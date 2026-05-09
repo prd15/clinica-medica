@@ -1,19 +1,138 @@
-version: "3.9"
+# Compose principal da clinica — cada microsservico tem seu proprio banco
+# pra manter o isolamento que a arquitetura pede
+name: brahma-clinic
 
 services:
-  mysql:
-    image: mysql:8.3
-    container_name: clinica-mysql
+  # Uso 3307 aqui pra nao conflitar com o MySQL que ja tenho rodando local
+  db-administrativo:
+    image: mysql:8
+    container_name: db-administrativo
     restart: unless-stopped
     environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
       MYSQL_DATABASE: clinica_administrativo
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
-      - clinica_mysql_data:/var/lib/mysql
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+      - vol-administrativo:/var/lib/mysql
+    # Sem esse healthcheck o Java tenta conectar antes do banco estar pronto
+    # e quebra na inicializacao — aprendi isso da pior forma
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - clinica-network
+
+  # 3308 pro agendamento — cada banco numa porta diferente facilita debug
+  db-agendamento:
+    image: mysql:8
+    container_name: db-agendamento
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: clinica_agendamento
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+    ports:
+      - "3308:3306"
+    volumes:
+      - vol-agendamento:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - clinica-network
+
+  # 3309 fecha os 3 bancos — agora cada microsservico tem o seu
+  db-atendimento:
+    image: mysql:8
+    container_name: db-atendimento
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: clinica_atendimento
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+    ports:
+      - "3309:3306"
+    volumes:
+      - vol-atendimento:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - clinica-network
+
+  administrativo:
+    build:
+      # Contexto na raiz porque o Dockerfile precisa enxergar commons/ e administrativo/
+      context: .
+      dockerfile: administrativo/Dockerfile
+    container_name: administrativo
+    restart: on-failure
+    # OrbStack roteia via administrativo.orb.local:8081 sem binding no host
+    environment:
+      DB_HOST: db-administrativo
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+    depends_on:
+      db-administrativo:
+        condition: service_healthy
+    networks:
+      - clinica-network
+
+  agendamento:
+    build:
+      context: .
+      dockerfile: agendamento/Dockerfile
+    container_name: agendamento
+    restart: on-failure
+    environment:
+      DB_HOST: db-agendamento
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      # Hostname interno do Docker — agendamento chama administrativo pelo nome do container
+      ADMINISTRATIVO_URL: http://administrativo:8081
+    depends_on:
+      db-agendamento:
+        condition: service_healthy
+      administrativo:
+        condition: service_started
+    networks:
+      - clinica-network
+
+  atendimento:
+    build:
+      context: .
+      dockerfile: atendimento/Dockerfile
+    container_name: atendimento
+    restart: on-failure
+    environment:
+      DB_HOST: db-atendimento
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      # Atendimento depende do agendamento pra consultar dados de agenda
+      AGENDAMENTO_URL: http://agendamento:8082
+    depends_on:
+      db-atendimento:
+        condition: service_healthy
+      agendamento:
+        condition: service_started
+    networks:
+      - clinica-network
 
 volumes:
-  clinica_mysql_data:
+  vol-administrativo:
+  vol-agendamento:
+  vol-atendimento:
 
+# Rede interna compartilhada entre todos os containers
+# Sem ela o agendamento nao consegue falar com o administrativo pelo hostname
+networks:
+  clinica-network:
+    driver: bridge
