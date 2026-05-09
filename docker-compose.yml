@@ -1,5 +1,6 @@
 # Compose principal da clinica — cada microsservico tem seu proprio banco
 # pra manter o isolamento que a arquitetura pede
+name: brahma-clinic
 version: "3.9"
 
 services:
@@ -67,12 +68,13 @@ services:
 
   administrativo:
     build:
-      context: ./administrativo
-      dockerfile: Dockerfile
+      # Contexto na raiz porque o Dockerfile precisa enxergar commons/ e administrativo/
+      context: .
+      dockerfile: administrativo/Dockerfile
     container_name: administrativo
     restart: on-failure
-    ports:
-      - "8081:8081"
+    # OrbStack roteia via administrativo.orb.local:8081 sem binding no host
+    # Nao precisa de ports: — containers se falam pela rede interna
     environment:
       DB_HOST: db-administrativo
       DB_PORT: 3306
@@ -82,6 +84,27 @@ services:
     depends_on:
       db-administrativo:
         condition: service_healthy
+    networks:
+      - clinica-network
+
+  agendamento:
+    build:
+      context: .
+      dockerfile: agendamento/Dockerfile
+    container_name: agendamento
+    restart: on-failure
+    environment:
+      DB_HOST: db-agendamento
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      # Hostname interno do Docker — agendamento chama administrativo pelo nome do container
+      ADMINISTRATIVO_URL: http://administrativo:8081
+    depends_on:
+      db-agendamento:
+        condition: service_healthy
+      administrativo:
+        condition: service_started
     networks:
       - clinica-network
 
