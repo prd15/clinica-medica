@@ -18,8 +18,24 @@ services:
     networks:
       - clinica-network
 
+  # 3308 pro agendamento — cada banco numa porta diferente facilita debug
+  db-agendamento:
+    image: mysql:8
+    container_name: db-agendamento
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: clinica_agendamento
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+    ports:
+      - "3308:3306"
+    volumes:
+      - vol-agendamento:/var/lib/mysql
+    networks:
+      - clinica-network
+
 volumes:
   vol-administrativo:
+  vol-agendamento:
 
 # Rede interna compartilhada entre todos os containers
 # Sem ela o agendamento nao consegue falar com o administrativo pelo hostname
