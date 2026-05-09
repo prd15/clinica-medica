@@ -2,7 +2,24 @@
 # pra manter o isolamento que a arquitetura pede
 version: "3.9"
 
-services: {}
+services:
+  # Uso 3307 aqui pra nao conflitar com o MySQL que ja tenho rodando local
+  db-administrativo:
+    image: mysql:8
+    container_name: db-administrativo
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: clinica_administrativo
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+    ports:
+      - "3307:3306"
+    volumes:
+      - vol-administrativo:/var/lib/mysql
+    networks:
+      - clinica-network
+
+volumes:
+  vol-administrativo:
 
 # Rede interna compartilhada entre todos os containers
 # Sem ela o agendamento nao consegue falar com o administrativo pelo hostname
