@@ -39,3 +39,9 @@ build/
 .DS_Store
 
 ### Agent/local notes ###
+
+### Variáveis de ambiente ###
+.env
+.env.*
+!.env.example
+*.env
