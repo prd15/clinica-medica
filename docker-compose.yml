@@ -1,7 +1,6 @@
 # Compose principal da clinica — cada microsservico tem seu proprio banco
 # pra manter o isolamento que a arquitetura pede
 name: brahma-clinic
-version: "3.9"
 
 services:
   # Uso 3307 aqui pra nao conflitar com o MySQL que ja tenho rodando local
@@ -74,13 +73,11 @@ services:
     container_name: administrativo
     restart: on-failure
     # OrbStack roteia via administrativo.orb.local:8081 sem binding no host
-    # Nao precisa de ports: — containers se falam pela rede interna
     environment:
       DB_HOST: db-administrativo
       DB_PORT: 3306
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
-    # Espera o banco estar healthy — sem isso o Spring quebra no boot
     depends_on:
       db-administrativo:
         condition: service_healthy
@@ -104,6 +101,27 @@ services:
       db-agendamento:
         condition: service_healthy
       administrativo:
+        condition: service_started
+    networks:
+      - clinica-network
+
+  atendimento:
+    build:
+      context: .
+      dockerfile: atendimento/Dockerfile
+    container_name: atendimento
+    restart: on-failure
+    environment:
+      DB_HOST: db-atendimento
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      # Atendimento depende do agendamento pra consultar dados de agenda
+      AGENDAMENTO_URL: http://agendamento:8082
+    depends_on:
+      db-atendimento:
+        condition: service_healthy
+      agendamento:
         condition: service_started
     networks:
       - clinica-network
