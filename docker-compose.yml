@@ -15,6 +15,13 @@ services:
       - "3307:3306"
     volumes:
       - vol-administrativo:/var/lib/mysql
+    # Sem esse healthcheck o Java tenta conectar antes do banco estar pronto
+    # e quebra na inicializacao — aprendi isso da pior forma
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - clinica-network
 
@@ -30,6 +37,11 @@ services:
       - "3308:3306"
     volumes:
       - vol-agendamento:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - clinica-network
 
@@ -45,6 +57,11 @@ services:
       - "3309:3306"
     volumes:
       - vol-atendimento:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - clinica-network
 
