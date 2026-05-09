@@ -38,7 +38,7 @@ public class PacienteController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PacienteResponse> findById(@PathVariable Long id) {
+    public ResponseEntity<PacienteResponse> findById(@PathVariable("id") Long id) {
         return pacienteService.findById(id)
                 .map(entity -> ResponseEntity.ok(modelMapper.map(entity, PacienteResponse.class)))
                 .orElse(ResponseEntity.notFound().build());
@@ -53,7 +53,7 @@ public class PacienteController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PacienteResponse> update(@PathVariable Long id,
+    public ResponseEntity<PacienteResponse> update(@PathVariable("id") Long id,
                                                    @Valid @RequestBody PacienteRequest request) {
         PacienteEntity entity = modelMapper.map(request, PacienteEntity.class);
         return pacienteService.update(id, entity)
@@ -62,7 +62,7 @@ public class PacienteController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         if (pacienteService.deleteById(id)) {
             return ResponseEntity.noContent().build();
         }

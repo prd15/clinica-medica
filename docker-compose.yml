@@ -72,7 +72,8 @@ services:
       dockerfile: administrativo/Dockerfile
     container_name: administrativo
     restart: on-failure
-    # OrbStack roteia via administrativo.orb.local:8081 sem binding no host
+    ports:
+      - "8081:8081"
     environment:
       DB_HOST: db-administrativo
       DB_PORT: 3306
@@ -90,6 +91,8 @@ services:
       dockerfile: agendamento/Dockerfile
     container_name: agendamento
     restart: on-failure
+    ports:
+      - "8082:8082"
     environment:
       DB_HOST: db-agendamento
       DB_PORT: 3306
@@ -111,6 +114,8 @@ services:
       dockerfile: atendimento/Dockerfile
     container_name: atendimento
     restart: on-failure
+    ports:
+      - "8083:8083"
     environment:
       DB_HOST: db-atendimento
       DB_PORT: 3306

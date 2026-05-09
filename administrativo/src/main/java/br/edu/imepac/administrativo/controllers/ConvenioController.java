@@ -34,7 +34,7 @@ public class ConvenioController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ConvenioResponse> findById(@PathVariable Long id) {
+    public ResponseEntity<ConvenioResponse> findById(@PathVariable("id") Long id) {
         return convenioService.findById(id)
                 .map(entity -> ResponseEntity.ok(modelMapper.map(entity, ConvenioResponse.class)))
                 .orElse(ResponseEntity.notFound().build());
@@ -49,7 +49,7 @@ public class ConvenioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ConvenioResponse> update(@PathVariable Long id,
+    public ResponseEntity<ConvenioResponse> update(@PathVariable("id") Long id,
                                                    @Valid @RequestBody ConvenioRequest request) {
         ConvenioEntity entity = modelMapper.map(request, ConvenioEntity.class);
         return convenioService.update(id, entity)
@@ -58,7 +58,7 @@ public class ConvenioController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         if (convenioService.deleteById(id)) {
             return ResponseEntity.noContent().build();
         }
