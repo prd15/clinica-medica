@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// dados que voltam pro front depois de consultar/salvar
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

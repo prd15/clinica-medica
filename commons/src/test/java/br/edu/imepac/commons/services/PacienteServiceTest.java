@@ -14,6 +14,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+// testes do PacienteService — mesma estrutura do ConvenioServiceTest
 @ExtendWith(MockitoExtension.class)
 class PacienteServiceTest {
 

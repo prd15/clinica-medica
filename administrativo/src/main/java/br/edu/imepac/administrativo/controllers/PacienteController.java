@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Endpoints de paciente no administrativo.
+ * CRUD completo em /v1/pacientes
+ */
 @RestController
 @RequestMapping("/v1/pacientes")
 public class PacienteController {

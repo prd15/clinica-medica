@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// dados que chegam do front pra criar/atualizar paciente
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

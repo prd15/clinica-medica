@@ -4,6 +4,7 @@ import br.edu.imepac.commons.entities.PacienteEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+// por enquanto so usa os metodos do JpaRepository mesmo
 @Repository
 public interface PacienteRepository extends JpaRepository<PacienteEntity, Long> {
 }

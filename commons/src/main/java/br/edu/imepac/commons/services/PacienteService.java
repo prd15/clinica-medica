@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * CRUD de pacientes. Segue o mesmo padrao do ConvenioService.
+ */
 @Service
 public class PacienteService {
 
@@ -28,6 +31,7 @@ public class PacienteService {
         return pacienteRepository.save(paciente);
     }
 
+    // atualiza todos os campos se o paciente existir, senao retorna vazio
     public Optional<PacienteEntity> update(Long id, PacienteEntity dadosAtualizados) {
         return pacienteRepository.findById(id).map(existing -> {
             existing.setNome(dadosAtualizados.getNome());

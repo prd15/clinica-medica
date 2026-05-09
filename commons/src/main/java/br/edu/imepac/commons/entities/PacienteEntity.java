@@ -6,6 +6,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Paciente cadastrado na clinica.
+ * Tabela: pacientes (banco clinica_administrativo)
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -34,5 +38,6 @@ public class PacienteEntity {
     @Column(length = 300)
     private String endereco;
 
+    // referencia ao convenio — Long em vez de @ManyToOne pra nao cruzar bancos
     private Long convenioId;
 }
