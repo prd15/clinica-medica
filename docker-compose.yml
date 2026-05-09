@@ -65,6 +65,26 @@ services:
     networks:
       - clinica-network
 
+  administrativo:
+    build:
+      context: ./administrativo
+      dockerfile: Dockerfile
+    container_name: administrativo
+    restart: on-failure
+    ports:
+      - "8081:8081"
+    environment:
+      DB_HOST: db-administrativo
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+    # Espera o banco estar healthy — sem isso o Spring quebra no boot
+    depends_on:
+      db-administrativo:
+        condition: service_healthy
+    networks:
+      - clinica-network
+
 volumes:
   vol-administrativo:
   vol-agendamento:
