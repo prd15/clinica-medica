@@ -33,9 +33,25 @@ services:
     networks:
       - clinica-network
 
+  # 3309 fecha os 3 bancos — agora cada microsservico tem o seu
+  db-atendimento:
+    image: mysql:8
+    container_name: db-atendimento
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: clinica_atendimento
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+    ports:
+      - "3309:3306"
+    volumes:
+      - vol-atendimento:/var/lib/mysql
+    networks:
+      - clinica-network
+
 volumes:
   vol-administrativo:
   vol-agendamento:
+  vol-atendimento:
 
 # Rede interna compartilhada entre todos os containers
 # Sem ela o agendamento nao consegue falar com o administrativo pelo hostname
