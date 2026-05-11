@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,8 +28,8 @@ class PacienteServiceTest {
     @Test
     void findAllDeveRetornarListaDePacientes() {
         List<PacienteEntity> pacientes = List.of(
-                new PacienteEntity(1L, "Joao Silva", "123.456.789-00", "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L),
-                new PacienteEntity(2L, "Maria Santos", "987.654.321-00", "(34)88888-0000", "maria@email.com", "Rua B, 200", 2L)
+                new PacienteEntity(1L, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L),
+                new PacienteEntity(2L, "Maria Santos", "987.654.321-00", LocalDate.of(1985, 3, 20), "(34)88888-0000", "maria@email.com", "Rua B, 200", 2L)
         );
         when(pacienteRepository.findAll()).thenReturn(pacientes);
 
@@ -41,7 +42,7 @@ class PacienteServiceTest {
 
     @Test
     void findByIdDeveRetornarPacienteQuandoExistir() {
-        PacienteEntity paciente = new PacienteEntity(1L, "Joao Silva", "123.456.789-00", "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L);
+        PacienteEntity paciente = new PacienteEntity(1L, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L);
         when(pacienteRepository.findById(1L)).thenReturn(Optional.of(paciente));
 
         Optional<PacienteEntity> resultado = pacienteService.findById(1L);
@@ -63,8 +64,8 @@ class PacienteServiceTest {
 
     @Test
     void saveDevePersistirPaciente() {
-        PacienteEntity novo = new PacienteEntity(null, "Joao Silva", "123.456.789-00", "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L);
-        PacienteEntity salvo = new PacienteEntity(1L, "Joao Silva", "123.456.789-00", "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L);
+        PacienteEntity novo = new PacienteEntity(null, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L);
+        PacienteEntity salvo = new PacienteEntity(1L, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L);
         when(pacienteRepository.save(any(PacienteEntity.class))).thenReturn(salvo);
 
         PacienteEntity resultado = pacienteService.save(novo);
@@ -79,8 +80,8 @@ class PacienteServiceTest {
 
     @Test
     void updateDeveAtualizarPacienteQuandoExistir() {
-        PacienteEntity existente = new PacienteEntity(1L, "Joao Silva", "123.456.789-00", "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L);
-        PacienteEntity dadosAtualizados = new PacienteEntity(null, "Joao Atualizado", "123.456.789-00", "(34)77777-0000", "joao.novo@email.com", "Rua C, 300", 2L);
+        PacienteEntity existente = new PacienteEntity(1L, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L);
+        PacienteEntity dadosAtualizados = new PacienteEntity(null, "Joao Atualizado", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)77777-0000", "joao.novo@email.com", "Rua C, 300", 2L);
 
         when(pacienteRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(pacienteRepository.save(any(PacienteEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -97,7 +98,7 @@ class PacienteServiceTest {
 
     @Test
     void updateDeveRetornarVazioQuandoNaoExistir() {
-        PacienteEntity dadosAtualizados = new PacienteEntity(null, "Joao Atualizado", "123.456.789-00", "(34)77777-0000", "joao@email.com", "Rua C, 300", 1L);
+        PacienteEntity dadosAtualizados = new PacienteEntity(null, "Joao Atualizado", "123.456.789-00", null, "(34)77777-0000", "joao@email.com", "Rua C, 300", 1L);
         when(pacienteRepository.findById(99L)).thenReturn(Optional.empty());
 
         Optional<PacienteEntity> resultado = pacienteService.update(99L, dadosAtualizados);

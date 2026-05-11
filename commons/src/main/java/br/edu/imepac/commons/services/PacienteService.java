@@ -36,6 +36,7 @@ public class PacienteService {
         return pacienteRepository.findById(id).map(existing -> {
             existing.setNome(dadosAtualizados.getNome());
             existing.setCpf(dadosAtualizados.getCpf());
+            existing.setDataNascimento(dadosAtualizados.getDataNascimento());
             existing.setTelefone(dadosAtualizados.getTelefone());
             existing.setEmail(dadosAtualizados.getEmail());
             existing.setEndereco(dadosAtualizados.getEndereco());
