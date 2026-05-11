@@ -20,13 +20,13 @@ public class ConvenioService {
         return convenioRepository.findAll();
     }
 
+    public Optional<ConvenioEntity> findById(Long id) {
+        return convenioRepository.findById(id);
+    }
+
     // filtra so os ativos (ou inativos) — depende do que o front precisar
     public List<ConvenioEntity> findByAtivo(Boolean ativo) {
         return convenioRepository.findByAtivo(ativo);
-    }
-
-    public Optional<ConvenioEntity> findById(Long id) {
-        return convenioRepository.findById(id);
     }
 
     public ConvenioEntity save(ConvenioEntity convenio) {
