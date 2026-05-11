@@ -117,6 +117,32 @@ class MedicoServiceTest {
         verify(medicoRepository, never()).deleteById(anyLong());
     }
 
+    // ── INATIVAR ─────────────────────────────────────────────────────────────
+
+    @Test
+    void inativarDeveDefinirAtivoComoFalso() {
+        MedicoEntity medico = buildMedico(1L, "Dr. João", "CRM-1");
+        medico.setAtivo(true);
+        when(medicoRepository.findById(1L)).thenReturn(Optional.of(medico));
+        when(medicoRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Optional<MedicoEntity> resultado = medicoService.inativar(1L);
+
+        assertTrue(resultado.isPresent());
+        assertFalse(resultado.get().getAtivo());
+        verify(medicoRepository).save(medico);
+    }
+
+    @Test
+    void inativarDeveRetornarVazioQuandoNaoExistir() {
+        when(medicoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Optional<MedicoEntity> resultado = medicoService.inativar(99L);
+
+        assertTrue(resultado.isEmpty());
+        verify(medicoRepository, never()).save(any());
+    }
+
     // ── HELPER ───────────────────────────────────────────────────────────────
 
     private MedicoEntity buildMedico(Long id, String nome, String crm) {
