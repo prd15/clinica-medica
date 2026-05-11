@@ -109,7 +109,10 @@ public class MedicoController {
     }
 
     @Operation(summary = "Remove especialidade do médico")
-    @ApiResponse(responseCode = "200", description = "Removida com sucesso")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Removida com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Médico ou especialidade não encontrado")
+    })
     @DeleteMapping("/{id}/especialidades/{especialidadeId}")
     public ResponseEntity<MedicoResponse> removerEspecialidade(@PathVariable("id") Long id,
                                                                 @PathVariable("especialidadeId") Long especialidadeId) {
