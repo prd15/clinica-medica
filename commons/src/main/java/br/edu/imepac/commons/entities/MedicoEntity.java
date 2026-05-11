@@ -38,7 +38,7 @@ public class MedicoEntity {
     @Column(nullable = false)
     private Boolean ativo = true;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "medico_especialidade",
         joinColumns = @JoinColumn(name = "medico_id"),
