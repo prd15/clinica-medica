@@ -190,7 +190,7 @@ class MedicoServiceTest {
 
     // ── HELPER ───────────────────────────────────────────────────────────────
 
-    private MedicoEntity buildMedico(Long id, String nome, String crm) {
+    private static MedicoEntity buildMedico(Long id, String nome, String crm) {
         MedicoEntity m = new MedicoEntity();
         m.setId(id);
         m.setNome(nome);
