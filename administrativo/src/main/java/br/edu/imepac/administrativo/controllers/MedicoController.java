@@ -91,7 +91,10 @@ public class MedicoController {
     }
 
     @Operation(summary = "Associa especialidade ao médico")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "Associado com sucesso"), @ApiResponse(responseCode = "404", description = "Médico ou especialidade não encontrado")})
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Associado com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Médico ou especialidade não encontrado")
+    })
     @PostMapping("/{id}/especialidades/{especialidadeId}")
     public ResponseEntity<MedicoResponse> associarEspecialidade(@PathVariable("id") Long id,
                                                                  @PathVariable("especialidadeId") Long especialidadeId) {
@@ -111,7 +114,10 @@ public class MedicoController {
     }
 
     @Operation(summary = "Inativa médico")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "Médico inativado"), @ApiResponse(responseCode = "404", description = "Médico não encontrado")})
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Médico inativado"),
+        @ApiResponse(responseCode = "404", description = "Médico não encontrado")
+    })
     @PatchMapping("/{id}/inativar")
     public ResponseEntity<MedicoResponse> inativar(@PathVariable("id") Long id) {
         return medicoService.inativar(id)
