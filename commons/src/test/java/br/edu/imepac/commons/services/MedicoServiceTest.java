@@ -143,6 +143,51 @@ class MedicoServiceTest {
         verify(medicoRepository, never()).save(any());
     }
 
+    // ── ESPECIALIDADES ────────────────────────────────────────────────────────
+
+    @Test
+    void associarEspecialidadeDeveAdicionarQuandoAmbosExistirem() {
+        MedicoEntity medico = buildMedico(1L, "Dr. João", "CRM-1");
+        EspecialidadeEntity especialidade = new EspecialidadeEntity(1L, "Cardiologia", "Desc");
+
+        when(medicoRepository.findById(1L)).thenReturn(Optional.of(medico));
+        when(especialidadeRepository.findById(1L)).thenReturn(Optional.of(especialidade));
+        when(medicoRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Optional<MedicoEntity> resultado = medicoService.associarEspecialidade(1L, 1L);
+
+        assertTrue(resultado.isPresent());
+        assertTrue(resultado.get().getEspecialidades().contains(especialidade));
+        verify(medicoRepository).save(medico);
+    }
+
+    @Test
+    void associarEspecialidadeDeveRetornarVazioQuandoMedicoNaoExistir() {
+        when(medicoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Optional<MedicoEntity> resultado = medicoService.associarEspecialidade(99L, 1L);
+
+        assertTrue(resultado.isEmpty());
+        verify(medicoRepository, never()).save(any());
+    }
+
+    @Test
+    void removerEspecialidadeDeveRemoverQuandoAmbosExistirem() {
+        EspecialidadeEntity especialidade = new EspecialidadeEntity(1L, "Cardiologia", "Desc");
+        MedicoEntity medico = buildMedico(1L, "Dr. João", "CRM-1");
+        medico.getEspecialidades().add(especialidade);
+
+        when(medicoRepository.findById(1L)).thenReturn(Optional.of(medico));
+        when(especialidadeRepository.findById(1L)).thenReturn(Optional.of(especialidade));
+        when(medicoRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Optional<MedicoEntity> resultado = medicoService.removerEspecialidade(1L, 1L);
+
+        assertTrue(resultado.isPresent());
+        assertFalse(resultado.get().getEspecialidades().contains(especialidade));
+        verify(medicoRepository).save(medico);
+    }
+
     // ── HELPER ───────────────────────────────────────────────────────────────
 
     private MedicoEntity buildMedico(Long id, String nome, String crm) {
