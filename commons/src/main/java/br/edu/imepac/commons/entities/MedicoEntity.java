@@ -6,6 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -34,4 +37,12 @@ public class MedicoEntity {
 
     @Column(nullable = false)
     private Boolean ativo = true;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "medico_especialidade",
+        joinColumns = @JoinColumn(name = "medico_id"),
+        inverseJoinColumns = @JoinColumn(name = "especialidade_id")
+    )
+    private Set<EspecialidadeEntity> especialidades = new HashSet<>();
 }
