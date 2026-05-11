@@ -23,6 +23,7 @@ class ConvenioServiceTest {
     @InjectMocks
     private ConvenioService convenioService;
 
+    // garante que o service nao filtra nem transforma o que o repo devolve
     @Test
     void findAllDeveRetornarListaDeConvenios() {
         List<ConvenioEntity> convenios = List.of(
@@ -50,6 +51,7 @@ class ConvenioServiceTest {
         verify(convenioRepository).findById(1L);
     }
 
+    // id nulo na entrada, id gerado na saida — confirma que o save funciona
     @Test
     void saveDevePersistirConvenio() {
         ConvenioEntity novo = new ConvenioEntity(null, "Unimed", "Plano regional", "12.345.678/0001-99", "(34)99999-0000", true);
@@ -84,6 +86,7 @@ class ConvenioServiceTest {
         verify(convenioRepository).save(existente);
     }
 
+    // nao pode chamar save se o registro nao existe
     @Test
     void updateDeveRetornarVazioQuandoNaoExistir() {
         ConvenioEntity dadosAtualizados = new ConvenioEntity(null, "Unimed Atualizado", "Novo", "12.345.678/0001-99", null, true);
