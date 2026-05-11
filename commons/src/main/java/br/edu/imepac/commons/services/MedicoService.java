@@ -24,6 +24,10 @@ public class MedicoService {
         return medicoRepository.findAll();
     }
 
+    public List<MedicoEntity> findByAtivo(Boolean ativo) {
+        return medicoRepository.findByAtivo(ativo);
+    }
+
     public Optional<MedicoEntity> findById(Long id) {
         return medicoRepository.findById(id);
     }

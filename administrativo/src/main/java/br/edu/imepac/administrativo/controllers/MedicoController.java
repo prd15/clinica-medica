@@ -40,6 +40,17 @@ public class MedicoController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Lista médicos por status ativo")
+    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @GetMapping("/ativos")
+    public ResponseEntity<List<MedicoResponse>> findByAtivo(@RequestParam(defaultValue = "true") Boolean ativo) {
+        List<MedicoResponse> response = medicoService.findByAtivo(ativo)
+                .stream()
+                .map(entity -> modelMapper.map(entity, MedicoResponse.class))
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "Busca médico por ID")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Médico encontrado"),
