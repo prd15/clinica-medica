@@ -33,12 +33,14 @@ public class ConvenioService {
         return convenioRepository.save(convenio);
     }
 
+    // atualiza tudo exceto o id — ativo so muda se vier no request
     public Optional<ConvenioEntity> update(Long id, ConvenioEntity dadosAtualizados) {
         return convenioRepository.findById(id).map(existing -> {
             existing.setNome(dadosAtualizados.getNome());
             existing.setDescricao(dadosAtualizados.getDescricao());
             existing.setCnpj(dadosAtualizados.getCnpj());
             existing.setTelefone(dadosAtualizados.getTelefone());
+            // nao deixa setar null no ativo via PUT
             if (dadosAtualizados.getAtivo() != null) {
                 existing.setAtivo(dadosAtualizados.getAtivo());
             }
