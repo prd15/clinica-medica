@@ -66,7 +66,7 @@ public class MedicoService {
         MedicoEntity medico = medicoOpt.get();
         EspecialidadeEntity especialidade = especialidadeOpt.get();
         if (medico.getEspecialidades().contains(especialidade)) {
-            return Optional.of(medico);
+            throw new IllegalStateException("Especialidade ja associada ao medico");
         }
         medico.getEspecialidades().add(especialidade);
         return Optional.of(medicoRepository.save(medico));

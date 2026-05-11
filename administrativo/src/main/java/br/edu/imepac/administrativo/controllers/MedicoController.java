@@ -93,14 +93,19 @@ public class MedicoController {
     @Operation(summary = "Associa especialidade ao médico")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Associado com sucesso"),
-        @ApiResponse(responseCode = "404", description = "Médico ou especialidade não encontrado")
+        @ApiResponse(responseCode = "404", description = "Médico ou especialidade não encontrado"),
+        @ApiResponse(responseCode = "409", description = "Especialidade já associada ao médico")
     })
     @PostMapping("/{id}/especialidades/{especialidadeId}")
     public ResponseEntity<MedicoResponse> associarEspecialidade(@PathVariable("id") Long id,
                                                                  @PathVariable("especialidadeId") Long especialidadeId) {
-        return medicoService.associarEspecialidade(id, especialidadeId)
-                .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            return medicoService.associarEspecialidade(id, especialidadeId)
+                    .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
     }
 
     @Operation(summary = "Remove especialidade do médico")
