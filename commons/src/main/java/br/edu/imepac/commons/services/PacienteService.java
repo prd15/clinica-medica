@@ -23,14 +23,17 @@ public class PacienteService {
         return pacienteRepository.findAll();
     }
 
+    // busca parcial, "jo" ja retorna "Joao" e "Jorge"
     public List<PacienteEntity> findByNome(String nome) {
         return pacienteRepository.findByNomeContainingIgnoreCase(nome);
     }
 
+    // retorna Optional porque pode nao existir, quem chama decide o que fazer
     public Optional<PacienteEntity> findByCpf(String cpf) {
         return pacienteRepository.findByCpf(cpf);
     }
 
+    // util pra saber quais pacientes pertencem a um convenio
     public List<PacienteEntity> findByConvenioId(Long convenioId) {
         return pacienteRepository.findByConvenioId(convenioId);
     }
