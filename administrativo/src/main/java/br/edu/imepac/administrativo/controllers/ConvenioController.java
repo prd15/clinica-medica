@@ -96,6 +96,7 @@ public class ConvenioController {
             ConvenioEntity atualizado = convenioService.alterarStatus(id, request.getAtivo());
             return ResponseEntity.ok(modelMapper.map(atualizado, ConvenioResponse.class));
         } catch (RuntimeException e) {
+            // service joga RuntimeException quando nao acha — mapeia pra 404
             return ResponseEntity.notFound().build();
         }
     }
