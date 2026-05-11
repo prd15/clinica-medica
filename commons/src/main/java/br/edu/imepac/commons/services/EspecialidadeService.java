@@ -24,6 +24,10 @@ public class EspecialidadeService {
         return especialidadeRepository.findById(id);
     }
 
+    public Optional<EspecialidadeEntity> findByNome(String nome) {
+        return especialidadeRepository.findByNome(nome);
+    }
+
     public EspecialidadeEntity save(EspecialidadeEntity especialidade) {
         return especialidadeRepository.save(especialidade);
     }

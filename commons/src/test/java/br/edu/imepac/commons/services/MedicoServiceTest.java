@@ -117,6 +117,33 @@ class MedicoServiceTest {
         verify(medicoRepository, never()).deleteById(anyLong());
     }
 
+    // ── FIND BY ATIVO ─────────────────────────────────────────────────────────
+
+    @Test
+    void findByAtivoDeveRetornarApenasMedicosAtivos() {
+        List<MedicoEntity> ativos = List.of(buildMedico(1L, "Dr. João", "CRM-1"));
+        when(medicoRepository.findByAtivo(true)).thenReturn(ativos);
+
+        List<MedicoEntity> resultado = medicoService.findByAtivo(true);
+
+        assertEquals(1, resultado.size());
+        assertTrue(resultado.get(0).getAtivo());
+        verify(medicoRepository).findByAtivo(true);
+    }
+
+    @Test
+    void findByAtivoDeveRetornarApenasMedicosInativos() {
+        MedicoEntity inativo = buildMedico(2L, "Dra. Ana", "CRM-2");
+        inativo.setAtivo(false);
+        when(medicoRepository.findByAtivo(false)).thenReturn(List.of(inativo));
+
+        List<MedicoEntity> resultado = medicoService.findByAtivo(false);
+
+        assertEquals(1, resultado.size());
+        assertFalse(resultado.get(0).getAtivo());
+        verify(medicoRepository).findByAtivo(false);
+    }
+
     // ── INATIVAR ─────────────────────────────────────────────────────────────
 
     @Test
@@ -162,6 +189,20 @@ class MedicoServiceTest {
     }
 
     @Test
+    void associarEspecialidadeDeveLancarExcecaoQuandoJaAssociada() {
+        EspecialidadeEntity especialidade = new EspecialidadeEntity(1L, "Cardiologia", "Desc");
+        MedicoEntity medico = buildMedico(1L, "Dr. João", "CRM-1");
+        medico.getEspecialidades().add(especialidade);
+
+        when(medicoRepository.findById(1L)).thenReturn(Optional.of(medico));
+        when(especialidadeRepository.findById(1L)).thenReturn(Optional.of(especialidade));
+
+        assertThrows(IllegalStateException.class,
+                () -> medicoService.associarEspecialidade(1L, 1L));
+        verify(medicoRepository, never()).save(any());
+    }
+
+    @Test
     void associarEspecialidadeDeveRetornarVazioQuandoMedicoNaoExistir() {
         when(medicoRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -190,7 +231,7 @@ class MedicoServiceTest {
 
     // ── HELPER ───────────────────────────────────────────────────────────────
 
-    private MedicoEntity buildMedico(Long id, String nome, String crm) {
+    private static MedicoEntity buildMedico(Long id, String nome, String crm) {
         MedicoEntity m = new MedicoEntity();
         m.setId(id);
         m.setNome(nome);

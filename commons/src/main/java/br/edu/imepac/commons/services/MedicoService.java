@@ -24,6 +24,10 @@ public class MedicoService {
         return medicoRepository.findAll();
     }
 
+    public List<MedicoEntity> findByAtivo(Boolean ativo) {
+        return medicoRepository.findByAtivo(ativo);
+    }
+
     public Optional<MedicoEntity> findById(Long id) {
         return medicoRepository.findById(id);
     }
@@ -56,7 +60,11 @@ public class MedicoService {
             return Optional.empty();
         }
         MedicoEntity medico = medicoOpt.get();
-        medico.getEspecialidades().add(especialidadeOpt.get());
+        EspecialidadeEntity especialidade = especialidadeOpt.get();
+        if (medico.getEspecialidades().contains(especialidade)) {
+            throw new IllegalStateException("Especialidade ja associada ao medico");
+        }
+        medico.getEspecialidades().add(especialidade);
         return Optional.of(medicoRepository.save(medico));
     }
 

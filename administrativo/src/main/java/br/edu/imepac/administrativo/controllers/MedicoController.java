@@ -40,6 +40,17 @@ public class MedicoController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Lista médicos por status ativo")
+    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @GetMapping("/ativos")
+    public ResponseEntity<List<MedicoResponse>> findByAtivo(@RequestParam(defaultValue = "true") Boolean ativo) {
+        List<MedicoResponse> response = medicoService.findByAtivo(ativo)
+                .stream()
+                .map(entity -> modelMapper.map(entity, MedicoResponse.class))
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "Busca médico por ID")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Médico encontrado"),
@@ -80,17 +91,28 @@ public class MedicoController {
     }
 
     @Operation(summary = "Associa especialidade ao médico")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "Associado com sucesso"), @ApiResponse(responseCode = "404", description = "Médico ou especialidade não encontrado")})
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Associado com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Médico ou especialidade não encontrado"),
+        @ApiResponse(responseCode = "409", description = "Especialidade já associada ao médico")
+    })
     @PostMapping("/{id}/especialidades/{especialidadeId}")
     public ResponseEntity<MedicoResponse> associarEspecialidade(@PathVariable("id") Long id,
                                                                  @PathVariable("especialidadeId") Long especialidadeId) {
-        return medicoService.associarEspecialidade(id, especialidadeId)
-                .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            return medicoService.associarEspecialidade(id, especialidadeId)
+                    .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
     }
 
     @Operation(summary = "Remove especialidade do médico")
-    @ApiResponse(responseCode = "200", description = "Removida com sucesso")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Removida com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Médico ou especialidade não encontrado")
+    })
     @DeleteMapping("/{id}/especialidades/{especialidadeId}")
     public ResponseEntity<MedicoResponse> removerEspecialidade(@PathVariable("id") Long id,
                                                                 @PathVariable("especialidadeId") Long especialidadeId) {
@@ -100,7 +122,10 @@ public class MedicoController {
     }
 
     @Operation(summary = "Inativa médico")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "Médico inativado"), @ApiResponse(responseCode = "404", description = "Médico não encontrado")})
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Médico inativado"),
+        @ApiResponse(responseCode = "404", description = "Médico não encontrado")
+    })
     @PatchMapping("/{id}/inativar")
     public ResponseEntity<MedicoResponse> inativar(@PathVariable("id") Long id) {
         return medicoService.inativar(id)
