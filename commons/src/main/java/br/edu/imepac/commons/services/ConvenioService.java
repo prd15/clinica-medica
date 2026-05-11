@@ -56,6 +56,7 @@ public class ConvenioService {
         return false;
     }
 
+    // PATCH especifico pra status — evita mandar o objeto inteiro so pra ativar/desativar
     public ConvenioEntity alterarStatus(Long id, Boolean ativo) {
         ConvenioEntity convenio = convenioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Convenio nao encontrado com id: " + id));
