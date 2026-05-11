@@ -20,6 +20,7 @@ public class ConvenioService {
         return convenioRepository.findAll();
     }
 
+    // filtra so os ativos (ou inativos) — depende do que o front precisar
     public List<ConvenioEntity> findByAtivo(Boolean ativo) {
         return convenioRepository.findByAtivo(ativo);
     }
