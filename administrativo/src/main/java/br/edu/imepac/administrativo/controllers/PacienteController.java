@@ -29,6 +29,7 @@ public class PacienteController {
         this.modelMapper = modelMapper;
     }
 
+    // todos os params sao opcionais — sem filtro retorna tudo
     @Operation(summary = "Lista pacientes com filtros opcionais por nome, CPF ou convenio")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
     @GetMapping
