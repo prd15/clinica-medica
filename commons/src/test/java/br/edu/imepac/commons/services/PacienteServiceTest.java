@@ -131,6 +131,71 @@ class PacienteServiceTest {
     }
 
     @Test
+    void buscarComFiltros_deveUsarNome_quandoNomeInformado() {
+        List<PacienteEntity> lista = List.of(
+                new PacienteEntity(1L, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A", 1L)
+        );
+        when(pacienteRepository.findByNomeContainingIgnoreCase("joao")).thenReturn(lista);
+
+        List<PacienteEntity> resultado = pacienteService.buscarComFiltros("joao", null, null);
+
+        assertEquals(1, resultado.size());
+        verify(pacienteRepository).findByNomeContainingIgnoreCase("joao");
+        verify(pacienteRepository, never()).findByCpf(any());
+        verify(pacienteRepository, never()).findAll();
+    }
+
+    @Test
+    void buscarComFiltros_deveUsarCpf_quandoCpfInformado() {
+        PacienteEntity paciente = new PacienteEntity(1L, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A", 1L);
+        when(pacienteRepository.findByCpf("123.456.789-00")).thenReturn(Optional.of(paciente));
+
+        List<PacienteEntity> resultado = pacienteService.buscarComFiltros(null, "123.456.789-00", null);
+
+        assertEquals(1, resultado.size());
+        verify(pacienteRepository).findByCpf("123.456.789-00");
+        verify(pacienteRepository, never()).findAll();
+    }
+
+    @Test
+    void buscarComFiltros_deveUsarConvenioId_quandoConvenioIdInformado() {
+        List<PacienteEntity> lista = List.of(
+                new PacienteEntity(1L, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A", 2L)
+        );
+        when(pacienteRepository.findByConvenioId(2L)).thenReturn(lista);
+
+        List<PacienteEntity> resultado = pacienteService.buscarComFiltros(null, null, 2L);
+
+        assertEquals(1, resultado.size());
+        verify(pacienteRepository).findByConvenioId(2L);
+        verify(pacienteRepository, never()).findAll();
+    }
+
+    @Test
+    void buscarComFiltros_deveListarTodos_quandoNenhumFiltroInformado() {
+        List<PacienteEntity> todos = List.of(
+                new PacienteEntity(1L, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A", 1L)
+        );
+        when(pacienteRepository.findAll()).thenReturn(todos);
+
+        List<PacienteEntity> resultado = pacienteService.buscarComFiltros(null, null, null);
+
+        assertEquals(1, resultado.size());
+        verify(pacienteRepository).findAll();
+    }
+
+    @Test
+    void buscarComFiltros_deveRetornarVazio_quandoCpfNaoEncontrado() {
+        when(pacienteRepository.findByCpf("000.000.000-00")).thenReturn(Optional.empty());
+
+        List<PacienteEntity> resultado = pacienteService.buscarComFiltros(null, "000.000.000-00", null);
+
+        assertNotNull(resultado);
+        assertTrue(resultado.isEmpty());
+        verify(pacienteRepository).findByCpf("000.000.000-00");
+    }
+
+    @Test
     void buscarPorNomeDeveRetornarPacientesComNomeParcial_ignorandoCase() {
         List<PacienteEntity> resultado = List.of(
                 new PacienteEntity(1L, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L)
