@@ -149,6 +149,7 @@ class ConvenioServiceTest {
         verify(convenioRepository).findByAtivo(false);
     }
 
+    // inativo -> ativo via PATCH
     @Test
     void alterarStatusDeveAtivarConvenio_quandoConvenioExiste() {
         ConvenioEntity convenio = new ConvenioEntity(1L, "Unimed", "Plano", "12.345.678/0001-99", "(34)99999-0000", false);
@@ -162,6 +163,7 @@ class ConvenioServiceTest {
         verify(convenioRepository).save(convenio);
     }
 
+    // mesmo teste mas no sentido contrario — ativo -> inativo
     @Test
     void alterarStatusDeveInativarConvenio_quandoConvenioExiste() {
         ConvenioEntity convenio = new ConvenioEntity(1L, "Unimed", "Plano", "12.345.678/0001-99", "(34)99999-0000", true);
@@ -175,6 +177,7 @@ class ConvenioServiceTest {
         verify(convenioRepository).save(convenio);
     }
 
+    // service tem que jogar excecao com o id no texto, facilita debug
     @Test
     void alterarStatusDeveLancarExcecao_quandoConvenioNaoEncontrado() {
         when(convenioRepository.findById(99L)).thenReturn(Optional.empty());
