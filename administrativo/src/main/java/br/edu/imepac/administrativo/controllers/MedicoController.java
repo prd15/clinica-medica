@@ -57,6 +57,13 @@ public class MedicoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PatchMapping("/{id}/inativar")
+    public ResponseEntity<MedicoResponse> inativar(@PathVariable("id") Long id) {
+        return medicoService.inativar(id)
+                .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         if (medicoService.deleteById(id)) {
