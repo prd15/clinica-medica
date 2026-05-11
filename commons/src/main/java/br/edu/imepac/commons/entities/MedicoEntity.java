@@ -28,9 +28,9 @@ public class MedicoEntity {
     @Column(nullable = false, unique = true, length = 20)
     private String crm;
 
-    @NotBlank(message = "O e-mail é obrigatório")
-    @Column(nullable = false, unique = true, length = 150)
-    private String email;
+    @NotBlank(message = "A senha é obrigatória")
+    @Column(nullable = false)
+    private String senha;
 
     @Column(length = 20)
     private String telefone;
