@@ -57,6 +57,22 @@ public class MedicoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/{id}/especialidades/{especialidadeId}")
+    public ResponseEntity<MedicoResponse> associarEspecialidade(@PathVariable("id") Long id,
+                                                                 @PathVariable("especialidadeId") Long especialidadeId) {
+        return medicoService.associarEspecialidade(id, especialidadeId)
+                .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}/especialidades/{especialidadeId}")
+    public ResponseEntity<MedicoResponse> removerEspecialidade(@PathVariable("id") Long id,
+                                                                @PathVariable("especialidadeId") Long especialidadeId) {
+        return medicoService.removerEspecialidade(id, especialidadeId)
+                .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PatchMapping("/{id}/inativar")
     public ResponseEntity<MedicoResponse> inativar(@PathVariable("id") Long id) {
         return medicoService.inativar(id)
