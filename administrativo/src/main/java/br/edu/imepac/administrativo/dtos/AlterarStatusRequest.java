@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// DTO minimo pro PATCH de status — so precisa do campo ativo
 @Schema(description = "Payload para alterar status do convênio")
 @Data
 @NoArgsConstructor
