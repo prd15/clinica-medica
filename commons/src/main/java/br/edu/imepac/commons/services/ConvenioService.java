@@ -20,6 +20,10 @@ public class ConvenioService {
         return convenioRepository.findAll();
     }
 
+    public List<ConvenioEntity> findByAtivo(Boolean ativo) {
+        return convenioRepository.findByAtivo(ativo);
+    }
+
     public Optional<ConvenioEntity> findById(Long id) {
         return convenioRepository.findById(id);
     }

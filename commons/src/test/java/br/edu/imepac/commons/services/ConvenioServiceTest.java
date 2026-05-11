@@ -117,5 +117,44 @@ class ConvenioServiceTest {
         verify(convenioRepository).existsById(99L);
         verify(convenioRepository, never()).deleteById(anyLong());
     }
+
+    @Test
+    void findByAtivoDeveRetornarApenasAtivos_quandoChamadoComTrue() {
+        List<ConvenioEntity> ativos = List.of(
+                new ConvenioEntity(1L, "Unimed", "Plano regional", "12.345.678/0001-99", "(34)99999-0000", true)
+        );
+        when(convenioRepository.findByAtivo(true)).thenReturn(ativos);
+
+        List<ConvenioEntity> resultado = convenioService.findByAtivo(true);
+
+        assertEquals(1, resultado.size());
+        assertTrue(resultado.get(0).getAtivo());
+        verify(convenioRepository).findByAtivo(true);
+    }
+
+    @Test
+    void findByAtivoDeveRetornarApenasInativos_quandoChamadoComFalse() {
+        List<ConvenioEntity> inativos = List.of(
+                new ConvenioEntity(2L, "Amil", "Plano nacional", "98.765.432/0001-11", "(34)88888-0000", false)
+        );
+        when(convenioRepository.findByAtivo(false)).thenReturn(inativos);
+
+        List<ConvenioEntity> resultado = convenioService.findByAtivo(false);
+
+        assertEquals(1, resultado.size());
+        assertFalse(resultado.get(0).getAtivo());
+        verify(convenioRepository).findByAtivo(false);
+    }
+
+    @Test
+    void findByAtivoDeveRetornarListaVazia_quandoNaoHaConveniosComStatus() {
+        when(convenioRepository.findByAtivo(false)).thenReturn(List.of());
+
+        List<ConvenioEntity> resultado = convenioService.findByAtivo(false);
+
+        assertNotNull(resultado);
+        assertTrue(resultado.isEmpty());
+        verify(convenioRepository).findByAtivo(false);
+    }
 }
 
