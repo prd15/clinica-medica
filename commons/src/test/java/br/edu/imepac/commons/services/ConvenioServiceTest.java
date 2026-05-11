@@ -23,11 +23,12 @@ class ConvenioServiceTest {
     @InjectMocks
     private ConvenioService convenioService;
 
+    // garante que o service nao filtra nem transforma o que o repo devolve
     @Test
     void findAllDeveRetornarListaDeConvenios() {
         List<ConvenioEntity> convenios = List.of(
-                new ConvenioEntity(1L, "Unimed", "Plano regional"),
-                new ConvenioEntity(2L, "Amil", "Plano nacional")
+                new ConvenioEntity(1L, "Unimed", "Plano regional", "12.345.678/0001-99", "(34)99999-0000", true),
+                new ConvenioEntity(2L, "Amil", "Plano nacional", "98.765.432/0001-11", "(34)88888-0000", true)
         );
         when(convenioRepository.findAll()).thenReturn(convenios);
 
@@ -40,7 +41,7 @@ class ConvenioServiceTest {
 
     @Test
     void findByIdDeveRetornarConvenioQuandoExistir() {
-        ConvenioEntity convenio = new ConvenioEntity(1L, "Unimed", "Plano regional");
+        ConvenioEntity convenio = new ConvenioEntity(1L, "Unimed", "Plano regional", "12.345.678/0001-99", "(34)99999-0000", true);
         when(convenioRepository.findById(1L)).thenReturn(Optional.of(convenio));
 
         Optional<ConvenioEntity> resultado = convenioService.findById(1L);
@@ -50,10 +51,11 @@ class ConvenioServiceTest {
         verify(convenioRepository).findById(1L);
     }
 
+    // id nulo na entrada, id gerado na saida — confirma que o save funciona
     @Test
     void saveDevePersistirConvenio() {
-        ConvenioEntity novo = new ConvenioEntity(null, "Unimed", "Plano regional");
-        ConvenioEntity salvo = new ConvenioEntity(1L, "Unimed", "Plano regional");
+        ConvenioEntity novo = new ConvenioEntity(null, "Unimed", "Plano regional", "12.345.678/0001-99", "(34)99999-0000", true);
+        ConvenioEntity salvo = new ConvenioEntity(1L, "Unimed", "Plano regional", "12.345.678/0001-99", "(34)99999-0000", true);
         when(convenioRepository.save(any(ConvenioEntity.class))).thenReturn(salvo);
 
         ConvenioEntity resultado = convenioService.save(novo);
@@ -69,8 +71,8 @@ class ConvenioServiceTest {
 
     @Test
     void updateDeveAtualizarConvenioQuandoExistir() {
-        ConvenioEntity existente = new ConvenioEntity(1L, "Unimed", "Antigo");
-        ConvenioEntity dadosAtualizados = new ConvenioEntity(null, "Unimed Atualizado", "Novo");
+        ConvenioEntity existente = new ConvenioEntity(1L, "Unimed", "Antigo", "12.345.678/0001-99", "(34)99999-0000", true);
+        ConvenioEntity dadosAtualizados = new ConvenioEntity(null, "Unimed Atualizado", "Novo", "12.345.678/0001-99", "(34)77777-0000", true);
 
         when(convenioRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(convenioRepository.save(any(ConvenioEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -84,9 +86,10 @@ class ConvenioServiceTest {
         verify(convenioRepository).save(existente);
     }
 
+    // nao pode chamar save se o registro nao existe
     @Test
     void updateDeveRetornarVazioQuandoNaoExistir() {
-        ConvenioEntity dadosAtualizados = new ConvenioEntity(null, "Unimed Atualizado", "Novo");
+        ConvenioEntity dadosAtualizados = new ConvenioEntity(null, "Unimed Atualizado", "Novo", "12.345.678/0001-99", null, true);
         when(convenioRepository.findById(99L)).thenReturn(Optional.empty());
 
         Optional<ConvenioEntity> resultado = convenioService.update(99L, dadosAtualizados);
@@ -116,6 +119,88 @@ class ConvenioServiceTest {
         assertFalse(removido);
         verify(convenioRepository).existsById(99L);
         verify(convenioRepository, never()).deleteById(anyLong());
+    }
+
+    // so convenios ativos devem aparecer quando filtrado com true
+    @Test
+    void findByAtivoDeveRetornarApenasAtivos_quandoChamadoComTrue() {
+        List<ConvenioEntity> ativos = List.of(
+                new ConvenioEntity(1L, "Unimed", "Plano regional", "12.345.678/0001-99", "(34)99999-0000", true)
+        );
+        when(convenioRepository.findByAtivo(true)).thenReturn(ativos);
+
+        List<ConvenioEntity> resultado = convenioService.findByAtivo(true);
+
+        assertEquals(1, resultado.size());
+        assertTrue(resultado.get(0).getAtivo());
+        verify(convenioRepository).findByAtivo(true);
+    }
+
+    @Test
+    void findByAtivoDeveRetornarApenasInativos_quandoChamadoComFalse() {
+        List<ConvenioEntity> inativos = List.of(
+                new ConvenioEntity(2L, "Amil", "Plano nacional", "98.765.432/0001-11", "(34)88888-0000", false)
+        );
+        when(convenioRepository.findByAtivo(false)).thenReturn(inativos);
+
+        List<ConvenioEntity> resultado = convenioService.findByAtivo(false);
+
+        assertEquals(1, resultado.size());
+        assertFalse(resultado.get(0).getAtivo());
+        verify(convenioRepository).findByAtivo(false);
+    }
+
+    // inativo -> ativo via PATCH
+    @Test
+    void alterarStatusDeveAtivarConvenio_quandoConvenioExiste() {
+        ConvenioEntity convenio = new ConvenioEntity(1L, "Unimed", "Plano", "12.345.678/0001-99", "(34)99999-0000", false);
+        when(convenioRepository.findById(1L)).thenReturn(Optional.of(convenio));
+        when(convenioRepository.save(any(ConvenioEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ConvenioEntity resultado = convenioService.alterarStatus(1L, true);
+
+        assertTrue(resultado.getAtivo());
+        verify(convenioRepository).findById(1L);
+        verify(convenioRepository).save(convenio);
+    }
+
+    // mesmo teste mas no sentido contrario — ativo -> inativo
+    @Test
+    void alterarStatusDeveInativarConvenio_quandoConvenioExiste() {
+        ConvenioEntity convenio = new ConvenioEntity(1L, "Unimed", "Plano", "12.345.678/0001-99", "(34)99999-0000", true);
+        when(convenioRepository.findById(1L)).thenReturn(Optional.of(convenio));
+        when(convenioRepository.save(any(ConvenioEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ConvenioEntity resultado = convenioService.alterarStatus(1L, false);
+
+        assertFalse(resultado.getAtivo());
+        verify(convenioRepository).findById(1L);
+        verify(convenioRepository).save(convenio);
+    }
+
+    // service tem que jogar excecao com o id no texto, facilita debug
+    @Test
+    void alterarStatusDeveLancarExcecao_quandoConvenioNaoEncontrado() {
+        when(convenioRepository.findById(99L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> convenioService.alterarStatus(99L, false));
+
+        assertTrue(ex.getMessage().contains("99"));
+        verify(convenioRepository).findById(99L);
+        verify(convenioRepository, never()).save(any(ConvenioEntity.class));
+    }
+
+    // banco sem inativos ainda, retorna vazio sem quebrar
+    @Test
+    void findByAtivoDeveRetornarListaVazia_quandoNaoHaConveniosComStatus() {
+        when(convenioRepository.findByAtivo(false)).thenReturn(List.of());
+
+        List<ConvenioEntity> resultado = convenioService.findByAtivo(false);
+
+        assertNotNull(resultado);
+        assertTrue(resultado.isEmpty());
+        verify(convenioRepository).findByAtivo(false);
     }
 }
 

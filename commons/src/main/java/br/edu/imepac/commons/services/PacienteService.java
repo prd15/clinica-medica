@@ -23,6 +23,21 @@ public class PacienteService {
         return pacienteRepository.findAll();
     }
 
+    // busca parcial, "jo" ja retorna "Joao" e "Jorge"
+    public List<PacienteEntity> findByNome(String nome) {
+        return pacienteRepository.findByNomeContainingIgnoreCase(nome);
+    }
+
+    // retorna Optional porque pode nao existir, quem chama decide o que fazer
+    public Optional<PacienteEntity> findByCpf(String cpf) {
+        return pacienteRepository.findByCpf(cpf);
+    }
+
+    // util pra saber quais pacientes pertencem a um convenio
+    public List<PacienteEntity> findByConvenioId(Long convenioId) {
+        return pacienteRepository.findByConvenioId(convenioId);
+    }
+
     public Optional<PacienteEntity> findById(Long id) {
         return pacienteRepository.findById(id);
     }
@@ -36,12 +51,31 @@ public class PacienteService {
         return pacienteRepository.findById(id).map(existing -> {
             existing.setNome(dadosAtualizados.getNome());
             existing.setCpf(dadosAtualizados.getCpf());
+            existing.setDataNascimento(dadosAtualizados.getDataNascimento());
             existing.setTelefone(dadosAtualizados.getTelefone());
             existing.setEmail(dadosAtualizados.getEmail());
             existing.setEndereco(dadosAtualizados.getEndereco());
             existing.setConvenioId(dadosAtualizados.getConvenioId());
             return pacienteRepository.save(existing);
         });
+    }
+
+    // prioridade: nome > cpf > convenioId > sem filtro
+    // so um filtro por vez por enquanto — suficiente pra maioria dos casos
+    public List<PacienteEntity> buscarComFiltros(String nome, String cpf, Long convenioId) {
+        if (nome != null && !nome.isBlank()) {
+            return pacienteRepository.findByNomeContainingIgnoreCase(nome);
+        }
+        if (cpf != null && !cpf.isBlank()) {
+            // cpf nao encontrado retorna lista vazia, nao 404
+            return pacienteRepository.findByCpf(cpf)
+                    .map(p -> List.of(p))
+                    .orElse(List.of());
+        }
+        if (convenioId != null) {
+            return pacienteRepository.findByConvenioId(convenioId);
+        }
+        return pacienteRepository.findAll();
     }
 
     public boolean deleteById(Long id) {

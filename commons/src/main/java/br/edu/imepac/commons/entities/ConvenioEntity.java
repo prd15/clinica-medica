@@ -23,5 +23,18 @@ public class ConvenioEntity {
 
     @Column(length = 500)
     private String descricao;
+
+    // cnpj unico por convenio — dois convenios com o mesmo cnpj nao faz sentido
+    @NotBlank(message = "CNPJ é obrigatório")
+    @Column(unique = true, nullable = false, length = 18)
+    private String cnpj;
+
+    // telefone de contato, nao obrigatorio
+    @Column(length = 20)
+    private String telefone;
+
+    // convenios inativos ficam no banco mas nao aparecem no agendamento
+    @Column(nullable = false)
+    private Boolean ativo = true;
 }
 

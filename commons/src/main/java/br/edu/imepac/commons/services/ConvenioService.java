@@ -24,14 +24,26 @@ public class ConvenioService {
         return convenioRepository.findById(id);
     }
 
+    // filtra so os ativos (ou inativos) — depende do que o front precisar
+    public List<ConvenioEntity> findByAtivo(Boolean ativo) {
+        return convenioRepository.findByAtivo(ativo);
+    }
+
     public ConvenioEntity save(ConvenioEntity convenio) {
         return convenioRepository.save(convenio);
     }
 
+    // atualiza tudo exceto o id — ativo so muda se vier no request
     public Optional<ConvenioEntity> update(Long id, ConvenioEntity dadosAtualizados) {
         return convenioRepository.findById(id).map(existing -> {
             existing.setNome(dadosAtualizados.getNome());
             existing.setDescricao(dadosAtualizados.getDescricao());
+            existing.setCnpj(dadosAtualizados.getCnpj());
+            existing.setTelefone(dadosAtualizados.getTelefone());
+            // nao deixa setar null no ativo via PUT
+            if (dadosAtualizados.getAtivo() != null) {
+                existing.setAtivo(dadosAtualizados.getAtivo());
+            }
             return convenioRepository.save(existing);
         });
     }
@@ -42,6 +54,14 @@ public class ConvenioService {
             return true;
         }
         return false;
+    }
+
+    // PATCH especifico pra status — evita mandar o objeto inteiro so pra ativar/desativar
+    public ConvenioEntity alterarStatus(Long id, Boolean ativo) {
+        ConvenioEntity convenio = convenioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Convenio nao encontrado com id: " + id));
+        convenio.setAtivo(ativo);
+        return convenioRepository.save(convenio);
     }
 }
 
