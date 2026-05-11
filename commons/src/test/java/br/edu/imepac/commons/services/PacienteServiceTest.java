@@ -130,6 +130,7 @@ class PacienteServiceTest {
         verify(pacienteRepository, never()).deleteById(anyLong());
     }
 
+    // com nome informado, nao deve chamar findAll nem findByCpf
     @Test
     void buscarComFiltros_deveUsarNome_quandoNomeInformado() {
         List<PacienteEntity> lista = List.of(
@@ -157,6 +158,7 @@ class PacienteServiceTest {
         verify(pacienteRepository, never()).findAll();
     }
 
+    // convenioId como terceiro filtro na prioridade
     @Test
     void buscarComFiltros_deveUsarConvenioId_quandoConvenioIdInformado() {
         List<PacienteEntity> lista = List.of(
@@ -171,6 +173,7 @@ class PacienteServiceTest {
         verify(pacienteRepository, never()).findAll();
     }
 
+    // sem filtro nenhum, cai no findAll
     @Test
     void buscarComFiltros_deveListarTodos_quandoNenhumFiltroInformado() {
         List<PacienteEntity> todos = List.of(
