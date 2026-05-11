@@ -129,4 +129,65 @@ class PacienteServiceTest {
         verify(pacienteRepository).existsById(99L);
         verify(pacienteRepository, never()).deleteById(anyLong());
     }
+
+    @Test
+    void buscarPorNomeDeveRetornarPacientesComNomeParcial_ignorandoCase() {
+        List<PacienteEntity> resultado = List.of(
+                new PacienteEntity(1L, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L)
+        );
+        when(pacienteRepository.findByNomeContainingIgnoreCase("joao")).thenReturn(resultado);
+
+        List<PacienteEntity> encontrados = pacienteService.findByNome("joao");
+
+        assertEquals(1, encontrados.size());
+        assertEquals("Joao Silva", encontrados.get(0).getNome());
+        verify(pacienteRepository).findByNomeContainingIgnoreCase("joao");
+    }
+
+    @Test
+    void buscarPorCpfDeveRetornarPaciente_quandoExistir() {
+        PacienteEntity paciente = new PacienteEntity(1L, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L);
+        when(pacienteRepository.findByCpf("123.456.789-00")).thenReturn(Optional.of(paciente));
+
+        Optional<PacienteEntity> encontrado = pacienteService.findByCpf("123.456.789-00");
+
+        assertTrue(encontrado.isPresent());
+        assertEquals("123.456.789-00", encontrado.get().getCpf());
+        verify(pacienteRepository).findByCpf("123.456.789-00");
+    }
+
+    @Test
+    void buscarPorCpfDeveRetornarVazio_quandoNaoExistir() {
+        when(pacienteRepository.findByCpf("000.000.000-00")).thenReturn(Optional.empty());
+
+        Optional<PacienteEntity> encontrado = pacienteService.findByCpf("000.000.000-00");
+
+        assertTrue(encontrado.isEmpty());
+        verify(pacienteRepository).findByCpf("000.000.000-00");
+    }
+
+    @Test
+    void buscarPorConvenioDeveRetornarPacientes_quandoExistir() {
+        List<PacienteEntity> pacientes = List.of(
+                new PacienteEntity(1L, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A, 100", 1L)
+        );
+        when(pacienteRepository.findByConvenioId(1L)).thenReturn(pacientes);
+
+        List<PacienteEntity> resultado = pacienteService.findByConvenioId(1L);
+
+        assertEquals(1, resultado.size());
+        assertEquals(1L, resultado.get(0).getConvenioId());
+        verify(pacienteRepository).findByConvenioId(1L);
+    }
+
+    @Test
+    void buscarPorConvenioDeveRetornarListaVazia_quandoNaoHaPacientesNoConvenio() {
+        when(pacienteRepository.findByConvenioId(99L)).thenReturn(List.of());
+
+        List<PacienteEntity> resultado = pacienteService.findByConvenioId(99L);
+
+        assertNotNull(resultado);
+        assertTrue(resultado.isEmpty());
+        verify(pacienteRepository).findByConvenioId(99L);
+    }
 }

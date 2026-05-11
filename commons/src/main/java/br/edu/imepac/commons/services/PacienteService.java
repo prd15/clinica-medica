@@ -23,6 +23,18 @@ public class PacienteService {
         return pacienteRepository.findAll();
     }
 
+    public List<PacienteEntity> findByNome(String nome) {
+        return pacienteRepository.findByNomeContainingIgnoreCase(nome);
+    }
+
+    public Optional<PacienteEntity> findByCpf(String cpf) {
+        return pacienteRepository.findByCpf(cpf);
+    }
+
+    public List<PacienteEntity> findByConvenioId(Long convenioId) {
+        return pacienteRepository.findByConvenioId(convenioId);
+    }
+
     public Optional<PacienteEntity> findById(Long id) {
         return pacienteRepository.findById(id);
     }
