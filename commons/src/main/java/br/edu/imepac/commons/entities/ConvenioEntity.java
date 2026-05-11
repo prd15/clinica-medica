@@ -23,5 +23,8 @@ public class ConvenioEntity {
 
     @Column(length = 500)
     private String descricao;
+
+    @Column(nullable = false)
+    private Boolean ativo = true;
 }
 
