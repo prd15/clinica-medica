@@ -117,6 +117,33 @@ class MedicoServiceTest {
         verify(medicoRepository, never()).deleteById(anyLong());
     }
 
+    // ── FIND BY ATIVO ─────────────────────────────────────────────────────────
+
+    @Test
+    void findByAtivoDeveRetornarApenasMedicosAtivos() {
+        List<MedicoEntity> ativos = List.of(buildMedico(1L, "Dr. João", "CRM-1"));
+        when(medicoRepository.findByAtivo(true)).thenReturn(ativos);
+
+        List<MedicoEntity> resultado = medicoService.findByAtivo(true);
+
+        assertEquals(1, resultado.size());
+        assertTrue(resultado.get(0).getAtivo());
+        verify(medicoRepository).findByAtivo(true);
+    }
+
+    @Test
+    void findByAtivoDeveRetornarApenasMedicosInativos() {
+        MedicoEntity inativo = buildMedico(2L, "Dra. Ana", "CRM-2");
+        inativo.setAtivo(false);
+        when(medicoRepository.findByAtivo(false)).thenReturn(List.of(inativo));
+
+        List<MedicoEntity> resultado = medicoService.findByAtivo(false);
+
+        assertEquals(1, resultado.size());
+        assertFalse(resultado.get(0).getAtivo());
+        verify(medicoRepository).findByAtivo(false);
+    }
+
     // ── INATIVAR ─────────────────────────────────────────────────────────────
 
     @Test
