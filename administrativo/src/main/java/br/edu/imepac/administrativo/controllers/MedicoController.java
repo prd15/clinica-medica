@@ -4,6 +4,10 @@ import br.edu.imepac.administrativo.dtos.MedicoRequest;
 import br.edu.imepac.administrativo.dtos.MedicoResponse;
 import br.edu.imepac.commons.entities.MedicoEntity;
 import br.edu.imepac.commons.services.MedicoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -12,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Médicos", description = "Gerenciamento de médicos")
 @RestController
 @RequestMapping("/v1/medicos")
 public class MedicoController {
@@ -57,6 +62,8 @@ public class MedicoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Associa especialidade ao médico")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Associado com sucesso"), @ApiResponse(responseCode = "404", description = "Médico ou especialidade não encontrado")})
     @PostMapping("/{id}/especialidades/{especialidadeId}")
     public ResponseEntity<MedicoResponse> associarEspecialidade(@PathVariable("id") Long id,
                                                                  @PathVariable("especialidadeId") Long especialidadeId) {
@@ -65,6 +72,8 @@ public class MedicoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Remove especialidade do médico")
+    @ApiResponse(responseCode = "200", description = "Removida com sucesso")
     @DeleteMapping("/{id}/especialidades/{especialidadeId}")
     public ResponseEntity<MedicoResponse> removerEspecialidade(@PathVariable("id") Long id,
                                                                 @PathVariable("especialidadeId") Long especialidadeId) {
@@ -73,6 +82,8 @@ public class MedicoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Inativa médico")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Médico inativado"), @ApiResponse(responseCode = "404", description = "Médico não encontrado")})
     @PatchMapping("/{id}/inativar")
     public ResponseEntity<MedicoResponse> inativar(@PathVariable("id") Long id) {
         return medicoService.inativar(id)
