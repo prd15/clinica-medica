@@ -121,6 +121,7 @@ class ConvenioServiceTest {
         verify(convenioRepository, never()).deleteById(anyLong());
     }
 
+    // so convenios ativos devem aparecer quando filtrado com true
     @Test
     void findByAtivoDeveRetornarApenasAtivos_quandoChamadoComTrue() {
         List<ConvenioEntity> ativos = List.of(
@@ -190,6 +191,7 @@ class ConvenioServiceTest {
         verify(convenioRepository, never()).save(any(ConvenioEntity.class));
     }
 
+    // banco sem inativos ainda, retorna vazio sem quebrar
     @Test
     void findByAtivoDeveRetornarListaVazia_quandoNaoHaConveniosComStatus() {
         when(convenioRepository.findByAtivo(false)).thenReturn(List.of());
