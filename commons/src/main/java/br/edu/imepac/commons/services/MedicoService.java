@@ -38,6 +38,13 @@ public class MedicoService {
         });
     }
 
+    public Optional<MedicoEntity> inativar(Long id) {
+        return medicoRepository.findById(id).map(medico -> {
+            medico.setAtivo(false);
+            return medicoRepository.save(medico);
+        });
+    }
+
     public boolean deleteById(Long id) {
         if (medicoRepository.existsById(id)) {
             medicoRepository.deleteById(id);
