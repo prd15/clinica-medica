@@ -56,7 +56,11 @@ public class MedicoService {
             return Optional.empty();
         }
         MedicoEntity medico = medicoOpt.get();
-        medico.getEspecialidades().add(especialidadeOpt.get());
+        EspecialidadeEntity especialidade = especialidadeOpt.get();
+        if (medico.getEspecialidades().contains(especialidade)) {
+            return Optional.of(medico);
+        }
+        medico.getEspecialidades().add(especialidade);
         return Optional.of(medicoRepository.save(medico));
     }
 
