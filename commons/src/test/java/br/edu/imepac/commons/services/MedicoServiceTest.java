@@ -195,7 +195,7 @@ class MedicoServiceTest {
         m.setId(id);
         m.setNome(nome);
         m.setCrm(crm);
-        m.setEmail(crm + "@clinica.com");
+        m.setSenha("senha123");
         m.setAtivo(true);
         m.setEspecialidades(new HashSet<>());
         return m;
