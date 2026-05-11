@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 /**
  * Paciente cadastrado na clinica.
  * Tabela: pacientes (banco clinica_administrativo)
@@ -28,6 +30,9 @@ public class PacienteEntity {
     @NotBlank(message = "O CPF do paciente e obrigatorio")
     @Column(nullable = false, unique = true, length = 14)
     private String cpf;
+
+    @Column(nullable = true)
+    private LocalDate dataNascimento;
 
     @Column(length = 20)
     private String telefone;
