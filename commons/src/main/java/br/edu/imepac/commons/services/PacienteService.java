@@ -57,6 +57,21 @@ public class PacienteService {
         });
     }
 
+    public List<PacienteEntity> buscarComFiltros(String nome, String cpf, Long convenioId) {
+        if (nome != null && !nome.isBlank()) {
+            return pacienteRepository.findByNomeContainingIgnoreCase(nome);
+        }
+        if (cpf != null && !cpf.isBlank()) {
+            return pacienteRepository.findByCpf(cpf)
+                    .map(p -> List.of(p))
+                    .orElse(List.of());
+        }
+        if (convenioId != null) {
+            return pacienteRepository.findByConvenioId(convenioId);
+        }
+        return pacienteRepository.findAll();
+    }
+
     public boolean deleteById(Long id) {
         if (pacienteRepository.existsById(id)) {
             pacienteRepository.deleteById(id);
