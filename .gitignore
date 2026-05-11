@@ -39,6 +39,11 @@ build/
 .DS_Store
 
 ### Agent/local notes ###
+.claude/worktrees/
+
+### Docker — configuracoes locais de maquina ###
+# override de portas pro OrbStack (cada dev tem o seu)
+docker-compose.override.yml
 
 ### Variáveis de ambiente ###
 .env
