@@ -189,6 +189,20 @@ class MedicoServiceTest {
     }
 
     @Test
+    void associarEspecialidadeDeveLancarExcecaoQuandoJaAssociada() {
+        EspecialidadeEntity especialidade = new EspecialidadeEntity(1L, "Cardiologia", "Desc");
+        MedicoEntity medico = buildMedico(1L, "Dr. João", "CRM-1");
+        medico.getEspecialidades().add(especialidade);
+
+        when(medicoRepository.findById(1L)).thenReturn(Optional.of(medico));
+        when(especialidadeRepository.findById(1L)).thenReturn(Optional.of(especialidade));
+
+        assertThrows(IllegalStateException.class,
+                () -> medicoService.associarEspecialidade(1L, 1L));
+        verify(medicoRepository, never()).save(any());
+    }
+
+    @Test
     void associarEspecialidadeDeveRetornarVazioQuandoMedicoNaoExistir() {
         when(medicoRepository.findById(99L)).thenReturn(Optional.empty());
 
