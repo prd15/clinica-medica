@@ -31,6 +31,7 @@ public class PacienteEntity {
     @Column(nullable = false, unique = true, length = 14)
     private String cpf;
 
+    // nullable pq pacientes ja cadastrados antes dessa mudanca nao tem essa info
     @Column(nullable = true)
     private LocalDate dataNascimento;
 
@@ -43,6 +44,6 @@ public class PacienteEntity {
     @Column(length = 300)
     private String endereco;
 
-    // referencia ao convenio — Long em vez de @ManyToOne pra nao cruzar bancos
+    // id do convenio ao inves de FK — cada servico tem seu proprio banco
     private Long convenioId;
 }
