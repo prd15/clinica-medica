@@ -38,7 +38,9 @@ public class MedicoEntity {
     @Column(nullable = false)
     private Boolean ativo = true;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    // EAGER: Medico e Especialidade estao no mesmo banco (clinica_administrativo),
+    // portanto @ManyToMany e permitido. EAGER evita LazyInitializationException no Controller.
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "medico_especialidade",
         joinColumns = @JoinColumn(name = "medico_id"),
