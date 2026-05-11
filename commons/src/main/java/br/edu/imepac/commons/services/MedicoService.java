@@ -1,6 +1,8 @@
 package br.edu.imepac.commons.services;
 
+import br.edu.imepac.commons.entities.EspecialidadeEntity;
 import br.edu.imepac.commons.entities.MedicoEntity;
+import br.edu.imepac.commons.repositories.EspecialidadeRepository;
 import br.edu.imepac.commons.repositories.MedicoRepository;
 import org.springframework.stereotype.Service;
 
@@ -11,9 +13,11 @@ import java.util.Optional;
 public class MedicoService {
 
     private final MedicoRepository medicoRepository;
+    private final EspecialidadeRepository especialidadeRepository;
 
-    public MedicoService(MedicoRepository medicoRepository) {
+    public MedicoService(MedicoRepository medicoRepository, EspecialidadeRepository especialidadeRepository) {
         this.medicoRepository = medicoRepository;
+        this.especialidadeRepository = especialidadeRepository;
     }
 
     public List<MedicoEntity> findAll() {
@@ -43,6 +47,28 @@ public class MedicoService {
             medico.setAtivo(false);
             return medicoRepository.save(medico);
         });
+    }
+
+    public Optional<MedicoEntity> associarEspecialidade(Long medicoId, Long especialidadeId) {
+        Optional<MedicoEntity> medicoOpt = medicoRepository.findById(medicoId);
+        Optional<EspecialidadeEntity> especialidadeOpt = especialidadeRepository.findById(especialidadeId);
+        if (medicoOpt.isEmpty() || especialidadeOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        MedicoEntity medico = medicoOpt.get();
+        medico.getEspecialidades().add(especialidadeOpt.get());
+        return Optional.of(medicoRepository.save(medico));
+    }
+
+    public Optional<MedicoEntity> removerEspecialidade(Long medicoId, Long especialidadeId) {
+        Optional<MedicoEntity> medicoOpt = medicoRepository.findById(medicoId);
+        Optional<EspecialidadeEntity> especialidadeOpt = especialidadeRepository.findById(especialidadeId);
+        if (medicoOpt.isEmpty() || especialidadeOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        MedicoEntity medico = medicoOpt.get();
+        medico.getEspecialidades().remove(especialidadeOpt.get());
+        return Optional.of(medicoRepository.save(medico));
     }
 
     public boolean deleteById(Long id) {
