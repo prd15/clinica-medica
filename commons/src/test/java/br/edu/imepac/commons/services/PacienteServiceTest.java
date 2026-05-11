@@ -198,6 +198,7 @@ class PacienteServiceTest {
         verify(pacienteRepository).findByCpf("000.000.000-00");
     }
 
+    // busca parcial — "jo" deve trazer "Joao"
     @Test
     void buscarPorNomeDeveRetornarPacientesComNomeParcial_ignorandoCase() {
         List<PacienteEntity> resultado = List.of(
@@ -248,6 +249,7 @@ class PacienteServiceTest {
         verify(pacienteRepository).findByConvenioId(1L);
     }
 
+    // convenio sem pacientes ainda — retorna vazio, nao null
     @Test
     void buscarPorConvenioDeveRetornarListaVazia_quandoNaoHaPacientesNoConvenio() {
         when(pacienteRepository.findByConvenioId(99L)).thenReturn(List.of());
