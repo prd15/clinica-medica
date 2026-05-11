@@ -29,6 +29,8 @@ public class MedicoController {
         this.modelMapper = modelMapper;
     }
 
+    @Operation(summary = "Lista todos os médicos")
+    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
     @GetMapping
     public ResponseEntity<List<MedicoResponse>> findAll() {
         List<MedicoResponse> response = medicoService.findAll()
@@ -38,6 +40,11 @@ public class MedicoController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Busca médico por ID")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Médico encontrado"),
+        @ApiResponse(responseCode = "404", description = "Médico não encontrado")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<MedicoResponse> findById(@PathVariable("id") Long id) {
         return medicoService.findById(id)
@@ -45,6 +52,11 @@ public class MedicoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Cria novo médico")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Médico criado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos")
+    })
     @PostMapping
     public ResponseEntity<MedicoResponse> create(@Valid @RequestBody MedicoRequest request) {
         MedicoEntity entity = modelMapper.map(request, MedicoEntity.class);
@@ -53,6 +65,11 @@ public class MedicoController {
                 .body(modelMapper.map(saved, MedicoResponse.class));
     }
 
+    @Operation(summary = "Atualiza médico existente")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Médico atualizado com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Médico não encontrado")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<MedicoResponse> update(@PathVariable("id") Long id,
                                                   @Valid @RequestBody MedicoRequest request) {
@@ -91,6 +108,11 @@ public class MedicoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Remove médico por ID")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Médico removido com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Médico não encontrado")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         if (medicoService.deleteById(id)) {
