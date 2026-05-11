@@ -57,11 +57,14 @@ public class PacienteService {
         });
     }
 
+    // prioridade: nome > cpf > convenioId > sem filtro
+    // so um filtro por vez por enquanto — suficiente pra maioria dos casos
     public List<PacienteEntity> buscarComFiltros(String nome, String cpf, Long convenioId) {
         if (nome != null && !nome.isBlank()) {
             return pacienteRepository.findByNomeContainingIgnoreCase(nome);
         }
         if (cpf != null && !cpf.isBlank()) {
+            // cpf nao encontrado retorna lista vazia, nao 404
             return pacienteRepository.findByCpf(cpf)
                     .map(p -> List.of(p))
                     .orElse(List.of());
