@@ -36,7 +36,7 @@ public class MedicoService {
         return medicoRepository.findById(id).map(existing -> {
             existing.setNome(dadosAtualizados.getNome());
             existing.setCrm(dadosAtualizados.getCrm());
-            existing.setEmail(dadosAtualizados.getEmail());
+            existing.setSenha(dadosAtualizados.getSenha());
             existing.setTelefone(dadosAtualizados.getTelefone());
             return medicoRepository.save(existing);
         });
