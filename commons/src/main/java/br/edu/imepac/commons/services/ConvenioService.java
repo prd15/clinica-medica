@@ -32,6 +32,11 @@ public class ConvenioService {
         return convenioRepository.findById(id).map(existing -> {
             existing.setNome(dadosAtualizados.getNome());
             existing.setDescricao(dadosAtualizados.getDescricao());
+            existing.setCnpj(dadosAtualizados.getCnpj());
+            existing.setTelefone(dadosAtualizados.getTelefone());
+            if (dadosAtualizados.getAtivo() != null) {
+                existing.setAtivo(dadosAtualizados.getAtivo());
+            }
             return convenioRepository.save(existing);
         });
     }

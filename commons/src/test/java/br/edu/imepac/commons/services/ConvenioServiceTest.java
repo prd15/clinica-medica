@@ -26,8 +26,8 @@ class ConvenioServiceTest {
     @Test
     void findAllDeveRetornarListaDeConvenios() {
         List<ConvenioEntity> convenios = List.of(
-                new ConvenioEntity(1L, "Unimed", "Plano regional"),
-                new ConvenioEntity(2L, "Amil", "Plano nacional")
+                new ConvenioEntity(1L, "Unimed", "Plano regional", "12.345.678/0001-99", "(34)99999-0000", true),
+                new ConvenioEntity(2L, "Amil", "Plano nacional", "98.765.432/0001-11", "(34)88888-0000", true)
         );
         when(convenioRepository.findAll()).thenReturn(convenios);
 
@@ -40,7 +40,7 @@ class ConvenioServiceTest {
 
     @Test
     void findByIdDeveRetornarConvenioQuandoExistir() {
-        ConvenioEntity convenio = new ConvenioEntity(1L, "Unimed", "Plano regional");
+        ConvenioEntity convenio = new ConvenioEntity(1L, "Unimed", "Plano regional", "12.345.678/0001-99", "(34)99999-0000", true);
         when(convenioRepository.findById(1L)).thenReturn(Optional.of(convenio));
 
         Optional<ConvenioEntity> resultado = convenioService.findById(1L);
@@ -52,8 +52,8 @@ class ConvenioServiceTest {
 
     @Test
     void saveDevePersistirConvenio() {
-        ConvenioEntity novo = new ConvenioEntity(null, "Unimed", "Plano regional");
-        ConvenioEntity salvo = new ConvenioEntity(1L, "Unimed", "Plano regional");
+        ConvenioEntity novo = new ConvenioEntity(null, "Unimed", "Plano regional", "12.345.678/0001-99", "(34)99999-0000", true);
+        ConvenioEntity salvo = new ConvenioEntity(1L, "Unimed", "Plano regional", "12.345.678/0001-99", "(34)99999-0000", true);
         when(convenioRepository.save(any(ConvenioEntity.class))).thenReturn(salvo);
 
         ConvenioEntity resultado = convenioService.save(novo);
@@ -69,8 +69,8 @@ class ConvenioServiceTest {
 
     @Test
     void updateDeveAtualizarConvenioQuandoExistir() {
-        ConvenioEntity existente = new ConvenioEntity(1L, "Unimed", "Antigo");
-        ConvenioEntity dadosAtualizados = new ConvenioEntity(null, "Unimed Atualizado", "Novo");
+        ConvenioEntity existente = new ConvenioEntity(1L, "Unimed", "Antigo", "12.345.678/0001-99", "(34)99999-0000", true);
+        ConvenioEntity dadosAtualizados = new ConvenioEntity(null, "Unimed Atualizado", "Novo", "12.345.678/0001-99", "(34)77777-0000", true);
 
         when(convenioRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(convenioRepository.save(any(ConvenioEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -86,7 +86,7 @@ class ConvenioServiceTest {
 
     @Test
     void updateDeveRetornarVazioQuandoNaoExistir() {
-        ConvenioEntity dadosAtualizados = new ConvenioEntity(null, "Unimed Atualizado", "Novo");
+        ConvenioEntity dadosAtualizados = new ConvenioEntity(null, "Unimed Atualizado", "Novo", "12.345.678/0001-99", null, true);
         when(convenioRepository.findById(99L)).thenReturn(Optional.empty());
 
         Optional<ConvenioEntity> resultado = convenioService.update(99L, dadosAtualizados);
