@@ -147,6 +147,44 @@ class ConvenioServiceTest {
     }
 
     @Test
+    void alterarStatusDeveAtivarConvenio_quandoConvenioExiste() {
+        ConvenioEntity convenio = new ConvenioEntity(1L, "Unimed", "Plano", "12.345.678/0001-99", "(34)99999-0000", false);
+        when(convenioRepository.findById(1L)).thenReturn(Optional.of(convenio));
+        when(convenioRepository.save(any(ConvenioEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ConvenioEntity resultado = convenioService.alterarStatus(1L, true);
+
+        assertTrue(resultado.getAtivo());
+        verify(convenioRepository).findById(1L);
+        verify(convenioRepository).save(convenio);
+    }
+
+    @Test
+    void alterarStatusDeveInativarConvenio_quandoConvenioExiste() {
+        ConvenioEntity convenio = new ConvenioEntity(1L, "Unimed", "Plano", "12.345.678/0001-99", "(34)99999-0000", true);
+        when(convenioRepository.findById(1L)).thenReturn(Optional.of(convenio));
+        when(convenioRepository.save(any(ConvenioEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ConvenioEntity resultado = convenioService.alterarStatus(1L, false);
+
+        assertFalse(resultado.getAtivo());
+        verify(convenioRepository).findById(1L);
+        verify(convenioRepository).save(convenio);
+    }
+
+    @Test
+    void alterarStatusDeveLancarExcecao_quandoConvenioNaoEncontrado() {
+        when(convenioRepository.findById(99L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> convenioService.alterarStatus(99L, false));
+
+        assertTrue(ex.getMessage().contains("99"));
+        verify(convenioRepository).findById(99L);
+        verify(convenioRepository, never()).save(any(ConvenioEntity.class));
+    }
+
+    @Test
     void findByAtivoDeveRetornarListaVazia_quandoNaoHaConveniosComStatus() {
         when(convenioRepository.findByAtivo(false)).thenReturn(List.of());
 
