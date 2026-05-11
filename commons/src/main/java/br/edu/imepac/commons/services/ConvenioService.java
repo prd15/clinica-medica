@@ -52,5 +52,12 @@ public class ConvenioService {
         }
         return false;
     }
+
+    public ConvenioEntity alterarStatus(Long id, Boolean ativo) {
+        ConvenioEntity convenio = convenioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Convenio nao encontrado com id: " + id));
+        convenio.setAtivo(ativo);
+        return convenioRepository.save(convenio);
+    }
 }
 
