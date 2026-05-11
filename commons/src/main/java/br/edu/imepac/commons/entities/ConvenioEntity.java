@@ -24,6 +24,13 @@ public class ConvenioEntity {
     @Column(length = 500)
     private String descricao;
 
+    @NotBlank(message = "CNPJ é obrigatório")
+    @Column(unique = true, nullable = false, length = 18)
+    private String cnpj;
+
+    @Column(length = 20)
+    private String telefone;
+
     @Column(nullable = false)
     private Boolean ativo = true;
 }
