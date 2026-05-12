@@ -1,0 +1,235 @@
+{
+  "info": {
+    "name": "Clinica Medica — Convenio",
+    "_postman_id": "clinica-convenio-001",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8081" },
+    { "key": "convenio_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Convenio — POST create",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Criado 201', () => pm.response.to.have.status(201));",
+              "pm.test('Tem ID', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.id).to.be.a('number');",
+              "  pm.collectionVariables.set('convenio_id', json.id);",
+              "});",
+              "pm.test('Nome correto', () => pm.expect(pm.response.json().nome).to.eql('Unimed'));",
+              "pm.test('Ativo true', () => pm.expect(pm.response.json().ativo).to.eql(true));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Unimed\",\n  \"descricao\": \"Plano regional de saude\",\n  \"cnpj\": \"12.345.678/0001-99\",\n  \"telefone\": \"(34) 99999-9999\",\n  \"ativo\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/convenios",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "convenios"]
+        }
+      }
+    },
+    {
+      "name": "Convenio — GET list",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Lista 200', () => pm.response.to.have.status(200));",
+              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+              "pm.test('Nao vazio', () => pm.expect(pm.response.json().length).to.be.above(0));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/convenios",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "convenios"]
+        }
+      }
+    },
+    {
+      "name": "Convenio — GET by id",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('ID confere', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('convenio_id'))));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/convenios/{{convenio_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "convenios", "{{convenio_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Convenio — GET by id 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/convenios/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "convenios", "999999"]
+        }
+      }
+    },
+    {
+      "name": "Convenio — PUT update",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Nome atualizado', () => pm.expect(pm.response.json().nome).to.eql('Unimed Premium'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Unimed Premium\",\n  \"descricao\": \"Plano premium nacional\",\n  \"cnpj\": \"12.345.678/0001-99\",\n  \"telefone\": \"(34) 98888-7777\",\n  \"ativo\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/convenios/{{convenio_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "convenios", "{{convenio_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Convenio — PATCH inativar",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Ativo false', () => pm.expect(pm.response.json().ativo).to.eql(false));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ativo\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/convenios/{{convenio_id}}/status",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "convenios", "{{convenio_id}}", "status"]
+        }
+      }
+    },
+    {
+      "name": "Convenio — PATCH reativar",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Ativo true', () => pm.expect(pm.response.json().ativo).to.eql(true));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ativo\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/convenios/{{convenio_id}}/status",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "convenios", "{{convenio_id}}", "status"]
+        }
+      }
+    },
+    {
+      "name": "Convenio — DELETE",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/v1/convenios/{{convenio_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "convenios", "{{convenio_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Convenio — DELETE 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/v1/convenios/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "convenios", "999999"]
+        }
+      }
+    }
+  ]
+}
