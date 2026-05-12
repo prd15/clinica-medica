@@ -6,10 +6,13 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+// exclui senha do toString — mesma protecao aplicada em MedicoEntity
+@ToString(exclude = "senha")
 @Entity
 @Table(name = "atendentes")
 public class AtendenteEntity {
