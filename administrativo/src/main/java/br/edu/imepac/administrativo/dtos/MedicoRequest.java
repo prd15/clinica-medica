@@ -1,6 +1,7 @@
 package br.edu.imepac.administrativo.dtos;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.AccessMode;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,7 +23,7 @@ public class MedicoRequest {
     private String crm;
 
     @NotBlank(message = "A senha é obrigatória")
-    @Schema(description = "Senha de acesso (write-only — nao aparece em respostas)", example = "senha123")
+    @Schema(description = "Senha de acesso", example = "senha123", accessMode = AccessMode.WRITE_ONLY)
     private String senha;
 
     @Schema(description = "Telefone de contato", example = "34988887777")
