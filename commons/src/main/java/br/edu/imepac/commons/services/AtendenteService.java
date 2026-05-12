@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+// servico de atendentes — valida unicidade de usuario antes de salvar ou atualizar
 @Service
 public class AtendenteService {
 
@@ -54,6 +55,7 @@ public class AtendenteService {
         return false;
     }
 
+    // idAtual == null no save (sem id ainda); no update passa o id para ignorar o proprio registro
     private void validarUsuarioDisponivel(String usuario, Long idAtual) {
         atendenteRepository.findByUsuario(usuario)
                 .filter(atendente -> idAtual == null || !atendente.getId().equals(idAtual))
