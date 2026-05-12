@@ -1,0 +1,443 @@
+{
+  "info": {
+    "name": "Clinica Medica — Medico",
+    "_postman_id": "clinica-medico-001",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8081" },
+    { "key": "medico_id", "value": "" },
+    { "key": "especialidade_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Setup — POST especialidade (pre-req)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Especialidade criada 201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('especialidade_id', pm.response.json().id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Cardiologia Teste Medico\",\n  \"descricao\": \"Para chaining de testes\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/especialidades",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "especialidades"]
+        }
+      }
+    },
+    {
+      "name": "Medico — POST create",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Criado 201', () => pm.response.to.have.status(201));",
+              "pm.test('Tem ID', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.id).to.be.a('number');",
+              "  pm.collectionVariables.set('medico_id', json.id);",
+              "});",
+              "pm.test('Nome correto', () => pm.expect(pm.response.json().nome).to.eql('Dr. Carlos Silva'));",
+              "pm.test('Sem senha no response', () => pm.expect(pm.response.json()).to.not.have.property('senha'));",
+              "pm.test('Ativo true', () => pm.expect(pm.response.json().ativo).to.be.true);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Dr. Carlos Silva\",\n  \"crm\": \"CRM-MG-{{$timestamp}}\",\n  \"senha\": \"senha123\",\n  \"telefone\": \"34988887777\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/medicos",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos"]
+        }
+      }
+    },
+    {
+      "name": "Medico — POST 400 nome vazio",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"\",\n  \"crm\": \"\",\n  \"senha\": \"\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/medicos",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos"]
+        }
+      }
+    },
+    {
+      "name": "Medico — GET list",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos"]
+        }
+      }
+    },
+    {
+      "name": "Medico — GET by ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Nome correto', () => pm.expect(pm.response.json().nome).to.eql('Dr. Carlos Silva'));",
+              "pm.test('Sem senha', () => pm.expect(pm.response.json()).to.not.have.property('senha'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/{{medico_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "{{medico_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Medico — GET by ID 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "999999"]
+        }
+      }
+    },
+    {
+      "name": "Medico — PUT update",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Nome atualizado', () => pm.expect(pm.response.json().nome).to.eql('Dr. Carlos Eduardo Silva'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Dr. Carlos Eduardo Silva\",\n  \"crm\": \"CRM-MG-ATT\",\n  \"senha\": \"novaSenha456\",\n  \"telefone\": \"34988887777\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/{{medico_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "{{medico_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Medico — PUT 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Ghost\",\n  \"crm\": \"CRM-X\",\n  \"senha\": \"x\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "999999"]
+        }
+      }
+    },
+    {
+      "name": "Medico — POST associar especialidade",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Especialidades nao vazio', () => {",
+              "  const esp = pm.response.json().especialidades;",
+              "  pm.expect(esp).to.be.an('array').that.is.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/{{medico_id}}/especialidades/{{especialidade_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "{{medico_id}}", "especialidades", "{{especialidade_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Medico — POST associar duplicado 409",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('409 Conflict', () => pm.response.to.have.status(409));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/{{medico_id}}/especialidades/{{especialidade_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "{{medico_id}}", "especialidades", "{{especialidade_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Medico — POST associar medico 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/999999/especialidades/{{especialidade_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "999999", "especialidades", "{{especialidade_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Medico — GET by ID com especialidade",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Tem especialidade', () => {",
+              "  const esp = pm.response.json().especialidades;",
+              "  pm.expect(esp).to.be.an('array').that.is.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/{{medico_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "{{medico_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Medico — DELETE remover especialidade",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Especialidades vazio', () => {",
+              "  const esp = pm.response.json().especialidades;",
+              "  pm.expect(esp).to.be.an('array').that.is.empty;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/{{medico_id}}/especialidades/{{especialidade_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "{{medico_id}}", "especialidades", "{{especialidade_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Medico — PATCH inativar",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Ativo false', () => pm.expect(pm.response.json().ativo).to.be.false);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/{{medico_id}}/inativar",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "{{medico_id}}", "inativar"]
+        }
+      }
+    },
+    {
+      "name": "Medico — PATCH inativar 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/999999/inativar",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "999999", "inativar"]
+        }
+      }
+    },
+    {
+      "name": "Medico — DELETE",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/{{medico_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "{{medico_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Medico — DELETE 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "999999"]
+        }
+      }
+    },
+    {
+      "name": "Cleanup — DELETE especialidade",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/v1/especialidades/{{especialidade_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "especialidades", "{{especialidade_id}}"]
+        }
+      }
+    }
+  ]
+}
