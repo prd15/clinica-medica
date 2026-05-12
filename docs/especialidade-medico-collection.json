@@ -375,7 +375,8 @@
               "script": {
                 "exec": [
                   "pm.test('Inativado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Ativo false', () => pm.expect(pm.response.json().ativo).to.be.false);"
+                  "pm.test('Ativo false', () => pm.expect(pm.response.json().ativo).to.be.false);",
+                  "pm.test('Sem senha no response', () => pm.expect(pm.response.json()).to.not.have.property('senha'));"
                 ]
               }
             }
