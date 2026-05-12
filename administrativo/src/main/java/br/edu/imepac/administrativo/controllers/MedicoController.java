@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// controller de medicos — leitura/escrita via MedicoService, mapeamento com ModelMapper
+// senha nunca entra em MedicoResponse, nem chega a passar pelo mapper
 @Tag(name = "Médicos", description = "Gerenciamento de médicos")
 @RestController
 @RequestMapping("/v1/medicos")
@@ -40,6 +42,7 @@ public class MedicoController {
         return ResponseEntity.ok(response);
     }
 
+    // filtra por ativo=true (padrao) ou ativo=false para ver medicos desligados
     @Operation(summary = "Lista médicos por status ativo")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
     @GetMapping("/ativos")
@@ -63,6 +66,7 @@ public class MedicoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // 409 quando CRM ja esta em uso — servico lanca IllegalStateException nesses casos
     @Operation(summary = "Cria novo médico")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Médico criado com sucesso"),
@@ -131,6 +135,7 @@ public class MedicoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // soft delete — nao remove do banco, so marca ativo=false
     @Operation(summary = "Inativa médico")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Médico inativado"),
