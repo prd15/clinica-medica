@@ -278,6 +278,58 @@
       }
     },
     {
+      "name": "Paciente — POST 400 nome vazio",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"\",\n  \"cpf\": \"\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes"]
+        }
+      }
+    },
+    {
+      "name": "Paciente — PUT 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Ghost\",\n  \"cpf\": \"000.000.000-00\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes", "999999"]
+        }
+      }
+    },
+    {
       "name": "Cleanup — DELETE convenio",
       "event": [
         {
