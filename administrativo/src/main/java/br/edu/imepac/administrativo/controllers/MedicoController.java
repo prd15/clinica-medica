@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// controller de medicos — leitura/escrita via MedicoService, mapeamento com ModelMapper
+// senha nunca entra em MedicoResponse, nem chega a passar pelo mapper
 @Tag(name = "Médicos", description = "Gerenciamento de médicos")
 @RestController
 @RequestMapping("/v1/medicos")
@@ -40,6 +42,7 @@ public class MedicoController {
         return ResponseEntity.ok(response);
     }
 
+    // filtra por ativo=true (padrao) ou ativo=false para ver medicos desligados
     @Operation(summary = "Lista médicos por status ativo")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
     @GetMapping("/ativos")
@@ -63,31 +66,42 @@ public class MedicoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // 409 quando CRM ja esta em uso — servico lanca IllegalStateException nesses casos
     @Operation(summary = "Cria novo médico")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Médico criado com sucesso"),
-        @ApiResponse(responseCode = "400", description = "Dados inválidos")
+        @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+        @ApiResponse(responseCode = "409", description = "CRM já cadastrado")
     })
     @PostMapping
     public ResponseEntity<MedicoResponse> create(@Valid @RequestBody MedicoRequest request) {
-        MedicoEntity entity = modelMapper.map(request, MedicoEntity.class);
-        MedicoEntity saved = medicoService.save(entity);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(modelMapper.map(saved, MedicoResponse.class));
+        try {
+            MedicoEntity entity = modelMapper.map(request, MedicoEntity.class);
+            MedicoEntity saved = medicoService.save(entity);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(modelMapper.map(saved, MedicoResponse.class));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
     }
 
     @Operation(summary = "Atualiza médico existente")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Médico atualizado com sucesso"),
-        @ApiResponse(responseCode = "404", description = "Médico não encontrado")
+        @ApiResponse(responseCode = "404", description = "Médico não encontrado"),
+        @ApiResponse(responseCode = "409", description = "CRM já cadastrado para outro médico")
     })
     @PutMapping("/{id}")
     public ResponseEntity<MedicoResponse> update(@PathVariable("id") Long id,
                                                   @Valid @RequestBody MedicoRequest request) {
-        MedicoEntity entity = modelMapper.map(request, MedicoEntity.class);
-        return medicoService.update(id, entity)
-                .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            MedicoEntity entity = modelMapper.map(request, MedicoEntity.class);
+            return medicoService.update(id, entity)
+                    .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
     }
 
     @Operation(summary = "Associa especialidade ao médico")
@@ -121,6 +135,7 @@ public class MedicoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // soft delete — nao remove do banco, so marca ativo=false
     @Operation(summary = "Inativa médico")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Médico inativado"),

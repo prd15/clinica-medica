@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.Set;
 
-@Schema(description = "Dados retornados de um médico")
+// response de medico — sem campo senha, independente do que estiver na entity
+@Schema(description = "Dados retornados de um médico (senha omitida por segurança)")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

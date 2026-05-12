@@ -59,9 +59,20 @@ class MedicoServiceTest {
     }
 
     @Test
+    void findByIdDeveRetornarVazioQuandoNaoExistir() {
+        when(medicoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Optional<MedicoEntity> resultado = medicoService.findById(99L);
+
+        assertTrue(resultado.isEmpty());
+        verify(medicoRepository).findById(99L);
+    }
+
+    @Test
     void saveDevePersistirMedico() {
         MedicoEntity novo = buildMedico(null, "Dr. João", "CRM-1");
         MedicoEntity salvo = buildMedico(1L, "Dr. João", "CRM-1");
+        when(medicoRepository.findByCrm("CRM-1")).thenReturn(Optional.empty());
         when(medicoRepository.save(any(MedicoEntity.class))).thenReturn(salvo);
 
         MedicoEntity resultado = medicoService.save(novo);
@@ -72,11 +83,22 @@ class MedicoServiceTest {
     }
 
     @Test
+    void saveDeveLancarExcecaoQuandoCrmJaCadastrado() {
+        MedicoEntity existente = buildMedico(2L, "Outro", "CRM-1");
+        MedicoEntity novo = buildMedico(null, "Dr. João", "CRM-1");
+        when(medicoRepository.findByCrm("CRM-1")).thenReturn(Optional.of(existente));
+
+        assertThrows(IllegalStateException.class, () -> medicoService.save(novo));
+        verify(medicoRepository, never()).save(any());
+    }
+
+    @Test
     void updateDeveAtualizarMedicoQuandoExistir() {
         MedicoEntity existente = buildMedico(1L, "Dr. João", "CRM-1");
         MedicoEntity dados = buildMedico(null, "Dr. João Silva", "CRM-1");
 
         when(medicoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(medicoRepository.findByCrm("CRM-1")).thenReturn(Optional.of(existente));
         when(medicoRepository.save(any(MedicoEntity.class))).thenAnswer(i -> i.getArgument(0));
 
         Optional<MedicoEntity> resultado = medicoService.update(1L, dados);
@@ -85,6 +107,36 @@ class MedicoServiceTest {
         assertEquals("Dr. João Silva", resultado.get().getNome());
         verify(medicoRepository).findById(1L);
         verify(medicoRepository).save(existente);
+    }
+
+    @Test
+    void updateDevePermitirMesmosCrmDoProprioMedico() {
+        // atualizar nome mantendo o mesmo CRM nao deve lancar excecao
+        MedicoEntity existente = buildMedico(1L, "Dr. João", "CRM-1");
+        MedicoEntity dados = buildMedico(null, "Dr. João Novo", "CRM-1");
+
+        when(medicoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(medicoRepository.findByCrm("CRM-1")).thenReturn(Optional.of(existente));
+        when(medicoRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Optional<MedicoEntity> resultado = medicoService.update(1L, dados);
+
+        assertTrue(resultado.isPresent());
+        assertEquals("Dr. João Novo", resultado.get().getNome());
+    }
+
+    @Test
+    void updateDeveLancarExcecaoQuandoCrmPertenceAOutroMedico() {
+        MedicoEntity existente = buildMedico(1L, "Dr. João", "CRM-1");
+        MedicoEntity outraMedico = buildMedico(2L, "Dra. Ana", "CRM-2");
+        // tenta mudar o CRM-1 para CRM-2, mas CRM-2 ja pertence a outraMedico
+        MedicoEntity dados = buildMedico(null, "Dr. João", "CRM-2");
+
+        when(medicoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(medicoRepository.findByCrm("CRM-2")).thenReturn(Optional.of(outraMedico));
+
+        assertThrows(IllegalStateException.class, () -> medicoService.update(1L, dados));
+        verify(medicoRepository, never()).save(any());
     }
 
     @Test
@@ -142,6 +194,16 @@ class MedicoServiceTest {
         assertEquals(1, resultado.size());
         assertFalse(resultado.get(0).getAtivo());
         verify(medicoRepository).findByAtivo(false);
+    }
+
+    @Test
+    void findByAtivoDeveRetornarListaVaziaQuandoNenhumMedico() {
+        when(medicoRepository.findByAtivo(true)).thenReturn(List.of());
+
+        List<MedicoEntity> resultado = medicoService.findByAtivo(true);
+
+        assertTrue(resultado.isEmpty());
+        verify(medicoRepository).findByAtivo(true);
     }
 
     // ── INATIVAR ─────────────────────────────────────────────────────────────
@@ -213,6 +275,18 @@ class MedicoServiceTest {
     }
 
     @Test
+    void associarEspecialidadeDeveRetornarVazioQuandoEspecialidadeNaoExistir() {
+        MedicoEntity medico = buildMedico(1L, "Dr. João", "CRM-1");
+        when(medicoRepository.findById(1L)).thenReturn(Optional.of(medico));
+        when(especialidadeRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Optional<MedicoEntity> resultado = medicoService.associarEspecialidade(1L, 99L);
+
+        assertTrue(resultado.isEmpty());
+        verify(medicoRepository, never()).save(any());
+    }
+
+    @Test
     void removerEspecialidadeDeveRemoverQuandoAmbosExistirem() {
         EspecialidadeEntity especialidade = new EspecialidadeEntity(1L, "Cardiologia", "Desc");
         MedicoEntity medico = buildMedico(1L, "Dr. João", "CRM-1");
@@ -227,6 +301,18 @@ class MedicoServiceTest {
         assertTrue(resultado.isPresent());
         assertFalse(resultado.get().getEspecialidades().contains(especialidade));
         verify(medicoRepository).save(medico);
+    }
+
+    @Test
+    void removerEspecialidadeDeveRetornarVazioQuandoEspecialidadeNaoExistir() {
+        MedicoEntity medico = buildMedico(1L, "Dr. João", "CRM-1");
+        when(medicoRepository.findById(1L)).thenReturn(Optional.of(medico));
+        when(especialidadeRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Optional<MedicoEntity> resultado = medicoService.removerEspecialidade(1L, 99L);
+
+        assertTrue(resultado.isEmpty());
+        verify(medicoRepository, never()).save(any());
     }
 
     // ── HELPER ───────────────────────────────────────────────────────────────

@@ -5,7 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Schema(description = "Dados retornados de um atendente")
+// response de atendente — sem campo senha, igual ao padrao do MedicoResponse
+@Schema(description = "Dados retornados de um atendente (senha omitida por segurança)")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

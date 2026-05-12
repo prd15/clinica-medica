@@ -1,10 +1,12 @@
 package br.edu.imepac.commons.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,6 +14,8 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+// exclui senha do toString — nao deixa a senha aparecer em logs
+@ToString(exclude = "senha")
 @Entity
 @Table(name = "medicos")
 public class MedicoEntity {
@@ -28,6 +32,8 @@ public class MedicoEntity {
     @Column(nullable = false, unique = true, length = 20)
     private String crm;
 
+    // senha nunca vai sair numa resposta JSON — nem que o controller retorne a entity por engano
+    @JsonIgnore
     @NotBlank(message = "A senha é obrigatória")
     @Column(nullable = false)
     private String senha;

@@ -32,12 +32,20 @@ public class MedicoService {
         return medicoRepository.findById(id);
     }
 
+    public Optional<MedicoEntity> findByCrm(String crm) {
+        return medicoRepository.findByCrm(crm);
+    }
+
     public MedicoEntity save(MedicoEntity medico) {
+        // garante que nao cadastra dois medicos com o mesmo CRM
+        validarCrmDisponivel(medico.getCrm(), null);
         return medicoRepository.save(medico);
     }
 
     public Optional<MedicoEntity> update(Long id, MedicoEntity dadosAtualizados) {
         return medicoRepository.findById(id).map(existing -> {
+            // valida CRM mas ignora o proprio registro (permite manter o mesmo CRM)
+            validarCrmDisponivel(dadosAtualizados.getCrm(), id);
             existing.setNome(dadosAtualizados.getNome());
             existing.setCrm(dadosAtualizados.getCrm());
             existing.setSenha(dadosAtualizados.getSenha());
@@ -85,5 +93,14 @@ public class MedicoService {
             return true;
         }
         return false;
+    }
+
+    // verifica se o CRM ja pertence a outro medico — mesma logica do usuario em AtendenteService
+    private void validarCrmDisponivel(String crm, Long idAtual) {
+        medicoRepository.findByCrm(crm)
+                .filter(medico -> idAtual == null || !medico.getId().equals(idAtual))
+                .ifPresent(medico -> {
+                    throw new IllegalStateException("CRM ja cadastrado para outro medico");
+                });
     }
 }
