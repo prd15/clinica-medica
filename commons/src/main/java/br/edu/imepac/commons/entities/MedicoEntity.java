@@ -1,5 +1,6 @@
 package br.edu.imepac.commons.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,8 @@ public class MedicoEntity {
     @Column(nullable = false, unique = true, length = 20)
     private String crm;
 
+    // senha nunca vai sair numa resposta JSON — nem que o controller retorne a entity por engano
+    @JsonIgnore
     @NotBlank(message = "A senha é obrigatória")
     @Column(nullable = false)
     private String senha;
