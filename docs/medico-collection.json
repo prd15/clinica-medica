@@ -172,6 +172,80 @@
       }
     },
     {
+      "name": "Medico — GET ativos true",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+              "pm.test('Todos ativos', () => {",
+              "  pm.response.json().forEach(m => pm.expect(m.ativo).to.be.true);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/ativos?ativo=true",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "ativos"],
+          "query": [{ "key": "ativo", "value": "true" }]
+        }
+      }
+    },
+    {
+      "name": "Medico — GET ativos false",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+              "pm.test('Todos inativos', () => {",
+              "  pm.response.json().forEach(m => pm.expect(m.ativo).to.be.false);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/ativos?ativo=false",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "ativos"],
+          "query": [{ "key": "ativo", "value": "false" }]
+        }
+      }
+    },
+    {
+      "name": "Medico — GET ativos default",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/medicos/ativos",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos", "ativos"]
+        }
+      }
+    },
+    {
       "name": "Medico — GET by ID",
       "event": [
         {
