@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -183,7 +184,7 @@ class ConvenioServiceTest {
     void alterarStatusDeveLancarExcecao_quandoConvenioNaoEncontrado() {
         when(convenioRepository.findById(99L)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        NoSuchElementException ex = assertThrows(NoSuchElementException.class,
                 () -> convenioService.alterarStatus(99L, false));
 
         assertTrue(ex.getMessage().contains("99"));

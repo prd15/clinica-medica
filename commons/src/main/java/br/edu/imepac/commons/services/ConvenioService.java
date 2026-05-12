@@ -5,6 +5,7 @@ import br.edu.imepac.commons.repositories.ConvenioRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -59,7 +60,7 @@ public class ConvenioService {
     // PATCH especifico pra status — evita mandar o objeto inteiro so pra ativar/desativar
     public ConvenioEntity alterarStatus(Long id, Boolean ativo) {
         ConvenioEntity convenio = convenioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Convenio nao encontrado com id: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Convenio nao encontrado com id: " + id));
         convenio.setAtivo(ativo);
         return convenioRepository.save(convenio);
     }
