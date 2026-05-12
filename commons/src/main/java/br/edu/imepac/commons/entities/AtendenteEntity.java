@@ -1,5 +1,6 @@
 package br.edu.imepac.commons.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,8 @@ public class AtendenteEntity {
     @Column(nullable = false, unique = true, length = 80)
     private String usuario;
 
+    // senha nunca sai em JSON — mesmo que o controller retorne a entity diretamente
+    @JsonIgnore
     @NotBlank(message = "A senha do atendente e obrigatoria")
     @Column(nullable = false)
     private String senha;
