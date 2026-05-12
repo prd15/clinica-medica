@@ -17,9 +17,9 @@
           "listen": "prerequest",
           "script": {
             "exec": [
-              "const ts = Date.now().toString();",
-              "const cnpj = ts.slice(-8).padStart(8, '0') + '/0001-' + ts.slice(-2);",
-              "pm.collectionVariables.set('convenio_cnpj', cnpj.slice(0,2) + '.' + cnpj.slice(2,5) + '.' + cnpj.slice(5));"
+              "const d = String(Date.now()).slice(-8).padStart(8, '0');",
+              "const cnpj = d.slice(0,2) + '.' + d.slice(2,5) + '.' + d.slice(5,8) + '/0001-' + d.slice(0,2);",
+              "pm.collectionVariables.set('convenio_cnpj', cnpj);"
             ]
           }
         },
