@@ -5,9 +5,18 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url", "value": "http://localhost:8081" },
-    { "key": "especialidade_id", "value": "" },
-    { "key": "medico_id", "value": "" }
+    {
+      "key": "base_url",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "especialidade_id",
+      "value": ""
+    },
+    {
+      "key": "medico_id",
+      "value": ""
+    }
   ],
   "item": [
     {
@@ -33,12 +42,26 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"Cardiologia\",\n  \"descricao\": \"Especialidade do coracao e sistema cardiovascular\"\n}"
             },
-            "url": { "raw": "{{base_url}}/v1/especialidades", "host": ["{{base_url}}"], "path": ["v1", "especialidades"] }
+            "url": {
+              "raw": "{{base_url}}/v1/especialidades",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "especialidades"
+              ]
+            }
           }
         },
         {
@@ -57,7 +80,16 @@
           ],
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/v1/especialidades", "host": ["{{base_url}}"], "path": ["v1", "especialidades"] }
+            "url": {
+              "raw": "{{base_url}}/v1/especialidades",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "especialidades"
+              ]
+            }
           }
         },
         {
@@ -75,7 +107,17 @@
           ],
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/v1/especialidades/{{especialidade_id}}", "host": ["{{base_url}}"], "path": ["v1", "especialidades", "{{especialidade_id}}"] }
+            "url": {
+              "raw": "{{base_url}}/v1/especialidades/{{especialidade_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "especialidades",
+                "{{especialidade_id}}"
+              ]
+            }
           }
         },
         {
@@ -93,12 +135,27 @@
           ],
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"Cardiologia Pediatrica\",\n  \"descricao\": \"Cardiologia voltada para criancas\"\n}"
             },
-            "url": { "raw": "{{base_url}}/v1/especialidades/{{especialidade_id}}", "host": ["{{base_url}}"], "path": ["v1", "especialidades", "{{especialidade_id}}"] }
+            "url": {
+              "raw": "{{base_url}}/v1/especialidades/{{especialidade_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "especialidades",
+                "{{especialidade_id}}"
+              ]
+            }
           }
         }
       ]
@@ -128,12 +185,26 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"Dr. Carlos Silva\",\n  \"crm\": \"CRM-MG-12345\",\n  \"senha\": \"senha123\",\n  \"telefone\": \"34988887777\"\n}"
             },
-            "url": { "raw": "{{base_url}}/v1/medicos", "host": ["{{base_url}}"], "path": ["v1", "medicos"] }
+            "url": {
+              "raw": "{{base_url}}/v1/medicos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "medicos"
+              ]
+            }
           }
         },
         {
@@ -152,7 +223,16 @@
           ],
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/v1/medicos", "host": ["{{base_url}}"], "path": ["v1", "medicos"] }
+            "url": {
+              "raw": "{{base_url}}/v1/medicos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "medicos"
+              ]
+            }
           }
         },
         {
@@ -171,7 +251,17 @@
           ],
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/v1/medicos/{{medico_id}}", "host": ["{{base_url}}"], "path": ["v1", "medicos", "{{medico_id}}"] }
+            "url": {
+              "raw": "{{base_url}}/v1/medicos/{{medico_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "medicos",
+                "{{medico_id}}"
+              ]
+            }
           }
         },
         {
@@ -182,19 +272,35 @@
               "script": {
                 "exec": [
                   "pm.test('Update 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Nome atualizado', () => pm.expect(pm.response.json().nome).to.eql('Dr. Carlos Eduardo Silva'));"
+                  "pm.test('Nome atualizado', () => pm.expect(pm.response.json().nome).to.eql('Dr. Carlos Eduardo Silva'));",
+                  "pm.test('Sem senha no response', () => pm.expect(pm.response.json()).to.not.have.property('senha'));"
                 ]
               }
             }
           ],
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"Dr. Carlos Eduardo Silva\",\n  \"crm\": \"CRM-MG-12345\",\n  \"senha\": \"novaSenha456\",\n  \"telefone\": \"34988887777\"\n}"
             },
-            "url": { "raw": "{{base_url}}/v1/medicos/{{medico_id}}", "host": ["{{base_url}}"], "path": ["v1", "medicos", "{{medico_id}}"] }
+            "url": {
+              "raw": "{{base_url}}/v1/medicos/{{medico_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "medicos",
+                "{{medico_id}}"
+              ]
+            }
           }
         },
         {
@@ -215,7 +321,19 @@
           ],
           "request": {
             "method": "POST",
-            "url": { "raw": "{{base_url}}/v1/medicos/{{medico_id}}/especialidades/{{especialidade_id}}", "host": ["{{base_url}}"], "path": ["v1", "medicos", "{{medico_id}}", "especialidades", "{{especialidade_id}}"] }
+            "url": {
+              "raw": "{{base_url}}/v1/medicos/{{medico_id}}/especialidades/{{especialidade_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "medicos",
+                "{{medico_id}}",
+                "especialidades",
+                "{{especialidade_id}}"
+              ]
+            }
           }
         },
         {
@@ -236,7 +354,17 @@
           ],
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/v1/medicos/{{medico_id}}", "host": ["{{base_url}}"], "path": ["v1", "medicos", "{{medico_id}}"] }
+            "url": {
+              "raw": "{{base_url}}/v1/medicos/{{medico_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "medicos",
+                "{{medico_id}}"
+              ]
+            }
           }
         },
         {
@@ -254,7 +382,18 @@
           ],
           "request": {
             "method": "PATCH",
-            "url": { "raw": "{{base_url}}/v1/medicos/{{medico_id}}/inativar", "host": ["{{base_url}}"], "path": ["v1", "medicos", "{{medico_id}}", "inativar"] }
+            "url": {
+              "raw": "{{base_url}}/v1/medicos/{{medico_id}}/inativar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "medicos",
+                "{{medico_id}}",
+                "inativar"
+              ]
+            }
           }
         },
         {
@@ -275,7 +414,19 @@
           ],
           "request": {
             "method": "DELETE",
-            "url": { "raw": "{{base_url}}/v1/medicos/{{medico_id}}/especialidades/{{especialidade_id}}", "host": ["{{base_url}}"], "path": ["v1", "medicos", "{{medico_id}}", "especialidades", "{{especialidade_id}}"] }
+            "url": {
+              "raw": "{{base_url}}/v1/medicos/{{medico_id}}/especialidades/{{especialidade_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "medicos",
+                "{{medico_id}}",
+                "especialidades",
+                "{{especialidade_id}}"
+              ]
+            }
           }
         },
         {
@@ -292,7 +443,17 @@
           ],
           "request": {
             "method": "DELETE",
-            "url": { "raw": "{{base_url}}/v1/medicos/{{medico_id}}", "host": ["{{base_url}}"], "path": ["v1", "medicos", "{{medico_id}}"] }
+            "url": {
+              "raw": "{{base_url}}/v1/medicos/{{medico_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "medicos",
+                "{{medico_id}}"
+              ]
+            }
           }
         },
         {
@@ -309,7 +470,17 @@
           ],
           "request": {
             "method": "DELETE",
-            "url": { "raw": "{{base_url}}/v1/especialidades/{{especialidade_id}}", "host": ["{{base_url}}"], "path": ["v1", "especialidades", "{{especialidade_id}}"] }
+            "url": {
+              "raw": "{{base_url}}/v1/especialidades/{{especialidade_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "especialidades",
+                "{{especialidade_id}}"
+              ]
+            }
           }
         }
       ]
