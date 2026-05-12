@@ -72,6 +72,58 @@
       }
     },
     {
+      "name": "Medico — POST CRM duplicado seed",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 201 ou 409', () => pm.expect([201, 409]).to.include(pm.response.code));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Dr. Duplicado Seed\",\n  \"crm\": \"CRM-MG-DUPLICADO\",\n  \"senha\": \"senha123\",\n  \"telefone\": \"34900000000\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/medicos",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos"]
+        }
+      }
+    },
+    {
+      "name": "Medico — POST CRM duplicado 409",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('409 Conflict', () => pm.response.to.have.status(409));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Dr. Outro\",\n  \"crm\": \"CRM-MG-DUPLICADO\",\n  \"senha\": \"senha123\",\n  \"telefone\": \"34988880000\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/medicos",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "medicos"]
+        }
+      }
+    },
+    {
       "name": "Medico — POST 400 nome vazio",
       "event": [
         {
