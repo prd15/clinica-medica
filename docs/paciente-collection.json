@@ -7,12 +7,21 @@
   "variable": [
     { "key": "base_url", "value": "http://localhost:8081" },
     { "key": "convenio_id", "value": "" },
-    { "key": "paciente_id", "value": "" }
+    { "key": "paciente_id", "value": "" },
+    { "key": "paciente_cpf", "value": "" }
   ],
   "item": [
     {
       "name": "Setup — POST convenio (pre-req)",
       "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.collectionVariables.set('setup_convenio_cnpj', '99.' + Date.now().toString().slice(-9, -3) + '.' + Date.now().toString().slice(-3) + '/0001-66');"
+            ]
+          }
+        },
         {
           "listen": "test",
           "script": {
@@ -28,7 +37,7 @@
         "header": [{ "key": "Content-Type", "value": "application/json" }],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"nome\": \"Convenio Teste Paciente\",\n  \"descricao\": \"Convenio para testes da collection paciente\",\n  \"cnpj\": \"99.888.777/0001-66\",\n  \"telefone\": \"(34) 99000-0000\",\n  \"ativo\": true\n}"
+          "raw": "{\n  \"nome\": \"Convenio Teste Paciente\",\n  \"descricao\": \"Convenio para testes da collection paciente\",\n  \"cnpj\": \"{{setup_convenio_cnpj}}\",\n  \"telefone\": \"(34) 99000-0000\",\n  \"ativo\": true\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/convenios",
@@ -41,6 +50,19 @@
       "name": "Paciente — POST create",
       "event": [
         {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "if (!pm.collectionVariables.get('convenio_id')) {",
+              "  throw new Error('Rode Setup convenio antes deste request');",
+              "}",
+              "const cpf = String(Date.now()).slice(-11).padStart(11, '0');",
+              "const cpfFmt = cpf.slice(0,3) + '.' + cpf.slice(3,6) + '.' + cpf.slice(6,9) + '-' + cpf.slice(9,11);",
+              "pm.collectionVariables.set('paciente_cpf', cpfFmt);"
+            ]
+          }
+        },
+        {
           "listen": "test",
           "script": {
             "exec": [
@@ -51,7 +73,7 @@
               "  pm.collectionVariables.set('paciente_id', json.id);",
               "});",
               "pm.test('Nome correto', () => pm.expect(pm.response.json().nome).to.eql('Joao da Silva'));",
-              "pm.test('CPF correto', () => pm.expect(pm.response.json().cpf).to.eql('123.456.789-00'));"
+              "pm.test('CPF presente', () => pm.expect(pm.response.json().cpf).to.eql(pm.collectionVariables.get('paciente_cpf')));"
             ]
           }
         }
@@ -61,7 +83,33 @@
         "header": [{ "key": "Content-Type", "value": "application/json" }],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"nome\": \"Joao da Silva\",\n  \"cpf\": \"123.456.789-00\",\n  \"dataNascimento\": \"1990-05-15\",\n  \"telefone\": \"(34) 99999-8888\",\n  \"email\": \"joao@email.com\",\n  \"endereco\": \"Rua das Flores, 123\",\n  \"convenioId\": {{convenio_id}}\n}"
+          "raw": "{\n  \"nome\": \"Joao da Silva\",\n  \"cpf\": \"{{paciente_cpf}}\",\n  \"dataNascimento\": \"1990-05-15\",\n  \"telefone\": \"(34) 99999-8888\",\n  \"email\": \"joao@email.com\",\n  \"endereco\": \"Rua das Flores, 123\",\n  \"convenioId\": {{convenio_id}}\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes"]
+        }
+      }
+    },
+    {
+      "name": "Paciente — POST 400 nome vazio",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"\",\n  \"cpf\": \"\"\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/pacientes",
@@ -124,9 +172,9 @@
           "script": {
             "exec": [
               "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('CPF bate', () => {",
+              "pm.test('Resultado bate CPF', () => {",
               "  const arr = pm.response.json();",
-              "  if (arr.length > 0) pm.expect(arr[0].cpf).to.eql('123.456.789-00');",
+              "  if (arr.length > 0) pm.expect(arr[0].cpf).to.eql(pm.collectionVariables.get('paciente_cpf'));",
               "});"
             ]
           }
@@ -135,10 +183,10 @@
       "request": {
         "method": "GET",
         "url": {
-          "raw": "{{base_url}}/v1/pacientes?cpf=123.456.789-00",
+          "raw": "{{base_url}}/v1/pacientes?cpf={{paciente_cpf}}",
           "host": ["{{base_url}}"],
           "path": ["v1", "pacientes"],
-          "query": [{ "key": "cpf", "value": "123.456.789-00" }]
+          "query": [{ "key": "cpf", "value": "{{paciente_cpf}}" }]
         }
       }
     },
@@ -168,6 +216,14 @@
     {
       "name": "Paciente — GET by id",
       "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "if (!pm.collectionVariables.get('paciente_id')) { throw new Error('Rode POST create antes'); }"
+            ]
+          }
+        },
         {
           "listen": "test",
           "script": {
@@ -212,6 +268,14 @@
       "name": "Paciente — PUT update",
       "event": [
         {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "if (!pm.collectionVariables.get('paciente_id') || !pm.collectionVariables.get('convenio_id')) { throw new Error('Rode setup + POST create antes'); }"
+            ]
+          }
+        },
+        {
           "listen": "test",
           "script": {
             "exec": [
@@ -226,7 +290,7 @@
         "header": [{ "key": "Content-Type", "value": "application/json" }],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"nome\": \"Joao da Silva Santos\",\n  \"cpf\": \"123.456.789-00\",\n  \"dataNascimento\": \"1990-05-15\",\n  \"telefone\": \"(34) 97777-6666\",\n  \"email\": \"joao.santos@email.com\",\n  \"endereco\": \"Avenida Brasil, 456\",\n  \"convenioId\": {{convenio_id}}\n}"
+          "raw": "{\n  \"nome\": \"Joao da Silva Santos\",\n  \"cpf\": \"{{paciente_cpf}}\",\n  \"dataNascimento\": \"1990-05-15\",\n  \"telefone\": \"(34) 97777-6666\",\n  \"email\": \"joao.santos@email.com\",\n  \"endereco\": \"Avenida Brasil, 456\",\n  \"convenioId\": {{convenio_id}}\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/pacientes/{{paciente_id}}",
@@ -236,8 +300,42 @@
       }
     },
     {
+      "name": "Paciente — PUT 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Ghost\",\n  \"cpf\": \"000.000.000-00\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes", "999999"]
+        }
+      }
+    },
+    {
       "name": "Paciente — DELETE",
       "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "if (!pm.collectionVariables.get('paciente_id')) { throw new Error('Rode POST create antes'); }"
+            ]
+          }
+        },
         {
           "listen": "test",
           "script": {
@@ -270,58 +368,6 @@
       ],
       "request": {
         "method": "DELETE",
-        "url": {
-          "raw": "{{base_url}}/v1/pacientes/999999",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "pacientes", "999999"]
-        }
-      }
-    },
-    {
-      "name": "Paciente — POST 400 nome vazio",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"nome\": \"\",\n  \"cpf\": \"\"\n}"
-        },
-        "url": {
-          "raw": "{{base_url}}/v1/pacientes",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "pacientes"]
-        }
-      }
-    },
-    {
-      "name": "Paciente — PUT 404",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "PUT",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"nome\": \"Ghost\",\n  \"cpf\": \"000.000.000-00\"\n}"
-        },
         "url": {
           "raw": "{{base_url}}/v1/pacientes/999999",
           "host": ["{{base_url}}"],

@@ -6,12 +6,23 @@
   },
   "variable": [
     { "key": "base_url", "value": "http://localhost:8081" },
-    { "key": "convenio_id", "value": "" }
+    { "key": "convenio_id", "value": "" },
+    { "key": "convenio_cnpj", "value": "" }
   ],
   "item": [
     {
       "name": "Convenio — POST create",
       "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "const ts = Date.now().toString();",
+              "const cnpj = ts.slice(-8).padStart(8, '0') + '/0001-' + ts.slice(-2);",
+              "pm.collectionVariables.set('convenio_cnpj', cnpj.slice(0,2) + '.' + cnpj.slice(2,5) + '.' + cnpj.slice(5));"
+            ]
+          }
+        },
         {
           "listen": "test",
           "script": {
@@ -33,7 +44,7 @@
         "header": [{ "key": "Content-Type", "value": "application/json" }],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"nome\": \"Unimed\",\n  \"descricao\": \"Plano regional de saude\",\n  \"cnpj\": \"12.345.678/0001-99\",\n  \"telefone\": \"(34) 99999-9999\",\n  \"ativo\": true\n}"
+          "raw": "{\n  \"nome\": \"Unimed\",\n  \"descricao\": \"Plano regional de saude\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 99999-9999\",\n  \"ativo\": true\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/convenios",
@@ -126,7 +137,7 @@
         "header": [{ "key": "Content-Type", "value": "application/json" }],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"nome\": \"Unimed Premium\",\n  \"descricao\": \"Plano premium nacional\",\n  \"cnpj\": \"12.345.678/0001-99\",\n  \"telefone\": \"(34) 98888-7777\",\n  \"ativo\": true\n}"
+          "raw": "{\n  \"nome\": \"Unimed Premium\",\n  \"descricao\": \"Plano premium nacional\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 98888-7777\",\n  \"ativo\": true\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/convenios/{{convenio_id}}",
