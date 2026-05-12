@@ -208,6 +208,43 @@
           }
         },
         {
+          "name": "Medico — POST crm duplicado (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Conflito 409', () => pm.response.to.have.status(409));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Dr. Outro\",\n  \"crm\": \"CRM-MG-12345\",\n  \"senha\": \"senha123\",\n  \"telefone\": \"34988880000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/medicos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "medicos"
+              ]
+            }
+          }
+        },
+        {
           "name": "Medico — GET list",
           "event": [
             {
