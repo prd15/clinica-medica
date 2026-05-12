@@ -1,0 +1,302 @@
+{
+  "info": {
+    "name": "Clinica Medica — Paciente",
+    "_postman_id": "clinica-paciente-001",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8081" },
+    { "key": "convenio_id", "value": "" },
+    { "key": "paciente_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Setup — POST convenio (pre-req)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Convenio criado 201', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('convenio_id', pm.response.json().id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Convenio Teste Paciente\",\n  \"descricao\": \"Convenio para testes da collection paciente\",\n  \"cnpj\": \"99.888.777/0001-66\",\n  \"telefone\": \"(34) 99000-0000\",\n  \"ativo\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/convenios",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "convenios"]
+        }
+      }
+    },
+    {
+      "name": "Paciente — POST create",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Criado 201', () => pm.response.to.have.status(201));",
+              "pm.test('Tem ID', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.id).to.be.a('number');",
+              "  pm.collectionVariables.set('paciente_id', json.id);",
+              "});",
+              "pm.test('Nome correto', () => pm.expect(pm.response.json().nome).to.eql('Joao da Silva'));",
+              "pm.test('CPF correto', () => pm.expect(pm.response.json().cpf).to.eql('123.456.789-00'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Joao da Silva\",\n  \"cpf\": \"123.456.789-00\",\n  \"dataNascimento\": \"1990-05-15\",\n  \"telefone\": \"(34) 99999-8888\",\n  \"email\": \"joao@email.com\",\n  \"endereco\": \"Rua das Flores, 123\",\n  \"convenioId\": {{convenio_id}}\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes"]
+        }
+      }
+    },
+    {
+      "name": "Paciente — GET list",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+              "pm.test('Nao vazio', () => pm.expect(pm.response.json().length).to.be.above(0));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes"]
+        }
+      }
+    },
+    {
+      "name": "Paciente — GET filter nome",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes?nome=Joao",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes"],
+          "query": [{ "key": "nome", "value": "Joao" }]
+        }
+      }
+    },
+    {
+      "name": "Paciente — GET filter cpf",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('CPF bate', () => {",
+              "  const arr = pm.response.json();",
+              "  if (arr.length > 0) pm.expect(arr[0].cpf).to.eql('123.456.789-00');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes?cpf=123.456.789-00",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes"],
+          "query": [{ "key": "cpf", "value": "123.456.789-00" }]
+        }
+      }
+    },
+    {
+      "name": "Paciente — GET filter convenioId",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes?convenioId={{convenio_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes"],
+          "query": [{ "key": "convenioId", "value": "{{convenio_id}}" }]
+        }
+      }
+    },
+    {
+      "name": "Paciente — GET by id",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('ID confere', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('paciente_id'))));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes/{{paciente_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes", "{{paciente_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Paciente — GET by id 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes", "999999"]
+        }
+      }
+    },
+    {
+      "name": "Paciente — PUT update",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Nome atualizado', () => pm.expect(pm.response.json().nome).to.eql('Joao da Silva Santos'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Joao da Silva Santos\",\n  \"cpf\": \"123.456.789-00\",\n  \"dataNascimento\": \"1990-05-15\",\n  \"telefone\": \"(34) 97777-6666\",\n  \"email\": \"joao.santos@email.com\",\n  \"endereco\": \"Avenida Brasil, 456\",\n  \"convenioId\": {{convenio_id}}\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes/{{paciente_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes", "{{paciente_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Paciente — DELETE",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes/{{paciente_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes", "{{paciente_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Paciente — DELETE 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/v1/pacientes/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "pacientes", "999999"]
+        }
+      }
+    },
+    {
+      "name": "Cleanup — DELETE convenio",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/v1/convenios/{{convenio_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "convenios", "{{convenio_id}}"]
+        }
+      }
+    }
+  ]
+}
