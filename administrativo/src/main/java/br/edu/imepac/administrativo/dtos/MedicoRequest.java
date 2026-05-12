@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// request de medico — senha e obrigatoria aqui mas nunca aparece no response
 @Schema(description = "Dados para criação ou atualização de médico")
 @Data
 @NoArgsConstructor
@@ -17,11 +18,11 @@ public class MedicoRequest {
     private String nome;
 
     @NotBlank(message = "O CRM é obrigatório")
-    @Schema(description = "CRM do médico (login)", example = "CRM-MG-12345")
+    @Schema(description = "CRM do médico (usado como login)", example = "CRM-MG-12345")
     private String crm;
 
     @NotBlank(message = "A senha é obrigatória")
-    @Schema(description = "Senha de acesso", example = "senha123")
+    @Schema(description = "Senha de acesso (write-only — nao aparece em respostas)", example = "senha123")
     private String senha;
 
     @Schema(description = "Telefone de contato", example = "34988887777")
