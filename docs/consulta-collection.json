@@ -715,6 +715,233 @@
               "path": ["v1", "consultas", "999999"]
             }
           }
+        },
+        {
+          "name": "POST agendar com data no passado - 400",
+          "description": "Service rejeita dataHora anterior a now() com IllegalArgumentException, controller traduz para 400.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const passado = new Date();",
+                  "passado.setDate(passado.getDate() - 1);",
+                  "passado.setHours(10, 0, 0, 0);",
+                  "pm.collectionVariables.set('dataHora_passado', passado.toISOString().slice(0,19));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem fala sobre passado', () => {",
+                  "  pm.expect(pm.response.text().toLowerCase()).to.include('passado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_ativo_id}},\n  \"dataHora\": \"{{dataHora_passado}}\",\n  \"observacoes\": \"Agendamento retroativo nao permitido\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas"]
+            }
+          }
+        },
+        {
+          "name": "PATCH confirmar consulta CANCELADA - 400",
+          "description": "Prerequest cria uma consulta em horario novo, cancela, e a request principal tenta confirmar essa consulta cancelada. Service lanca IllegalStateException -> 400.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const dt = new Date();",
+                  "dt.setDate(dt.getDate() + 90);",
+                  "dt.setHours(8, 30, 0, 0);",
+                  "const iso = dt.toISOString().slice(0,19);",
+                  "// 1) cria consulta",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('agenda_url') + '/v1/consultas',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: { mode: 'raw', raw: JSON.stringify({",
+                  "    pacienteId: Number(pm.collectionVariables.get('paciente_id')),",
+                  "    medicoId: Number(pm.collectionVariables.get('medico_id')),",
+                  "    convenioId: Number(pm.collectionVariables.get('convenio_ativo_id')),",
+                  "    dataHora: iso,",
+                  "    observacoes: 'aux confirmar cancelada'",
+                  "  }) }",
+                  "}, (err, res) => {",
+                  "  if (!err && res.code === 201) {",
+                  "    const id = res.json().id;",
+                  "    pm.collectionVariables.set('cancelada_id_confirm', id);",
+                  "    // 2) cancela em seguida",
+                  "    pm.sendRequest({",
+                  "      url: pm.collectionVariables.get('agenda_url') + '/v1/consultas/' + id,",
+                  "      method: 'DELETE'",
+                  "    }, () => {});",
+                  "  }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem cita CANCELADA', () => {",
+                  "  pm.expect(pm.response.text()).to.include('CANCELADA');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/{{cancelada_id_confirm}}/confirmar",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "{{cancelada_id_confirm}}", "confirmar"]
+            }
+          }
+        },
+        {
+          "name": "PATCH reagendar consulta CANCELADA - 400",
+          "description": "Prerequest cria + cancela uma consulta. A request principal tenta reagendar a cancelada -> 400.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const dt = new Date();",
+                  "dt.setDate(dt.getDate() + 95);",
+                  "dt.setHours(11, 0, 0, 0);",
+                  "const iso = dt.toISOString().slice(0,19);",
+                  "// nova dataHora para tentar reagendar (mais 1 dia)",
+                  "const nova = new Date(dt.getTime());",
+                  "nova.setDate(nova.getDate() + 1);",
+                  "pm.collectionVariables.set('reagendar_nova_data', nova.toISOString().slice(0,19));",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('agenda_url') + '/v1/consultas',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: { mode: 'raw', raw: JSON.stringify({",
+                  "    pacienteId: Number(pm.collectionVariables.get('paciente_id')),",
+                  "    medicoId: Number(pm.collectionVariables.get('medico_id')),",
+                  "    convenioId: Number(pm.collectionVariables.get('convenio_ativo_id')),",
+                  "    dataHora: iso,",
+                  "    observacoes: 'aux reagendar cancelada'",
+                  "  }) }",
+                  "}, (err, res) => {",
+                  "  if (!err && res.code === 201) {",
+                  "    const id = res.json().id;",
+                  "    pm.collectionVariables.set('cancelada_id_reagendar', id);",
+                  "    pm.sendRequest({",
+                  "      url: pm.collectionVariables.get('agenda_url') + '/v1/consultas/' + id,",
+                  "      method: 'DELETE'",
+                  "    }, () => {});",
+                  "  }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem cita reagendar', () => {",
+                  "  pm.expect(pm.response.text().toLowerCase()).to.include('reagend');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataHora\": \"{{reagendar_nova_data}}\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/{{cancelada_id_reagendar}}/reagendar",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "{{cancelada_id_reagendar}}", "reagendar"]
+            }
+          }
+        },
+        {
+          "name": "PATCH reagendar com data no passado - 400",
+          "description": "Cria uma consulta nova e tenta reagendar para data anterior a now().",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const dt = new Date();",
+                  "dt.setDate(dt.getDate() + 100);",
+                  "dt.setHours(15, 0, 0, 0);",
+                  "const iso = dt.toISOString().slice(0,19);",
+                  "const passado = new Date();",
+                  "passado.setDate(passado.getDate() - 2);",
+                  "passado.setHours(10, 0, 0, 0);",
+                  "pm.collectionVariables.set('reagendar_passado', passado.toISOString().slice(0,19));",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('agenda_url') + '/v1/consultas',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: { mode: 'raw', raw: JSON.stringify({",
+                  "    pacienteId: Number(pm.collectionVariables.get('paciente_id')),",
+                  "    medicoId: Number(pm.collectionVariables.get('medico_id')),",
+                  "    convenioId: Number(pm.collectionVariables.get('convenio_ativo_id')),",
+                  "    dataHora: iso,",
+                  "    observacoes: 'aux reagendar passado'",
+                  "  }) }",
+                  "}, (err, res) => {",
+                  "  if (!err && res.code === 201) {",
+                  "    pm.collectionVariables.set('consulta_reagendar_passado_id', res.json().id);",
+                  "  }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem fala sobre passado', () => {",
+                  "  pm.expect(pm.response.text().toLowerCase()).to.include('passado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataHora\": \"{{reagendar_passado}}\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/{{consulta_reagendar_passado_id}}/reagendar",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "{{consulta_reagendar_passado_id}}", "reagendar"]
+            }
+          }
         }
       ]
     }
