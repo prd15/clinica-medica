@@ -28,8 +28,10 @@ class ConsultaServiceTest {
     private ConsultaService consultaService;
 
     // helper pra montar entidade rapidinho — evita repeticao em todo teste
+    // dataHora relativa (hoje + 30 dias) pra teste nao virar time-bomb depois que a validacao
+    // de data no passado entrou no service
     private ConsultaEntity novaConsulta(Long id, StatusConsulta status) {
-        LocalDateTime dataHora = LocalDateTime.of(2026, 8, 1, 10, 0);
+        LocalDateTime dataHora = LocalDateTime.now().plusDays(30).withSecond(0).withNano(0);
         return new ConsultaEntity(id, 1L, 1L, 1L, dataHora, status, "consulta de rotina");
     }
 
@@ -98,7 +100,7 @@ class ConsultaServiceTest {
     @Test
     void testReagendar_Encontrado_SemConflito() {
         ConsultaEntity existente = novaConsulta(1L, StatusConsulta.PENDENTE);
-        LocalDateTime novaDataHora = LocalDateTime.of(2026, 8, 10, 14, 0);
+        LocalDateTime novaDataHora = LocalDateTime.now().plusDays(45).withSecond(0).withNano(0);
 
         when(consultaRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(consultaRepository.existsByMedicoIdAndDataHoraAndStatusNot(
