@@ -40,4 +40,12 @@ public class ConsultaService {
         consulta.setStatus(StatusConsulta.PENDENTE);
         return consultaRepository.save(consulta);
     }
+
+    // soft delete logico — mantem historico, so muda o status
+    public Optional<ConsultaEntity> cancelar(Long id) {
+        return consultaRepository.findById(id).map(consulta -> {
+            consulta.setStatus(StatusConsulta.CANCELADA);
+            return consultaRepository.save(consulta);
+        });
+    }
 }
