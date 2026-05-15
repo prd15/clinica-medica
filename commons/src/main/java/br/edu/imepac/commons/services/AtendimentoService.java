@@ -74,4 +74,16 @@ public class AtendimentoService {
         anotacao.setDataCriacao(LocalDateTime.now());
         return anotacaoRepository.save(anotacao);
     }
+
+    public SolicitacaoExameEntity solicitarExame(Long atendimentoId, String descricao, String tipo) {
+        atendimentoRepository.findById(atendimentoId)
+                .orElseThrow(() -> new NoSuchElementException("Atendimento nao encontrado: " + atendimentoId));
+
+        SolicitacaoExameEntity exame = new SolicitacaoExameEntity();
+        exame.setAtendimentoId(atendimentoId);
+        exame.setDescricao(descricao);
+        exame.setTipo(tipo);
+        exame.setDataSolicitacao(LocalDateTime.now());
+        return exameRepository.save(exame);
+    }
 }
