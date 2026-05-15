@@ -58,8 +58,17 @@ public class ConsultaService {
     }
 
     // muda data/hora — precisa revalidar conflito no novo horario
+    // CANCELADA/REALIZADA sao status terminais; reagendar elas nao faz sentido
     public Optional<ConsultaEntity> reagendar(Long id, LocalDateTime novaDataHora) {
         return consultaRepository.findById(id).map(consulta -> {
+            if (consulta.getStatus() == StatusConsulta.CANCELADA
+                    || consulta.getStatus() == StatusConsulta.REALIZADA) {
+                throw new IllegalStateException(
+                        "Consulta no status " + consulta.getStatus() + " nao pode ser reagendada");
+            }
+            if (novaDataHora == null || novaDataHora.isBefore(LocalDateTime.now())) {
+                throw new IllegalArgumentException("Data do reagendamento nao pode estar no passado");
+            }
             boolean conflito = consultaRepository.existsByMedicoIdAndDataHoraAndStatusNot(
                     consulta.getMedicoId(),
                     novaDataHora,
