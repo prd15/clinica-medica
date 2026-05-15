@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -56,5 +57,28 @@ class AtendimentoServiceTest {
         assertNotNull(resultado.getId());
         verify(atendimentoRepository, times(1)).save(any());
         verify(prontuarioRepository, times(1)).save(any());
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoConsultaNaoEncontrada() {
+        when(atendimentoRepository.findByConsultaId(99L)).thenReturn(Optional.empty());
+
+        NoSuchElementException ex = assertThrows(NoSuchElementException.class,
+                () -> atendimentoService.buscarPorConsulta(99L));
+
+        assertTrue(ex.getMessage().contains("99"));
+        verify(atendimentoRepository).findByConsultaId(99L);
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoProntuarioNaoExiste() {
+        when(prontuarioRepository.findFirstByAtendimentoIdOrderByIdDesc(5L)).thenReturn(Optional.empty());
+
+        NoSuchElementException ex = assertThrows(NoSuchElementException.class,
+                () -> atendimentoService.adicionarAnotacao(5L, "algum texto"));
+
+        assertTrue(ex.getMessage().contains("5"));
+        verify(prontuarioRepository).findFirstByAtendimentoIdOrderByIdDesc(5L);
+        verify(anotacaoRepository, never()).save(any());
     }
 }
