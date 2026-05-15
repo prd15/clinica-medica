@@ -46,7 +46,15 @@ public class ConsultaController {
             return ResponseEntity.badRequest().body("Convenio inativo ou nao encontrado");
         }
         try {
-            ConsultaEntity entity = modelMapper.map(request, ConsultaEntity.class);
+            // mapping manual: ModelMapper em matching loose confunde *Id com setId()
+            // (qualquer get*Id na origem vira candidato pra setId no destino)
+            ConsultaEntity entity = new ConsultaEntity();
+            entity.setPacienteId(request.getPacienteId());
+            entity.setMedicoId(request.getMedicoId());
+            entity.setConvenioId(request.getConvenioId());
+            entity.setDataHora(request.getDataHora());
+            entity.setObservacoes(request.getObservacoes());
+
             ConsultaEntity salva = consultaService.agendar(entity);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(modelMapper.map(salva, ConsultaResponse.class));
