@@ -62,4 +62,16 @@ public class AtendimentoService {
         return atendimentoRepository.findByConsultaId(consultaId)
                 .orElseThrow(() -> new NoSuchElementException("Atendimento nao encontrado para consultaId: " + consultaId));
     }
+
+    public AnotacaoEntity adicionarAnotacao(Long atendimentoId, String texto) {
+        ProntuarioEntity prontuario = prontuarioRepository
+                .findFirstByAtendimentoIdOrderByIdDesc(atendimentoId)
+                .orElseThrow(() -> new NoSuchElementException("Prontuario nao encontrado para atendimentoId: " + atendimentoId));
+
+        AnotacaoEntity anotacao = new AnotacaoEntity();
+        anotacao.setProntuarioId(prontuario.getId());
+        anotacao.setTexto(texto);
+        anotacao.setDataCriacao(LocalDateTime.now());
+        return anotacaoRepository.save(anotacao);
+    }
 }
