@@ -51,4 +51,19 @@ class ConsultaServiceTest {
         assertEquals(StatusConsulta.PENDENTE, resultado.getStatus());
         verify(consultaRepository).save(any(ConsultaEntity.class));
     }
+
+    // conflito de horario tem que abortar antes de chamar o save
+    @Test
+    void testAgendar_ComConflito_LancaException() {
+        ConsultaEntity nova = novaConsulta(null, null);
+
+        when(consultaRepository.existsByMedicoIdAndDataHoraAndStatusNot(
+                eq(1L), any(LocalDateTime.class), eq(StatusConsulta.CANCELADA)))
+                .thenReturn(true);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> consultaService.agendar(nova));
+        assertTrue(ex.getMessage().toLowerCase().contains("horario"));
+
+        verify(consultaRepository, never()).save(any(ConsultaEntity.class));
+    }
 }
