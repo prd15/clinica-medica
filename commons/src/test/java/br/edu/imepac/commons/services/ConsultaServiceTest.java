@@ -210,4 +210,19 @@ class ConsultaServiceTest {
 
         verify(consultaRepository, never()).save(any(ConsultaEntity.class));
     }
+
+    // reagendar e operacao para consulta viva — CANCELADA/REALIZADA sao terminais
+    @Test
+    void testReagendar_ConsultaCancelada_LancaException() {
+        ConsultaEntity cancelada = novaConsulta(1L, StatusConsulta.CANCELADA);
+        when(consultaRepository.findById(1L)).thenReturn(Optional.of(cancelada));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> consultaService.reagendar(1L, LocalDateTime.now().plusDays(5)));
+        assertTrue(ex.getMessage().toLowerCase().contains("nao pode ser reagendada"));
+
+        // conflito nao deve ser consultado e save nao deve ser chamado
+        verify(consultaRepository, never()).existsByMedicoIdAndDataHoraAndStatusNot(any(), any(), any());
+        verify(consultaRepository, never()).save(any(ConsultaEntity.class));
+    }
 }
