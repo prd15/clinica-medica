@@ -1,0 +1,232 @@
+{
+  "info": {
+    "name": "Clinica Medica — Especialidade",
+    "_postman_id": "clinica-especialidade-001",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8081" },
+    { "key": "especialidade_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Especialidade — POST create",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Criado 201', () => pm.response.to.have.status(201));",
+              "pm.test('Tem ID', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.id).to.be.a('number');",
+              "  pm.collectionVariables.set('especialidade_id', json.id);",
+              "});",
+              "pm.test('Nome correto', () => pm.expect(pm.response.json().nome).to.eql('Cardiologia'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Cardiologia\",\n  \"descricao\": \"Especialidade do coracao e sistema cardiovascular\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/especialidades",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "especialidades"]
+        }
+      }
+    },
+    {
+      "name": "Especialidade — POST 400 nome vazio",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"\",\n  \"descricao\": \"sem nome\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/especialidades",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "especialidades"]
+        }
+      }
+    },
+    {
+      "name": "Especialidade — GET list",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+              "pm.test('Nao vazio', () => pm.expect(pm.response.json().length).to.be.above(0));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/especialidades",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "especialidades"]
+        }
+      }
+    },
+    {
+      "name": "Especialidade — GET by ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Nome correto', () => pm.expect(pm.response.json().nome).to.eql('Cardiologia'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/especialidades/{{especialidade_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "especialidades", "{{especialidade_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Especialidade — GET by ID 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/especialidades/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "especialidades", "999999"]
+        }
+      }
+    },
+    {
+      "name": "Especialidade — PUT update",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Nome atualizado', () => pm.expect(pm.response.json().nome).to.eql('Cardiologia Pediatrica'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Cardiologia Pediatrica\",\n  \"descricao\": \"Cardiologia voltada para criancas\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/especialidades/{{especialidade_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "especialidades", "{{especialidade_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Especialidade — PUT 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Ghost\",\n  \"descricao\": \"x\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/especialidades/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "especialidades", "999999"]
+        }
+      }
+    },
+    {
+      "name": "Especialidade — DELETE",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/v1/especialidades/{{especialidade_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "especialidades", "{{especialidade_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Especialidade — DELETE 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/v1/especialidades/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "especialidades", "999999"]
+        }
+      }
+    }
+  ]
+}

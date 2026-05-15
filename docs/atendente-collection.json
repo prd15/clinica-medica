@@ -1,0 +1,228 @@
+{
+  "info": {
+    "name": "Clinica Medica — Atendente",
+    "_postman_id": "clinica-atendente-001",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8081" },
+    { "key": "atendente_id", "value": "" },
+    { "key": "atendente_usuario", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Atendente — POST create",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.collectionVariables.set('atendente_usuario', 'maria.recepcao.' + Date.now());"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Criado 201', () => pm.response.to.have.status(201));",
+              "pm.test('Tem ID', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.id).to.be.a('number');",
+              "  pm.collectionVariables.set('atendente_id', json.id);",
+              "});",
+              "pm.test('Sem senha no response', () => pm.expect(pm.response.json()).to.not.have.property('senha'));",
+              "pm.test('Ativo true', () => pm.expect(pm.response.json().ativo).to.be.true);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Maria Recepcao\",\n  \"usuario\": \"{{atendente_usuario}}\",\n  \"senha\": \"senha123\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/atendentes",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "atendentes"]
+        }
+      }
+    },
+    {
+      "name": "Atendente — POST usuario duplicado 409",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('409 Conflict', () => pm.response.to.have.status(409));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Outra Recepcao\",\n  \"usuario\": \"{{atendente_usuario}}\",\n  \"senha\": \"qualquer\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/atendentes",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "atendentes"]
+        }
+      }
+    },
+    {
+      "name": "Atendente — POST 400 nome vazio",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"\",\n  \"usuario\": \"\",\n  \"senha\": \"\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/atendentes",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "atendentes"]
+        }
+      }
+    },
+    {
+      "name": "Atendente — GET list",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+              "pm.test('Nenhum tem senha', () => {",
+              "  pm.response.json().forEach(a => pm.expect(a).to.not.have.property('senha'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/v1/atendentes",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "atendentes"]
+        }
+      }
+    },
+    {
+      "name": "Atendente — PUT update",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Nome atualizado', () => pm.expect(pm.response.json().nome).to.eql('Maria Recepcao Atualizada'));",
+              "pm.test('Sem senha', () => pm.expect(pm.response.json()).to.not.have.property('senha'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Maria Recepcao Atualizada\",\n  \"usuario\": \"{{atendente_usuario}}\",\n  \"senha\": \"novaSenha456\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/atendentes/{{atendente_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "atendentes", "{{atendente_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Atendente — PUT 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Ghost\",\n  \"usuario\": \"ghost.user\",\n  \"senha\": \"x\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/atendentes/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "atendentes", "999999"]
+        }
+      }
+    },
+    {
+      "name": "Atendente — DELETE",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/v1/atendentes/{{atendente_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "atendentes", "{{atendente_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Atendente — DELETE 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/v1/atendentes/999999",
+          "host": ["{{base_url}}"],
+          "path": ["v1", "atendentes", "999999"]
+        }
+      }
+    }
+  ]
+}
