@@ -141,4 +141,16 @@ class ConsultaServiceTest {
         assertEquals(2, resultado.size());
         verify(consultaRepository).findByMedicoId(1L);
     }
+
+    // historico do paciente
+    @Test
+    void testFindByPacienteId_RetornaLista() {
+        List<ConsultaEntity> consultas = List.of(novaConsulta(1L, StatusConsulta.REALIZADA));
+        when(consultaRepository.findByPacienteId(1L)).thenReturn(consultas);
+
+        List<ConsultaEntity> resultado = consultaService.findByPacienteId(1L);
+
+        assertEquals(1, resultado.size());
+        verify(consultaRepository).findByPacienteId(1L);
+    }
 }
