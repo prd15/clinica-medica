@@ -93,4 +93,23 @@ class ConsultaServiceTest {
         verify(consultaRepository).findById(99L);
         verify(consultaRepository, never()).save(any(ConsultaEntity.class));
     }
+
+    // reagendar atualiza dataHora se a consulta existe e nao ha conflito no novo horario
+    @Test
+    void testReagendar_Encontrado_SemConflito() {
+        ConsultaEntity existente = novaConsulta(1L, StatusConsulta.PENDENTE);
+        LocalDateTime novaDataHora = LocalDateTime.of(2026, 8, 10, 14, 0);
+
+        when(consultaRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(consultaRepository.existsByMedicoIdAndDataHoraAndStatusNot(
+                eq(1L), eq(novaDataHora), eq(StatusConsulta.CANCELADA)))
+                .thenReturn(false);
+        when(consultaRepository.save(any(ConsultaEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Optional<ConsultaEntity> resultado = consultaService.reagendar(1L, novaDataHora);
+
+        assertTrue(resultado.isPresent());
+        assertEquals(novaDataHora, resultado.get().getDataHora());
+        verify(consultaRepository).save(existente);
+    }
 }
