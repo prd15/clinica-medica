@@ -62,4 +62,20 @@ public class ConsultaController {
                 .map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @Operation(summary = "Reagenda uma consulta para outra data e hora")
+    @ApiResponse(responseCode = "200", description = "Consulta reagendada")
+    @ApiResponse(responseCode = "400", description = "Conflito de horario no novo horario")
+    @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
+    @PatchMapping("/{id}/reagendar")
+    public ResponseEntity<?> reagendar(@PathVariable("id") Long id,
+                                       @Valid @RequestBody ReagendarRequest request) {
+        try {
+            return consultaService.reagendar(id, request.getDataHora())
+                    .map(c -> ResponseEntity.ok((Object) modelMapper.map(c, ConsultaResponse.class)))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
