@@ -66,4 +66,19 @@ class ConsultaServiceTest {
 
         verify(consultaRepository, never()).save(any(ConsultaEntity.class));
     }
+
+    // cancelar deve mudar status para CANCELADA quando a consulta existe
+    @Test
+    void testCancelar_Encontrado_RetornaCancelada() {
+        ConsultaEntity existente = novaConsulta(1L, StatusConsulta.PENDENTE);
+        when(consultaRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(consultaRepository.save(any(ConsultaEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Optional<ConsultaEntity> resultado = consultaService.cancelar(1L);
+
+        assertTrue(resultado.isPresent());
+        assertEquals(StatusConsulta.CANCELADA, resultado.get().getStatus());
+        verify(consultaRepository).findById(1L);
+        verify(consultaRepository).save(existente);
+    }
 }
