@@ -67,6 +67,16 @@ public class AtendimentoController {
         return ResponseEntity.ok(atendimentoService.buscarHistoricoPorPaciente(pacienteId));
     }
 
+    @GetMapping("/{consultaId}")
+    @Operation(summary = "Retorna o prontuário de uma consulta específica")
+    @ApiResponse(responseCode = "200", description = "Prontuário encontrado")
+    @ApiResponse(responseCode = "404", description = "Consulta não encontrada")
+    public ResponseEntity<ProntuarioEntity> prontuarioPorConsulta(@PathVariable Long consultaId) {
+        AtendimentoEntity atendimento = atendimentoService.buscarPorConsulta(consultaId);
+        ProntuarioEntity prontuario = atendimentoService.buscarProntuario(atendimento.getId());
+        return ResponseEntity.ok(prontuario);
+    }
+
     private AtendimentoResponse toResponse(AtendimentoEntity entidade, Long prontuarioId) {
         AtendimentoResponse r = new AtendimentoResponse();
         r.setId(entidade.getId());
