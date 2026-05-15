@@ -197,4 +197,17 @@ class ConsultaServiceTest {
 
         verify(consultaRepository, never()).save(any(ConsultaEntity.class));
     }
+
+    // consulta REALIZADA e historico — cancelar depois deturparia o registro
+    @Test
+    void testCancelar_ConsultaRealizada_LancaException() {
+        ConsultaEntity realizada = novaConsulta(1L, StatusConsulta.REALIZADA);
+        when(consultaRepository.findById(1L)).thenReturn(Optional.of(realizada));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> consultaService.cancelar(1L));
+        assertTrue(ex.getMessage().toLowerCase().contains("realizada"));
+
+        verify(consultaRepository, never()).save(any(ConsultaEntity.class));
+    }
 }
