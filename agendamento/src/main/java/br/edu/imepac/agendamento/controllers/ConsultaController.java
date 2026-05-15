@@ -38,9 +38,9 @@ public class ConsultaController {
     @Operation(summary = "Agenda uma nova consulta",
             description = "Valida conflito de horario e status do convenio antes de agendar")
     @ApiResponse(responseCode = "201", description = "Consulta agendada com sucesso")
-    @ApiResponse(responseCode = "400", description = "Conflito de horario ou convenio inativo")
+    @ApiResponse(responseCode = "400", description = "Conflito de horario, convenio inativo ou dados invalidos")
     @PostMapping
-    public ResponseEntity<?> agendar(@Valid @RequestBody ConsultaRequest request) {
+    public ResponseEntity<Object> agendar(@Valid @RequestBody ConsultaRequest request) {
         // validacao de convenio ativo acontece ANTES do service — depende de HTTP no administrativo
         if (!administrativoClient.isConvenioAtivo(request.getConvenioId())) {
             return ResponseEntity.badRequest().body("Convenio inativo ou nao encontrado");
@@ -58,46 +58,57 @@ public class ConsultaController {
             ConsultaEntity salva = consultaService.agendar(entity);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(modelMapper.map(salva, ConsultaResponse.class));
-        } catch (RuntimeException e) {
-            // service joga RuntimeException quando ha conflito de horario
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // erros de regra de negocio (conflito, data passado) — 400 com mensagem clara
+            // NPE/etc nao sao capturados aqui de proposito; deixa o Spring tratar como 500
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @Operation(summary = "Cancela uma consulta agendada")
     @ApiResponse(responseCode = "200", description = "Consulta cancelada")
+    @ApiResponse(responseCode = "400", description = "Consulta nao pode ser cancelada no status atual")
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
     @DeleteMapping("/{id}")
-    public ResponseEntity<ConsultaResponse> cancelar(@PathVariable("id") Long id) {
-        return consultaService.cancelar(id)
-                .map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Object> cancelar(@PathVariable("id") Long id) {
+        try {
+            return consultaService.cancelar(id)
+                    .<ResponseEntity<Object>>map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                    .orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @Operation(summary = "Reagenda uma consulta para outra data e hora")
     @ApiResponse(responseCode = "200", description = "Consulta reagendada")
-    @ApiResponse(responseCode = "400", description = "Conflito de horario no novo horario")
+    @ApiResponse(responseCode = "400", description = "Conflito de horario, status invalido ou data no passado")
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
     @PatchMapping("/{id}/reagendar")
-    public ResponseEntity<?> reagendar(@PathVariable("id") Long id,
-                                       @Valid @RequestBody ReagendarRequest request) {
+    public ResponseEntity<Object> reagendar(@PathVariable("id") Long id,
+                                            @Valid @RequestBody ReagendarRequest request) {
         try {
             return consultaService.reagendar(id, request.getDataHora())
-                    .map(c -> ResponseEntity.ok((Object) modelMapper.map(c, ConsultaResponse.class)))
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (RuntimeException e) {
+                    .<ResponseEntity<Object>>map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                    .orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @Operation(summary = "Confirma uma consulta pendente")
     @ApiResponse(responseCode = "200", description = "Consulta confirmada")
+    @ApiResponse(responseCode = "400", description = "Consulta nao esta no status PENDENTE")
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
     @PatchMapping("/{id}/confirmar")
-    public ResponseEntity<ConsultaResponse> confirmar(@PathVariable("id") Long id) {
-        return consultaService.confirmar(id)
-                .map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Object> confirmar(@PathVariable("id") Long id) {
+        try {
+            return consultaService.confirmar(id)
+                    .<ResponseEntity<Object>>map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                    .orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @Operation(summary = "Lista consultas com filtros opcionais",
