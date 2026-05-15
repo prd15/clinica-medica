@@ -26,6 +26,10 @@ public class ConsultaService {
     // metodo central do modulo: valida conflito antes de salvar
     // a validacao de convenio ativo fica no Controller (precisa de HTTP — nao e responsabilidade do Service)
     public ConsultaEntity agendar(ConsultaEntity consulta) {
+        // agendamento retroativo nao faz sentido na regra de negocio
+        if (consulta.getDataHora() == null || consulta.getDataHora().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Data da consulta nao pode estar no passado");
+        }
         // conflito = mesmo medico, mesmo horario, status diferente de CANCELADA
         // (uma consulta cancelada libera o slot — nao bloqueia novo agendamento)
         boolean conflito = consultaRepository.existsByMedicoIdAndDataHoraAndStatusNot(
