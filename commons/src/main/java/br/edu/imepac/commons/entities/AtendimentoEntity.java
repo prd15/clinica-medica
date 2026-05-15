@@ -18,9 +18,11 @@ public class AtendimentoEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // id da consulta — referencia ao servico de agendamento, sem FK entre bancos
     @Column(nullable = false)
     private Long consultaId;
 
+    // ids como Long — bancos separados, sem @ManyToOne entre servicos
     @Column(nullable = false)
     private Long medicoId;
 
