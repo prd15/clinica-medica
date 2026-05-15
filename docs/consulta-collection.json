@@ -1,0 +1,949 @@
+{
+  "info": {
+    "name": "Clinica Medica - Consulta (Agendamento)",
+    "_postman_id": "clinica-consulta-001",
+    "description": "Collection completa do modulo de agendamento. Rode na ordem: 1) Setup, 2) Casos de sucesso, 3) Casos de erro. As variaveis sao preenchidas automaticamente pelos prerequest/test scripts.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "admin_url", "value": "http://localhost:8081" },
+    { "key": "agenda_url", "value": "http://localhost:8082" },
+    { "key": "convenio_ativo_id", "value": "" },
+    { "key": "convenio_inativo_id", "value": "" },
+    { "key": "medico_id", "value": "" },
+    { "key": "paciente_id", "value": "" },
+    { "key": "consulta_id", "value": "" },
+    { "key": "consulta_dataHora", "value": "" },
+    { "key": "consulta_dataHora_2", "value": "" },
+    { "key": "consulta_data", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Setup - dependencias no Administrativo",
+      "description": "Cria os recursos minimos (convenio ativo, convenio inativo, medico, paciente) no microsservico administrativo para que as consultas possam referencia-los.",
+      "item": [
+        {
+          "name": "Setup - POST Convenio ATIVO",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const d = String(Date.now()).slice(-8).padStart(8, '0');",
+                  "const cnpj = d.slice(0,2) + '.' + d.slice(2,5) + '.' + d.slice(5,8) + '/0001-' + d.slice(0,2);",
+                  "pm.collectionVariables.set('setup_cnpj_ativo', cnpj);",
+                  "// gera dois horarios distintos no futuro para os testes",
+                  "const base = new Date();",
+                  "base.setDate(base.getDate() + 30);",
+                  "base.setHours(10, 0, 0, 0);",
+                  "const iso = (dt) => dt.toISOString().slice(0,19);",
+                  "pm.collectionVariables.set('consulta_dataHora', iso(base));",
+                  "const data2 = new Date(base.getTime());",
+                  "data2.setDate(data2.getDate() + 1);",
+                  "data2.setHours(14, 0, 0, 0);",
+                  "pm.collectionVariables.set('consulta_dataHora_2', iso(data2));",
+                  "pm.collectionVariables.set('consulta_data', iso(base).slice(0,10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('convenio_ativo_id', json.id);",
+                  "pm.test('Ativo true', () => pm.expect(json.ativo).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Unimed Teste\",\n  \"descricao\": \"Convenio ativo para testes\",\n  \"cnpj\": \"{{setup_cnpj_ativo}}\",\n  \"telefone\": \"(34) 99999-0001\",\n  \"ativo\": true\n}"
+            },
+            "url": {
+              "raw": "{{admin_url}}/v1/convenios",
+              "host": ["{{admin_url}}"],
+              "path": ["v1", "convenios"]
+            }
+          }
+        },
+        {
+          "name": "Setup - POST Convenio INATIVO",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const d = String(Date.now() + 1).slice(-8).padStart(8, '0');",
+                  "const cnpj = d.slice(0,2) + '.' + d.slice(2,5) + '.' + d.slice(5,8) + '/0002-' + d.slice(0,2);",
+                  "pm.collectionVariables.set('setup_cnpj_inativo', cnpj);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('convenio_inativo_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Convenio Inativo Teste\",\n  \"descricao\": \"Convenio inativo para testes de erro\",\n  \"cnpj\": \"{{setup_cnpj_inativo}}\",\n  \"telefone\": \"(34) 99999-0002\",\n  \"ativo\": false\n}"
+            },
+            "url": {
+              "raw": "{{admin_url}}/v1/convenios",
+              "host": ["{{admin_url}}"],
+              "path": ["v1", "convenios"]
+            }
+          }
+        },
+        {
+          "name": "Setup - POST Medico",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('setup_crm', 'CRM-' + Date.now().toString().slice(-6));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('medico_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Dr. Carlos Teste\",\n  \"crm\": \"{{setup_crm}}\",\n  \"senha\": \"senha123\",\n  \"telefone\": \"(34) 98888-0000\",\n  \"ativo\": true\n}"
+            },
+            "url": {
+              "raw": "{{admin_url}}/v1/medicos",
+              "host": ["{{admin_url}}"],
+              "path": ["v1", "medicos"]
+            }
+          }
+        },
+        {
+          "name": "Setup - POST Paciente",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const d = String(Date.now()).slice(-11).padStart(11, '0');",
+                  "pm.collectionVariables.set('setup_cpf', d);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('paciente_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Paciente Teste\",\n  \"cpf\": \"{{setup_cpf}}\",\n  \"telefone\": \"(34) 97777-0000\",\n  \"email\": \"paciente@teste.com\",\n  \"endereco\": \"Rua Teste, 123\",\n  \"convenioId\": {{convenio_ativo_id}}\n}"
+            },
+            "url": {
+              "raw": "{{admin_url}}/v1/pacientes",
+              "host": ["{{admin_url}}"],
+              "path": ["v1", "pacientes"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Casos de sucesso",
+      "item": [
+        {
+          "name": "POST agendar - 201 sucesso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Tem id', () => pm.expect(json.id).to.be.a('number'));",
+                  "pm.test('Status PENDENTE', () => pm.expect(json.status).to.eql('PENDENTE'));",
+                  "pm.test('medicoId correto', () => pm.expect(json.medicoId).to.eql(Number(pm.collectionVariables.get('medico_id'))));",
+                  "pm.collectionVariables.set('consulta_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_ativo_id}},\n  \"dataHora\": \"{{consulta_dataHora}}\",\n  \"observacoes\": \"Consulta de rotina\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas"]
+            }
+          }
+        },
+        {
+          "name": "GET listar por medicoId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const arr = pm.response.json();",
+                  "pm.test('Array', () => pm.expect(arr).to.be.an('array'));",
+                  "pm.test('Contem a consulta criada', () => {",
+                  "  const id = Number(pm.collectionVariables.get('consulta_id'));",
+                  "  pm.expect(arr.some(c => c.id === id)).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas?medicoId={{medico_id}}",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas"],
+              "query": [{ "key": "medicoId", "value": "{{medico_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "GET listar por pacienteId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Array nao vazio', () => pm.expect(pm.response.json().length).to.be.above(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas?pacienteId={{paciente_id}}",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas"],
+              "query": [{ "key": "pacienteId", "value": "{{paciente_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "GET listar por data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas?data={{consulta_data}}",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas"],
+              "query": [{ "key": "data", "value": "{{consulta_data}}" }]
+            }
+          }
+        },
+        {
+          "name": "GET listar sem filtro - retorna vazio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Array vazio (controller exige filtro)', () => {",
+                  "  pm.expect(pm.response.json()).to.eql([]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas"]
+            }
+          }
+        },
+        {
+          "name": "GET minha-agenda (PENDENTE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const arr = pm.response.json();",
+                  "pm.test('Todas PENDENTE', () => {",
+                  "  arr.forEach(c => pm.expect(c.status).to.eql('PENDENTE'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/minha-agenda?medicoId={{medico_id}}",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "minha-agenda"],
+              "query": [{ "key": "medicoId", "value": "{{medico_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "PATCH confirmar - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status CONFIRMADA', () => pm.expect(pm.response.json().status).to.eql('CONFIRMADA'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/{{consulta_id}}/confirmar",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "{{consulta_id}}", "confirmar"]
+            }
+          }
+        },
+        {
+          "name": "GET minha-agenda apos confirmar (deve nao listar)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const arr = pm.response.json();",
+                  "pm.test('Consulta confirmada nao aparece em minha-agenda', () => {",
+                  "  const id = Number(pm.collectionVariables.get('consulta_id'));",
+                  "  pm.expect(arr.some(c => c.id === id)).to.be.false;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/minha-agenda?medicoId={{medico_id}}",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "minha-agenda"],
+              "query": [{ "key": "medicoId", "value": "{{medico_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "PATCH reagendar - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('DataHora atualizada', () => {",
+                  "  pm.expect(json.dataHora.startsWith(pm.collectionVariables.get('consulta_dataHora_2'))).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataHora\": \"{{consulta_dataHora_2}}\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/{{consulta_id}}/reagendar",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "{{consulta_id}}", "reagendar"]
+            }
+          }
+        },
+        {
+          "name": "DELETE cancelar - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status CANCELADA', () => pm.expect(pm.response.json().status).to.eql('CANCELADA'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/{{consulta_id}}",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "{{consulta_id}}"]
+            }
+          }
+        },
+        {
+          "name": "POST agendar - libera slot apos cancelar (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Status PENDENTE', () => pm.expect(pm.response.json().status).to.eql('PENDENTE'));",
+                  "// guarda como nova consulta valida pra usar nos proximos testes",
+                  "pm.collectionVariables.set('consulta_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_ativo_id}},\n  \"dataHora\": \"{{consulta_dataHora_2}}\",\n  \"observacoes\": \"Reaproveita slot apos CANCELADA\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Casos de erro",
+      "item": [
+        {
+          "name": "POST conflito de horario - 400",
+          "description": "Mesmo medico, mesma dataHora da consulta ativa do passo anterior. Deve falhar.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem fala sobre horario', () => {",
+                  "  pm.expect(pm.response.text().toLowerCase()).to.include('horario');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_ativo_id}},\n  \"dataHora\": \"{{consulta_dataHora_2}}\",\n  \"observacoes\": \"Tentativa de conflito\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas"]
+            }
+          }
+        },
+        {
+          "name": "POST convenio inexistente - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem fala sobre convenio', () => {",
+                  "  pm.expect(pm.response.text().toLowerCase()).to.include('conv');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": 999999,\n  \"dataHora\": \"{{consulta_dataHora}}\",\n  \"observacoes\": \"convenio nao existe\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas"]
+            }
+          }
+        },
+        {
+          "name": "POST convenio inativo - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem fala sobre convenio', () => {",
+                  "  pm.expect(pm.response.text().toLowerCase()).to.include('conv');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_inativo_id}},\n  \"dataHora\": \"{{consulta_dataHora}}\",\n  \"observacoes\": \"convenio inativo\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas"]
+            }
+          }
+        },
+        {
+          "name": "POST body invalido (campos faltando) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacoes\": \"falta tudo\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas"]
+            }
+          }
+        },
+        {
+          "name": "PATCH reagendar consulta inexistente - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataHora\": \"{{consulta_dataHora}}\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/999999/reagendar",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "999999", "reagendar"]
+            }
+          }
+        },
+        {
+          "name": "PATCH reagendar com conflito - 400",
+          "description": "Cria uma segunda consulta em outro horario e tenta reagendar a primeira para o horario da segunda.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Cria uma segunda consulta em horario novo via API pra forcar o conflito",
+                  "const newDate = new Date();",
+                  "newDate.setDate(newDate.getDate() + 60);",
+                  "newDate.setHours(9, 0, 0, 0);",
+                  "const iso = newDate.toISOString().slice(0,19);",
+                  "pm.collectionVariables.set('conflito_dataHora', iso);",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('agenda_url') + '/v1/consultas',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: { mode: 'raw', raw: JSON.stringify({",
+                  "    pacienteId: Number(pm.collectionVariables.get('paciente_id')),",
+                  "    medicoId: Number(pm.collectionVariables.get('medico_id')),",
+                  "    convenioId: Number(pm.collectionVariables.get('convenio_ativo_id')),",
+                  "    dataHora: iso,",
+                  "    observacoes: 'segunda consulta'",
+                  "  }) }",
+                  "}, (err, res) => {",
+                  "  if (!err && res.code === 201) {",
+                  "    pm.collectionVariables.set('consulta_id_2', res.json().id);",
+                  "  }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400 conflito', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataHora\": \"{{conflito_dataHora}}\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/{{consulta_id}}/reagendar",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "{{consulta_id}}", "reagendar"]
+            }
+          }
+        },
+        {
+          "name": "PATCH confirmar consulta inexistente - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/999999/confirmar",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "999999", "confirmar"]
+            }
+          }
+        },
+        {
+          "name": "DELETE cancelar inexistente - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/999999",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "999999"]
+            }
+          }
+        },
+        {
+          "name": "POST agendar com data no passado - 400",
+          "description": "Service rejeita dataHora anterior a now() com IllegalArgumentException, controller traduz para 400.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const passado = new Date();",
+                  "passado.setDate(passado.getDate() - 1);",
+                  "passado.setHours(10, 0, 0, 0);",
+                  "pm.collectionVariables.set('dataHora_passado', passado.toISOString().slice(0,19));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem fala sobre passado', () => {",
+                  "  pm.expect(pm.response.text().toLowerCase()).to.include('passado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_ativo_id}},\n  \"dataHora\": \"{{dataHora_passado}}\",\n  \"observacoes\": \"Agendamento retroativo nao permitido\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas"]
+            }
+          }
+        },
+        {
+          "name": "PATCH confirmar consulta CANCELADA - 400",
+          "description": "Prerequest cria uma consulta em horario novo, cancela, e a request principal tenta confirmar essa consulta cancelada. Service lanca IllegalStateException -> 400.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const dt = new Date();",
+                  "dt.setDate(dt.getDate() + 90);",
+                  "dt.setHours(8, 30, 0, 0);",
+                  "const iso = dt.toISOString().slice(0,19);",
+                  "// 1) cria consulta",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('agenda_url') + '/v1/consultas',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: { mode: 'raw', raw: JSON.stringify({",
+                  "    pacienteId: Number(pm.collectionVariables.get('paciente_id')),",
+                  "    medicoId: Number(pm.collectionVariables.get('medico_id')),",
+                  "    convenioId: Number(pm.collectionVariables.get('convenio_ativo_id')),",
+                  "    dataHora: iso,",
+                  "    observacoes: 'aux confirmar cancelada'",
+                  "  }) }",
+                  "}, (err, res) => {",
+                  "  if (!err && res.code === 201) {",
+                  "    const id = res.json().id;",
+                  "    pm.collectionVariables.set('cancelada_id_confirm', id);",
+                  "    // 2) cancela em seguida",
+                  "    pm.sendRequest({",
+                  "      url: pm.collectionVariables.get('agenda_url') + '/v1/consultas/' + id,",
+                  "      method: 'DELETE'",
+                  "    }, () => {});",
+                  "  }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem cita CANCELADA', () => {",
+                  "  pm.expect(pm.response.text()).to.include('CANCELADA');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/{{cancelada_id_confirm}}/confirmar",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "{{cancelada_id_confirm}}", "confirmar"]
+            }
+          }
+        },
+        {
+          "name": "PATCH reagendar consulta CANCELADA - 400",
+          "description": "Prerequest cria + cancela uma consulta. A request principal tenta reagendar a cancelada -> 400.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const dt = new Date();",
+                  "dt.setDate(dt.getDate() + 95);",
+                  "dt.setHours(11, 0, 0, 0);",
+                  "const iso = dt.toISOString().slice(0,19);",
+                  "// nova dataHora para tentar reagendar (mais 1 dia)",
+                  "const nova = new Date(dt.getTime());",
+                  "nova.setDate(nova.getDate() + 1);",
+                  "pm.collectionVariables.set('reagendar_nova_data', nova.toISOString().slice(0,19));",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('agenda_url') + '/v1/consultas',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: { mode: 'raw', raw: JSON.stringify({",
+                  "    pacienteId: Number(pm.collectionVariables.get('paciente_id')),",
+                  "    medicoId: Number(pm.collectionVariables.get('medico_id')),",
+                  "    convenioId: Number(pm.collectionVariables.get('convenio_ativo_id')),",
+                  "    dataHora: iso,",
+                  "    observacoes: 'aux reagendar cancelada'",
+                  "  }) }",
+                  "}, (err, res) => {",
+                  "  if (!err && res.code === 201) {",
+                  "    const id = res.json().id;",
+                  "    pm.collectionVariables.set('cancelada_id_reagendar', id);",
+                  "    pm.sendRequest({",
+                  "      url: pm.collectionVariables.get('agenda_url') + '/v1/consultas/' + id,",
+                  "      method: 'DELETE'",
+                  "    }, () => {});",
+                  "  }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem cita reagendar', () => {",
+                  "  pm.expect(pm.response.text().toLowerCase()).to.include('reagend');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataHora\": \"{{reagendar_nova_data}}\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/{{cancelada_id_reagendar}}/reagendar",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "{{cancelada_id_reagendar}}", "reagendar"]
+            }
+          }
+        },
+        {
+          "name": "PATCH reagendar com data no passado - 400",
+          "description": "Cria uma consulta nova e tenta reagendar para data anterior a now().",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const dt = new Date();",
+                  "dt.setDate(dt.getDate() + 100);",
+                  "dt.setHours(15, 0, 0, 0);",
+                  "const iso = dt.toISOString().slice(0,19);",
+                  "const passado = new Date();",
+                  "passado.setDate(passado.getDate() - 2);",
+                  "passado.setHours(10, 0, 0, 0);",
+                  "pm.collectionVariables.set('reagendar_passado', passado.toISOString().slice(0,19));",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('agenda_url') + '/v1/consultas',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: { mode: 'raw', raw: JSON.stringify({",
+                  "    pacienteId: Number(pm.collectionVariables.get('paciente_id')),",
+                  "    medicoId: Number(pm.collectionVariables.get('medico_id')),",
+                  "    convenioId: Number(pm.collectionVariables.get('convenio_ativo_id')),",
+                  "    dataHora: iso,",
+                  "    observacoes: 'aux reagendar passado'",
+                  "  }) }",
+                  "}, (err, res) => {",
+                  "  if (!err && res.code === 201) {",
+                  "    pm.collectionVariables.set('consulta_reagendar_passado_id', res.json().id);",
+                  "  }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem fala sobre passado', () => {",
+                  "  pm.expect(pm.response.text().toLowerCase()).to.include('passado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataHora\": \"{{reagendar_passado}}\"\n}"
+            },
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/{{consulta_reagendar_passado_id}}/reagendar",
+              "host": ["{{agenda_url}}"],
+              "path": ["v1", "consultas", "{{consulta_reagendar_passado_id}}", "reagendar"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

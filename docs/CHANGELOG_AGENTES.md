@@ -5,6 +5,48 @@ O agente `doc-writer` le este arquivo para gerar documentacao no Obsidian.
 
 ---
 
+### 2026-05-15 — Consulta (Agendamento)
+**Agente:** backend-dev (Pessoa 4 — roadmap pessoal)
+**Arquivos criados:**
+- commons/src/main/java/br/edu/imepac/commons/entities/StatusConsulta.java
+- commons/src/main/java/br/edu/imepac/commons/entities/ConsultaEntity.java
+- commons/src/main/java/br/edu/imepac/commons/entities/HorarioDisponivelEntity.java
+- commons/src/main/java/br/edu/imepac/commons/repositories/ConsultaRepository.java
+- commons/src/main/java/br/edu/imepac/commons/repositories/HorarioDisponivelRepository.java
+- commons/src/main/java/br/edu/imepac/commons/services/ConsultaService.java
+- commons/src/test/java/br/edu/imepac/commons/services/ConsultaServiceTest.java
+- agendamento/src/main/java/br/edu/imepac/agendamento/config/RestTemplateConfig.java
+- agendamento/src/main/java/br/edu/imepac/agendamento/config/SwaggerConfig.java
+- agendamento/src/main/java/br/edu/imepac/agendamento/clients/AdministrativoClient.java
+- agendamento/src/main/java/br/edu/imepac/agendamento/dtos/ConsultaRequest.java
+- agendamento/src/main/java/br/edu/imepac/agendamento/dtos/ConsultaResponse.java
+- agendamento/src/main/java/br/edu/imepac/agendamento/dtos/ReagendarRequest.java
+- agendamento/src/main/java/br/edu/imepac/agendamento/controllers/ConsultaController.java
+**Rotas expostas (porta 8082):**
+- POST   /v1/consultas                       — Agenda nova consulta (valida convenio ativo + conflito)
+- DELETE /v1/consultas/{id}                  — Cancela consulta (soft delete via status)
+- PATCH  /v1/consultas/{id}/reagendar        — Reagenda com revalidacao de conflito
+- PATCH  /v1/consultas/{id}/confirmar        — Confirma consulta pendente
+- GET    /v1/consultas?medicoId|pacienteId|data — Lista com filtros prioritarios
+- GET    /v1/consultas/minha-agenda?medicoId — Pendentes do medico
+**Entidades:**
+- StatusConsulta (enum): PENDENTE, CONFIRMADA, REALIZADA, CANCELADA
+- ConsultaEntity: id, pacienteId, medicoId, convenioId, dataHora, status, observacoes
+- HorarioDisponivelEntity: id, medicoId, dataHora, ocupado
+**Comunicacao HTTP:**
+- AdministrativoClient consulta /v1/convenios/{id}, /v1/medicos/{id}, /v1/pacientes/{id} no administrativo (porta 8081)
+- isConvenioAtivo() trata 404 como inativo
+**Validacoes:**
+- Conflito de horario (no Service): existsByMedicoIdAndDataHoraAndStatusNot(medicoId, dataHora, CANCELADA)
+- Convenio ativo (no Controller): chamada HTTP antes de salvar
+**Testes:** 9 testes Mockito cobrindo agendar (com/sem conflito), cancelar, reagendar, confirmar, finders
+**Observacoes:**
+- Referencias por Long id — sem @ManyToOne entre bancos diferentes (admin vs agendamento)
+- @Value("${administrativo.url}") usa exatamente a chave do application.properties
+- Toda consulta nasce PENDENTE; agendar() sobrescreve status enviado pelo cliente
+
+---
+
 ### 2026-05-07 — Convenio
 **Agente:** backend-dev (referencia — implementado manualmente)
 **Arquivos criados:**
