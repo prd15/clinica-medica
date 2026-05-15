@@ -120,4 +120,14 @@ public class ConsultaController {
                 .toList();
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "Retorna agenda do medico com consultas pendentes")
+    @ApiResponse(responseCode = "200", description = "Agenda retornada")
+    @GetMapping("/minha-agenda")
+    public ResponseEntity<List<ConsultaResponse>> minhaAgenda(@RequestParam Long medicoId) {
+        List<ConsultaResponse> response = consultaService.findMinhaAgenda(medicoId).stream()
+                .map(c -> modelMapper.map(c, ConsultaResponse.class))
+                .toList();
+        return ResponseEntity.ok(response);
+    }
 }
