@@ -48,4 +48,20 @@ public class ConsultaService {
             return consultaRepository.save(consulta);
         });
     }
+
+    // muda data/hora — precisa revalidar conflito no novo horario
+    public Optional<ConsultaEntity> reagendar(Long id, LocalDateTime novaDataHora) {
+        return consultaRepository.findById(id).map(consulta -> {
+            boolean conflito = consultaRepository.existsByMedicoIdAndDataHoraAndStatusNot(
+                    consulta.getMedicoId(),
+                    novaDataHora,
+                    StatusConsulta.CANCELADA
+            );
+            if (conflito) {
+                throw new RuntimeException("Medico ja possui consulta neste horario");
+            }
+            consulta.setDataHora(novaDataHora);
+            return consultaRepository.save(consulta);
+        });
+    }
 }
