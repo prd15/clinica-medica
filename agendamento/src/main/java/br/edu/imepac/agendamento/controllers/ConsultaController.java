@@ -31,4 +31,25 @@ public class ConsultaController {
         this.administrativoClient = administrativoClient;
         this.modelMapper = modelMapper;
     }
+
+    @Operation(summary = "Agenda uma nova consulta",
+            description = "Valida conflito de horario e status do convenio antes de agendar")
+    @ApiResponse(responseCode = "201", description = "Consulta agendada com sucesso")
+    @ApiResponse(responseCode = "400", description = "Conflito de horario ou convenio inativo")
+    @PostMapping
+    public ResponseEntity<?> agendar(@Valid @RequestBody ConsultaRequest request) {
+        // validacao de convenio ativo acontece ANTES do service — depende de HTTP no administrativo
+        if (!administrativoClient.isConvenioAtivo(request.getConvenioId())) {
+            return ResponseEntity.badRequest().body("Convenio inativo ou nao encontrado");
+        }
+        try {
+            ConsultaEntity entity = modelMapper.map(request, ConsultaEntity.class);
+            ConsultaEntity salva = consultaService.agendar(entity);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(modelMapper.map(salva, ConsultaResponse.class));
+        } catch (RuntimeException e) {
+            // service joga RuntimeException quando ha conflito de horario
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
