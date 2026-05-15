@@ -126,4 +126,19 @@ class ConsultaServiceTest {
         assertEquals(StatusConsulta.CONFIRMADA, resultado.get().getStatus());
         verify(consultaRepository).save(existente);
     }
+
+    // findByMedicoId delega direto pro repository — confirma que nao filtra nada
+    @Test
+    void testFindByMedicoId_RetornaLista() {
+        List<ConsultaEntity> consultas = List.of(
+                novaConsulta(1L, StatusConsulta.PENDENTE),
+                novaConsulta(2L, StatusConsulta.CONFIRMADA)
+        );
+        when(consultaRepository.findByMedicoId(1L)).thenReturn(consultas);
+
+        List<ConsultaEntity> resultado = consultaService.findByMedicoId(1L);
+
+        assertEquals(2, resultado.size());
+        verify(consultaRepository).findByMedicoId(1L);
+    }
 }
