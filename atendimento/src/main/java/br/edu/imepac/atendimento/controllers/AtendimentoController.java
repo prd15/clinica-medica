@@ -77,6 +77,16 @@ public class AtendimentoController {
         return ResponseEntity.ok(prontuario);
     }
 
+    @PostMapping("/{id}/anotacoes")
+    @Operation(summary = "Adiciona anotação ao prontuário do atendimento")
+    @ApiResponse(responseCode = "201", description = "Anotação registrada")
+    @ApiResponse(responseCode = "404", description = "Atendimento não encontrado")
+    public ResponseEntity<AnotacaoEntity> adicionarAnotacao(@PathVariable Long id,
+                                                             @RequestBody @Valid AnotacaoRequest request) {
+        AnotacaoEntity anotacao = atendimentoService.adicionarAnotacao(id, request.getTexto());
+        return ResponseEntity.status(HttpStatus.CREATED).body(anotacao);
+    }
+
     private AtendimentoResponse toResponse(AtendimentoEntity entidade, Long prontuarioId) {
         AtendimentoResponse r = new AtendimentoResponse();
         r.setId(entidade.getId());
