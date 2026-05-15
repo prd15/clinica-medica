@@ -52,4 +52,14 @@ public class ConsultaController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @Operation(summary = "Cancela uma consulta agendada")
+    @ApiResponse(responseCode = "200", description = "Consulta cancelada")
+    @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ConsultaResponse> cancelar(@PathVariable("id") Long id) {
+        return consultaService.cancelar(id)
+                .map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                .orElse(ResponseEntity.notFound().build());
+    }
 }
