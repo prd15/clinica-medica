@@ -184,4 +184,17 @@ class ConsultaServiceTest {
         verify(consultaRepository, never()).existsByMedicoIdAndDataHoraAndStatusNot(any(), any(), any());
         verify(consultaRepository, never()).save(any(ConsultaEntity.class));
     }
+
+    // tentativa de confirmar uma cancelada (ou qualquer status diferente de PENDENTE) deve falhar
+    @Test
+    void testConfirmar_ConsultaCancelada_LancaException() {
+        ConsultaEntity cancelada = novaConsulta(1L, StatusConsulta.CANCELADA);
+        when(consultaRepository.findById(1L)).thenReturn(Optional.of(cancelada));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> consultaService.confirmar(1L));
+        assertTrue(ex.getMessage().contains("CANCELADA"));
+
+        verify(consultaRepository, never()).save(any(ConsultaEntity.class));
+    }
 }
