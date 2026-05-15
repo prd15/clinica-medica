@@ -60,6 +60,13 @@ public class AtendimentoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(salvo, null));
     }
 
+    @GetMapping("/historico")
+    @Operation(summary = "Retorna histórico de atendimentos de um paciente")
+    @ApiResponse(responseCode = "200", description = "Histórico retornado")
+    public ResponseEntity<List<AtendimentoEntity>> historico(@RequestParam Long pacienteId) {
+        return ResponseEntity.ok(atendimentoService.buscarHistoricoPorPaciente(pacienteId));
+    }
+
     private AtendimentoResponse toResponse(AtendimentoEntity entidade, Long prontuarioId) {
         AtendimentoResponse r = new AtendimentoResponse();
         r.setId(entidade.getId());
