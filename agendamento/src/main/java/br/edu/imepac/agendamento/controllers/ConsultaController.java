@@ -15,6 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Tag(name = "Consultas", description = "Agendamento e gestao de consultas medicas")
 @RestController
 @RequestMapping("/v1/consultas")
@@ -87,5 +90,34 @@ public class ConsultaController {
         return consultaService.confirmar(id)
                 .map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Lista consultas com filtros opcionais",
+            description = "Prioridade dos filtros: medicoId > pacienteId > data > sem filtro")
+    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @GetMapping
+    public ResponseEntity<List<ConsultaResponse>> listar(
+            @RequestParam(required = false) Long medicoId,
+            @RequestParam(required = false) Long pacienteId,
+            @RequestParam(required = false) String data) {
+
+        List<ConsultaEntity> consultas;
+        if (medicoId != null) {
+            consultas = consultaService.findByMedicoId(medicoId);
+        } else if (pacienteId != null) {
+            consultas = consultaService.findByPacienteId(pacienteId);
+        } else if (data != null && !data.isBlank()) {
+            // formato esperado yyyy-MM-dd — LocalDate.parse ja valida
+            consultas = consultaService.findByData(LocalDate.parse(data));
+        } else {
+            // sem filtro: retorna agenda de quem? — nenhuma; devolve vazio.
+            // (evita escanear tudo no banco; chamada deve sempre vir com filtro)
+            consultas = List.of();
+        }
+
+        List<ConsultaResponse> response = consultas.stream()
+                .map(c -> modelMapper.map(c, ConsultaResponse.class))
+                .toList();
+        return ResponseEntity.ok(response);
     }
 }
