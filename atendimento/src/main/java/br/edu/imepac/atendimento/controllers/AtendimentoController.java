@@ -87,6 +87,16 @@ public class AtendimentoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(anotacao);
     }
 
+    @PostMapping("/{id}/exames")
+    @Operation(summary = "Solicita exame vinculado ao atendimento")
+    @ApiResponse(responseCode = "201", description = "Exame solicitado")
+    @ApiResponse(responseCode = "404", description = "Atendimento não encontrado")
+    public ResponseEntity<SolicitacaoExameEntity> solicitarExame(@PathVariable Long id,
+                                                                  @RequestBody @Valid ExameRequest request) {
+        SolicitacaoExameEntity exame = atendimentoService.solicitarExame(id, request.getDescricao(), request.getTipo());
+        return ResponseEntity.status(HttpStatus.CREATED).body(exame);
+    }
+
     private AtendimentoResponse toResponse(AtendimentoEntity entidade, Long prontuarioId) {
         AtendimentoResponse r = new AtendimentoResponse();
         r.setId(entidade.getId());
