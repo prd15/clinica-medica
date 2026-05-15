@@ -86,4 +86,10 @@ public class AtendimentoService {
         exame.setDataSolicitacao(LocalDateTime.now());
         return exameRepository.save(exame);
     }
+
+    public ProntuarioEntity buscarProntuario(Long atendimentoId) {
+        return prontuarioRepository
+                .findFirstByAtendimentoIdOrderByIdDesc(atendimentoId)
+                .orElseThrow(() -> new NoSuchElementException("Prontuario nao encontrado para atendimentoId: " + atendimentoId));
+    }
 }
