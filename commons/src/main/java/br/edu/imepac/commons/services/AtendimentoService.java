@@ -57,4 +57,9 @@ public class AtendimentoService {
     public List<AtendimentoEntity> buscarHistoricoPorPaciente(Long pacienteId) {
         return atendimentoRepository.findByPacienteId(pacienteId);
     }
+
+    public AtendimentoEntity buscarPorConsulta(Long consultaId) {
+        return atendimentoRepository.findByConsultaId(consultaId)
+                .orElseThrow(() -> new NoSuchElementException("Atendimento nao encontrado para consultaId: " + consultaId));
+    }
 }
