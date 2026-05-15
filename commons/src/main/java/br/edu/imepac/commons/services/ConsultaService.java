@@ -46,8 +46,12 @@ public class ConsultaService {
     }
 
     // soft delete logico — mantem historico, so muda o status
+    // consulta REALIZADA nao pode ser cancelada (ja aconteceu — alterar status falsearia historico)
     public Optional<ConsultaEntity> cancelar(Long id) {
         return consultaRepository.findById(id).map(consulta -> {
+            if (consulta.getStatus() == StatusConsulta.REALIZADA) {
+                throw new IllegalStateException("Consulta ja realizada nao pode ser cancelada");
+            }
             consulta.setStatus(StatusConsulta.CANCELADA);
             return consultaRepository.save(consulta);
         });
