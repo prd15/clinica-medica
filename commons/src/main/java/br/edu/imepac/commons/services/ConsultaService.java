@@ -76,4 +76,25 @@ public class ConsultaService {
             return consulta;
         });
     }
+
+    public List<ConsultaEntity> findByMedicoId(Long medicoId) {
+        return consultaRepository.findByMedicoId(medicoId);
+    }
+
+    public List<ConsultaEntity> findByPacienteId(Long pacienteId) {
+        return consultaRepository.findByPacienteId(pacienteId);
+    }
+
+    // converte LocalDate para intervalo do dia: 00:00:00 ate 23:59:59.999...
+    // assim findByDataHoraBetween pega tudo que foi marcado naquele dia
+    public List<ConsultaEntity> findByData(LocalDate data) {
+        LocalDateTime inicio = data.atStartOfDay();
+        LocalDateTime fim = data.atTime(23, 59, 59, 999_999_999);
+        return consultaRepository.findByDataHoraBetween(inicio, fim);
+    }
+
+    // agenda do medico = so o que esta PENDENTE (consultas futuras nao confirmadas ainda)
+    public List<ConsultaEntity> findMinhaAgenda(Long medicoId) {
+        return consultaRepository.findByMedicoIdAndStatus(medicoId, StatusConsulta.PENDENTE);
+    }
 }
