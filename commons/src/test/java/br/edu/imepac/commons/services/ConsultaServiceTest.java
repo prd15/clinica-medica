@@ -153,4 +153,21 @@ class ConsultaServiceTest {
         assertEquals(1, resultado.size());
         verify(consultaRepository).findByPacienteId(1L);
     }
+
+    // minha-agenda traz somente PENDENTE — confirma que o service passa o status certo
+    @Test
+    void testFindMinhaAgenda_RetornaApenasPendentes() {
+        List<ConsultaEntity> pendentes = List.of(
+                novaConsulta(1L, StatusConsulta.PENDENTE),
+                novaConsulta(2L, StatusConsulta.PENDENTE)
+        );
+        when(consultaRepository.findByMedicoIdAndStatus(1L, StatusConsulta.PENDENTE))
+                .thenReturn(pendentes);
+
+        List<ConsultaEntity> resultado = consultaService.findMinhaAgenda(1L);
+
+        assertEquals(2, resultado.size());
+        assertTrue(resultado.stream().allMatch(c -> c.getStatus() == StatusConsulta.PENDENTE));
+        verify(consultaRepository).findByMedicoIdAndStatus(1L, StatusConsulta.PENDENTE);
+    }
 }
