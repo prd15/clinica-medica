@@ -70,14 +70,16 @@ public class ConsultaService {
     }
 
     // so confirma se estiver PENDENTE — cancelada/realizada nao volta atras
+    // antes a gente devolvia sem alterar; mudei pra estourar exception
+    // pq retornar 200 em uma operacao que nao fez nada e enganoso pra quem consome a API
     public Optional<ConsultaEntity> confirmar(Long id) {
         return consultaRepository.findById(id).map(consulta -> {
-            if (consulta.getStatus() == StatusConsulta.PENDENTE) {
-                consulta.setStatus(StatusConsulta.CONFIRMADA);
-                return consultaRepository.save(consulta);
+            if (consulta.getStatus() != StatusConsulta.PENDENTE) {
+                throw new IllegalStateException(
+                        "Consulta nao pode ser confirmada no status atual: " + consulta.getStatus());
             }
-            // se nao for PENDENTE, devolve sem alterar — controller decide o que retornar
-            return consulta;
+            consulta.setStatus(StatusConsulta.CONFIRMADA);
+            return consultaRepository.save(consulta);
         });
     }
 
