@@ -78,4 +78,14 @@ public class ConsultaController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @Operation(summary = "Confirma uma consulta pendente")
+    @ApiResponse(responseCode = "200", description = "Consulta confirmada")
+    @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
+    @PatchMapping("/{id}/confirmar")
+    public ResponseEntity<ConsultaResponse> confirmar(@PathVariable("id") Long id) {
+        return consultaService.confirmar(id)
+                .map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                .orElse(ResponseEntity.notFound().build());
+    }
 }
