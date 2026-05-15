@@ -81,4 +81,16 @@ class ConsultaServiceTest {
         verify(consultaRepository).findById(1L);
         verify(consultaRepository).save(existente);
     }
+
+    // cancelar consulta inexistente devolve Optional.empty sem chamar save
+    @Test
+    void testCancelar_NaoEncontrado_RetornaEmpty() {
+        when(consultaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Optional<ConsultaEntity> resultado = consultaService.cancelar(99L);
+
+        assertTrue(resultado.isEmpty());
+        verify(consultaRepository).findById(99L);
+        verify(consultaRepository, never()).save(any(ConsultaEntity.class));
+    }
 }
