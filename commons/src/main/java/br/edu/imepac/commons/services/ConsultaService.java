@@ -64,4 +64,16 @@ public class ConsultaService {
             return consultaRepository.save(consulta);
         });
     }
+
+    // so confirma se estiver PENDENTE — cancelada/realizada nao volta atras
+    public Optional<ConsultaEntity> confirmar(Long id) {
+        return consultaRepository.findById(id).map(consulta -> {
+            if (consulta.getStatus() == StatusConsulta.PENDENTE) {
+                consulta.setStatus(StatusConsulta.CONFIRMADA);
+                return consultaRepository.save(consulta);
+            }
+            // se nao for PENDENTE, devolve sem alterar — controller decide o que retornar
+            return consulta;
+        });
+    }
 }
