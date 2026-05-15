@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,100 +39,81 @@ public class ConsultaController {
     @Operation(summary = "Agenda uma nova consulta",
             description = "Valida conflito de horario e status do convenio antes de agendar")
     @ApiResponse(responseCode = "201", description = "Consulta agendada com sucesso")
-    @ApiResponse(responseCode = "400", description = "Conflito de horario, convenio inativo ou dados invalidos")
+    @ApiResponse(responseCode = "400", description = "Convenio inativo ou dados invalidos")
+    @ApiResponse(responseCode = "409", description = "Conflito de horario")
     @PostMapping
-    public ResponseEntity<Object> agendar(@Valid @RequestBody ConsultaRequest request) {
-        // validacao de convenio ativo acontece ANTES do service — depende de HTTP no administrativo
+    public ResponseEntity<ConsultaResponse> agendar(@Valid @RequestBody ConsultaRequest request) {
         if (!administrativoClient.isConvenioAtivo(request.getConvenioId())) {
-            return ResponseEntity.badRequest().body("Convenio inativo ou nao encontrado");
+            throw new IllegalArgumentException("Convenio inativo ou nao encontrado");
         }
-        try {
-            // mapping manual: ModelMapper em matching loose confunde *Id com setId()
-            // (qualquer get*Id na origem vira candidato pra setId no destino)
-            ConsultaEntity entity = new ConsultaEntity();
-            entity.setPacienteId(request.getPacienteId());
-            entity.setMedicoId(request.getMedicoId());
-            entity.setConvenioId(request.getConvenioId());
-            entity.setDataHora(request.getDataHora());
-            entity.setObservacoes(request.getObservacoes());
+        ConsultaEntity entity = new ConsultaEntity();
+        entity.setPacienteId(request.getPacienteId());
+        entity.setMedicoId(request.getMedicoId());
+        entity.setConvenioId(request.getConvenioId());
+        entity.setDataHora(request.getDataHora());
+        entity.setObservacoes(request.getObservacoes());
 
-            ConsultaEntity salva = consultaService.agendar(entity);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(modelMapper.map(salva, ConsultaResponse.class));
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            // erros de regra de negocio (conflito, data passado) — 400 com mensagem clara
-            // NPE/etc nao sao capturados aqui de proposito; deixa o Spring tratar como 500
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        ConsultaEntity salva = consultaService.agendar(entity);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(modelMapper.map(salva, ConsultaResponse.class));
     }
 
     @Operation(summary = "Cancela uma consulta agendada")
     @ApiResponse(responseCode = "200", description = "Consulta cancelada")
-    @ApiResponse(responseCode = "400", description = "Consulta nao pode ser cancelada no status atual")
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
+    @ApiResponse(responseCode = "409", description = "Consulta nao pode ser cancelada no status atual")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> cancelar(@PathVariable("id") Long id) {
-        try {
-            return consultaService.cancelar(id)
-                    .<ResponseEntity<Object>>map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
-                    .orElseGet(() -> ResponseEntity.notFound().build());
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<ConsultaResponse> cancelar(@PathVariable("id") Long id) {
+        return consultaService.cancelar(id)
+                .map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @Operation(summary = "Reagenda uma consulta para outra data e hora")
     @ApiResponse(responseCode = "200", description = "Consulta reagendada")
-    @ApiResponse(responseCode = "400", description = "Conflito de horario, status invalido ou data no passado")
+    @ApiResponse(responseCode = "400", description = "Data no passado")
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
+    @ApiResponse(responseCode = "409", description = "Conflito de horario ou status terminal")
     @PatchMapping("/{id}/reagendar")
-    public ResponseEntity<Object> reagendar(@PathVariable("id") Long id,
-                                            @Valid @RequestBody ReagendarRequest request) {
-        try {
-            return consultaService.reagendar(id, request.getDataHora())
-                    .<ResponseEntity<Object>>map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
-                    .orElseGet(() -> ResponseEntity.notFound().build());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<ConsultaResponse> reagendar(@PathVariable("id") Long id,
+                                                     @Valid @RequestBody ReagendarRequest request) {
+        return consultaService.reagendar(id, request.getDataHora())
+                .map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @Operation(summary = "Confirma uma consulta pendente")
     @ApiResponse(responseCode = "200", description = "Consulta confirmada")
-    @ApiResponse(responseCode = "400", description = "Consulta nao esta no status PENDENTE")
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
+    @ApiResponse(responseCode = "409", description = "Consulta nao esta no status PENDENTE")
     @PatchMapping("/{id}/confirmar")
-    public ResponseEntity<Object> confirmar(@PathVariable("id") Long id) {
-        try {
-            return consultaService.confirmar(id)
-                    .<ResponseEntity<Object>>map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
-                    .orElseGet(() -> ResponseEntity.notFound().build());
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<ConsultaResponse> confirmar(@PathVariable("id") Long id) {
+        return consultaService.confirmar(id)
+                .map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @Operation(summary = "Lista consultas com filtros opcionais",
-            description = "Prioridade dos filtros: medicoId > pacienteId > data > sem filtro")
+            description = "Prioridade dos filtros: medicoId > pacienteId > data. Informe ao menos um filtro.")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @ApiResponse(responseCode = "400", description = "Nenhum filtro informado ou data invalida")
     @GetMapping
     public ResponseEntity<List<ConsultaResponse>> listar(
             @RequestParam(required = false) Long medicoId,
             @RequestParam(required = false) Long pacienteId,
-            @RequestParam(required = false) String data) {
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
 
         List<ConsultaEntity> consultas;
         if (medicoId != null) {
             consultas = consultaService.findByMedicoId(medicoId);
         } else if (pacienteId != null) {
             consultas = consultaService.findByPacienteId(pacienteId);
-        } else if (data != null && !data.isBlank()) {
-            // formato esperado yyyy-MM-dd — LocalDate.parse ja valida
-            consultas = consultaService.findByData(LocalDate.parse(data));
+        } else if (data != null) {
+            consultas = consultaService.findByData(data);
         } else {
-            // sem filtro: retorna agenda de quem? — nenhuma; devolve vazio.
-            // (evita escanear tudo no banco; chamada deve sempre vir com filtro)
-            consultas = List.of();
+            throw new IllegalArgumentException(
+                    "Informe ao menos um filtro: medicoId, pacienteId ou data");
         }
 
         List<ConsultaResponse> response = consultas.stream()
