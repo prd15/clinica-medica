@@ -170,4 +170,18 @@ class ConsultaServiceTest {
         assertTrue(resultado.stream().allMatch(c -> c.getStatus() == StatusConsulta.PENDENTE));
         verify(consultaRepository).findByMedicoIdAndStatus(1L, StatusConsulta.PENDENTE);
     }
+
+    // agendamento retroativo nao faz sentido — service tem que abortar antes de tocar no repository
+    @Test
+    void testAgendar_DataNoPassado_LancaException() {
+        ConsultaEntity nova = novaConsulta(null, null);
+        nova.setDataHora(LocalDateTime.now().minusDays(1));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> consultaService.agendar(nova));
+        assertTrue(ex.getMessage().toLowerCase().contains("passado"));
+
+        verify(consultaRepository, never()).existsByMedicoIdAndDataHoraAndStatusNot(any(), any(), any());
+        verify(consultaRepository, never()).save(any(ConsultaEntity.class));
+    }
 }
