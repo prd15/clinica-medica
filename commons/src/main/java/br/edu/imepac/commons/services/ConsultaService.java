@@ -38,7 +38,7 @@ public class ConsultaService {
                 StatusConsulta.CANCELADA
         );
         if (conflito) {
-            throw new RuntimeException("Medico ja possui consulta neste horario");
+            throw new IllegalStateException("Medico ja possui consulta neste horario");
         }
         // toda consulta nasce PENDENTE — sobrescreve qualquer status vindo de fora
         consulta.setStatus(StatusConsulta.PENDENTE);
@@ -75,7 +75,7 @@ public class ConsultaService {
                     StatusConsulta.CANCELADA
             );
             if (conflito) {
-                throw new RuntimeException("Medico ja possui consulta neste horario");
+                throw new IllegalStateException("Medico ja possui consulta neste horario");
             }
             consulta.setDataHora(novaDataHora);
             return consultaRepository.save(consulta);
