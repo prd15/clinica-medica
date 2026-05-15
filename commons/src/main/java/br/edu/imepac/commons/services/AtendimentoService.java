@@ -53,4 +53,8 @@ public class AtendimentoService {
 
         return salvo;
     }
+
+    public List<AtendimentoEntity> buscarHistoricoPorPaciente(Long pacienteId) {
+        return atendimentoRepository.findByPacienteId(pacienteId);
+    }
 }
