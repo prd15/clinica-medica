@@ -112,4 +112,18 @@ class ConsultaServiceTest {
         assertEquals(novaDataHora, resultado.get().getDataHora());
         verify(consultaRepository).save(existente);
     }
+
+    // confirmar muda status de PENDENTE para CONFIRMADA
+    @Test
+    void testConfirmar_Encontrado_RetornaConfirmada() {
+        ConsultaEntity existente = novaConsulta(1L, StatusConsulta.PENDENTE);
+        when(consultaRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(consultaRepository.save(any(ConsultaEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Optional<ConsultaEntity> resultado = consultaService.confirmar(1L);
+
+        assertTrue(resultado.isPresent());
+        assertEquals(StatusConsulta.CONFIRMADA, resultado.get().getStatus());
+        verify(consultaRepository).save(existente);
+    }
 }
