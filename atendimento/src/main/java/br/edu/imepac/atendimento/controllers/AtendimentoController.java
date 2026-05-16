@@ -14,12 +14,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/v1/atendimentos")
 @Tag(name = "Atendimentos", description = "Registro clínico de consultas realizadas")
@@ -51,13 +53,16 @@ public class AtendimentoController {
                 request.getObservacoes()
         );
 
+        // busca o id do prontuario criado na mesma transacao para incluir no response
+        Long prontuarioId = atendimentoService.buscarProntuario(salvo.getId()).getId();
+
         try {
             agendamentoClient.confirmarRealizacao(request.getConsultaId());
         } catch (Exception e) {
-            System.err.println("Aviso: nao foi possivel notificar o agendamento. " + e.getMessage());
+            log.warn("Nao foi possivel notificar o agendamento para consultaId {}: {}", request.getConsultaId(), e.getMessage());
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(salvo, null));
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(salvo, prontuarioId));
     }
 
     @GetMapping("/historico")

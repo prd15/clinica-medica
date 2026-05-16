@@ -45,6 +45,12 @@ public class ConsultaController {
         if (!administrativoClient.isConvenioAtivo(request.getConvenioId())) {
             return ResponseEntity.badRequest().body("Convenio inativo ou nao encontrado");
         }
+        if (!administrativoClient.isMedicoAtivo(request.getMedicoId())) {
+            return ResponseEntity.badRequest().body("Medico inativo ou nao encontrado");
+        }
+        if (!administrativoClient.isPacienteExistente(request.getPacienteId())) {
+            return ResponseEntity.badRequest().body("Paciente nao encontrado");
+        }
         try {
             // mapping manual: ModelMapper em matching loose confunde *Id com setId()
             // (qualquer get*Id na origem vira candidato pra setId no destino)

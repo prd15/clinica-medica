@@ -58,6 +58,22 @@ public class AdministrativoClient {
         }
     }
 
+    // valida se o medico existe E esta ativo — mesma logica do convenio
+    public boolean isMedicoAtivo(Long medicoId) {
+        try {
+            ResponseEntity<Map> response = buscarMedico(medicoId);
+            if (response.getBody() == null) {
+                return false;
+            }
+            Object ativo = response.getBody().get("ativo");
+            return Boolean.TRUE.equals(ativo);
+        } catch (HttpClientErrorException.NotFound e) {
+            return false;
+        } catch (RestClientException e) {
+            return false;
+        }
+    }
+
     // GET /v1/pacientes/{id}
     @SuppressWarnings("rawtypes")
     public ResponseEntity<Map> buscarPaciente(Long id) {
@@ -65,6 +81,18 @@ public class AdministrativoClient {
             return restTemplate.getForEntity(adminUrl + "/v1/pacientes/" + id, Map.class);
         } catch (HttpClientErrorException.NotFound e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    // paciente nao tem campo ativo — valida somente existencia antes de agendar
+    public boolean isPacienteExistente(Long pacienteId) {
+        try {
+            ResponseEntity<Map> response = buscarPaciente(pacienteId);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (HttpClientErrorException.NotFound e) {
+            return false;
+        } catch (RestClientException e) {
+            return false;
         }
     }
 }
