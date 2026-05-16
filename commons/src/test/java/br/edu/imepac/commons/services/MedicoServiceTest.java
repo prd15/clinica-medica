@@ -150,6 +150,40 @@ class MedicoServiceTest {
     }
 
     @Test
+    void updateNaoDeveSobrescreverSenhaQuandoVierNula() {
+        MedicoEntity existente = buildMedico(1L, "Dr. João", "CRM-1");
+        existente.setSenha("senhaOriginal");
+        MedicoEntity dados = buildMedico(null, "Dr. João Atualizado", "CRM-1");
+        dados.setSenha(null);
+
+        when(medicoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(medicoRepository.findByCrm("CRM-1")).thenReturn(Optional.of(existente));
+        when(medicoRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Optional<MedicoEntity> resultado = medicoService.update(1L, dados);
+
+        assertTrue(resultado.isPresent());
+        assertEquals("senhaOriginal", resultado.get().getSenha());
+    }
+
+    @Test
+    void updateNaoDeveSobrescreverSenhaQuandoVierEmBranco() {
+        MedicoEntity existente = buildMedico(1L, "Dr. João", "CRM-1");
+        existente.setSenha("senhaOriginal");
+        MedicoEntity dados = buildMedico(null, "Dr. João Atualizado", "CRM-1");
+        dados.setSenha("   ");
+
+        when(medicoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(medicoRepository.findByCrm("CRM-1")).thenReturn(Optional.of(existente));
+        when(medicoRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Optional<MedicoEntity> resultado = medicoService.update(1L, dados);
+
+        assertTrue(resultado.isPresent());
+        assertEquals("senhaOriginal", resultado.get().getSenha());
+    }
+
+    @Test
     void deleteByIdDeveExcluirQuandoExistir() {
         when(medicoRepository.existsById(1L)).thenReturn(true);
 

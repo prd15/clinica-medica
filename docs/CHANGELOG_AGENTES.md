@@ -5,6 +5,71 @@ O agente `doc-writer` le este arquivo para gerar documentacao no Obsidian.
 
 ---
 
+### 2026-05-15 — Code Review Fixes (Medios + Melhorias)
+**Agente:** backend-dev
+**Branch:** fix/medium-improvements
+**Itens implementados:**
+- M1: GlobalExceptionHandler em administrativo, agendamento e atendimento + ErrorResponse DTO em cada
+- M2: ConvenioController, MedicoController, AtendenteController e ConsultaController padronizados com retorno tipado e sem try/catch redundante
+- M3: ConsultaController.listar usa @DateTimeFormat para o param data
+- M4: ConsultaController.listar retorna 400 quando nenhum filtro e informado
+- M5: ProntuarioResponse, HistoricoResponse, AnotacaoResponse e ExameResponse no atendimento
+- M6: unique constraint em ProntuarioEntity.atendimentoId
+- M7: MedicoService.update e AtendenteService.update preservam senha quando vier nula ou em branco
+- M9: ConsultaService valida conflito de horario com janela de SLOT_MINUTOS=30; novo metodo findByMedicoIdAndDataHoraBetweenAndStatusNot no repository
+- M10: AdministrativoClient agora usa ConvenioRefDTO, MedicoRefDTO e PacienteRefDTO em agendamento/clients/dto
+- M11: RestTemplate configurado com HttpComponentsClientHttpRequestFactory em agendamento e atendimento; dep httpclient5 adicionada nos poms
+- L2: AtendimentoController usa ModelMapper para todos os DTOs de saida
+- L4 + L5: enum StatusAtendimento { EM_ANDAMENTO, REALIZADO } com @Enumerated(EnumType.STRING) em AtendimentoEntity
+- L6: GET /v1/atendimentos/{id}/anotacoes e GET /v1/atendimentos/{id}/exames
+- L7: AtendimentoServiceTest expandido para 12 cenarios (sucesso e atendimento inexistente em solicitarExame, adicionarAnotacao, listarAnotacoes, listarExames, buscarHistoricoPorPaciente com dados e vazio, buscarPorConsulta)
+- L8: postman atendimento-collection.json com testes negativos (404 em prontuario/anotacao/exame em atendimento inexistente) e testes positivos de listagem
+- L9: ModelMapper com MatchingStrategies.STRICT
+
+**Itens pulados (com motivo):**
+- C1, C2, C3, C4, C5, C6: criticos pertencem ao amigo
+- M8: depende de C3
+- L1: BCrypt fora de escopo academico
+- L3: depende de C4
+
+**Arquivos criados:**
+- administrativo/src/main/java/br/edu/imepac/administrativo/controllers/GlobalExceptionHandler.java
+- administrativo/src/main/java/br/edu/imepac/administrativo/dtos/ErrorResponse.java
+- agendamento/src/main/java/br/edu/imepac/agendamento/controllers/GlobalExceptionHandler.java
+- agendamento/src/main/java/br/edu/imepac/agendamento/dtos/ErrorResponse.java
+- agendamento/src/main/java/br/edu/imepac/agendamento/clients/dto/ConvenioRefDTO.java
+- agendamento/src/main/java/br/edu/imepac/agendamento/clients/dto/MedicoRefDTO.java
+- agendamento/src/main/java/br/edu/imepac/agendamento/clients/dto/PacienteRefDTO.java
+- atendimento/src/main/java/br/edu/imepac/atendimento/controllers/GlobalExceptionHandler.java
+- atendimento/src/main/java/br/edu/imepac/atendimento/dtos/ErrorResponse.java
+- atendimento/src/main/java/br/edu/imepac/atendimento/dtos/ProntuarioResponse.java
+- atendimento/src/main/java/br/edu/imepac/atendimento/dtos/HistoricoResponse.java
+- atendimento/src/main/java/br/edu/imepac/atendimento/dtos/AnotacaoResponse.java
+- atendimento/src/main/java/br/edu/imepac/atendimento/dtos/ExameResponse.java
+- commons/src/main/java/br/edu/imepac/commons/entities/StatusAtendimento.java
+
+**Arquivos modificados:**
+- administrativo: ConvenioController, MedicoController, AtendenteController
+- agendamento: ConsultaController, AdministrativoClient, RestTemplateConfig, pom.xml
+- atendimento: AtendimentoController, AtendimentoResponse, AppConfig, pom.xml
+- commons: AtendimentoEntity, ProntuarioEntity, ModelMapperConfig, AtendimentoService, ConsultaService, ConsultaRepository, MedicoService, AtendenteService
+- commons/test: AtendimentoServiceTest, ConsultaServiceTest, MedicoServiceTest, AtendenteServiceTest
+- docs/atendimento-collection.json
+
+**Rotas novas:**
+- GET /v1/atendimentos/{id}/anotacoes — lista anotacoes do prontuario
+- GET /v1/atendimentos/{id}/exames — lista exames solicitados do atendimento
+
+**Validacao:**
+- mvn clean test em commons,administrativo,agendamento,atendimento: BUILD SUCCESS, 100 testes, 0 falhas
+
+**Observacoes:**
+- C3 (notificacao silenciosa) deixada para o amigo, mas o System.err foi substituido por SLF4J log.warn em AtendimentoController como parte do refactor M5/L2
+- Em ConsultaController.agendar, "convenio inativo" agora lanca IllegalArgumentException tratada pelo handler global, retornando 400 com payload padronizado
+- O conflito de horario agora retorna 409 (IllegalStateException) ao inves de 400 — semantica HTTP mais correta
+
+---
+
 ### 2026-05-15 — Consulta (Agendamento)
 **Agente:** backend-dev (Pessoa 4 — roadmap pessoal)
 **Arquivos criados:**

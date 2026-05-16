@@ -32,6 +32,11 @@
             <groupId>br.edu.imepac</groupId>
             <artifactId>commons</artifactId>
         </dependency>
+        <!-- Apache HttpClient 5 para suporte a PATCH no RestTemplate -->
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+        </dependency>
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

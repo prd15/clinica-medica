@@ -42,7 +42,9 @@ public class AtendenteService {
             validarUsuarioDisponivel(dadosAtualizados.getUsuario(), id);
             existing.setNome(dadosAtualizados.getNome());
             existing.setUsuario(dadosAtualizados.getUsuario());
-            existing.setSenha(dadosAtualizados.getSenha());
+            if (dadosAtualizados.getSenha() != null && !dadosAtualizados.getSenha().isBlank()) {
+                existing.setSenha(dadosAtualizados.getSenha());
+            }
             return atendenteRepository.save(existing);
         });
     }

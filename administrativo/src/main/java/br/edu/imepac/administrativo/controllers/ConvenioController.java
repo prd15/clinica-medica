@@ -14,8 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.NoSuchElementException;
-
 import java.util.List;
 
 @Tag(name = "Convenios", description = "Gerenciamento de convenios da clinica")
@@ -94,12 +92,8 @@ public class ConvenioController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<ConvenioResponse> alterarStatus(@PathVariable("id") Long id,
                                                           @Valid @RequestBody AlterarStatusRequest request) {
-        try {
-            ConvenioEntity atualizado = convenioService.alterarStatus(id, request.getAtivo());
-            return ResponseEntity.ok(modelMapper.map(atualizado, ConvenioResponse.class));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        ConvenioEntity atualizado = convenioService.alterarStatus(id, request.getAtivo());
+        return ResponseEntity.ok(modelMapper.map(atualizado, ConvenioResponse.class));
     }
 }
 

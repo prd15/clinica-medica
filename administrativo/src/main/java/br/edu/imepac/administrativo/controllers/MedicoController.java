@@ -75,14 +75,10 @@ public class MedicoController {
     })
     @PostMapping
     public ResponseEntity<MedicoResponse> create(@Valid @RequestBody MedicoRequest request) {
-        try {
-            MedicoEntity entity = modelMapper.map(request, MedicoEntity.class);
-            MedicoEntity saved = medicoService.save(entity);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(modelMapper.map(saved, MedicoResponse.class));
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        MedicoEntity entity = modelMapper.map(request, MedicoEntity.class);
+        MedicoEntity saved = medicoService.save(entity);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(modelMapper.map(saved, MedicoResponse.class));
     }
 
     @Operation(summary = "Atualiza médico existente")
@@ -94,14 +90,10 @@ public class MedicoController {
     @PutMapping("/{id}")
     public ResponseEntity<MedicoResponse> update(@PathVariable("id") Long id,
                                                   @Valid @RequestBody MedicoRequest request) {
-        try {
-            MedicoEntity entity = modelMapper.map(request, MedicoEntity.class);
-            return medicoService.update(id, entity)
-                    .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        MedicoEntity entity = modelMapper.map(request, MedicoEntity.class);
+        return medicoService.update(id, entity)
+                .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @Operation(summary = "Associa especialidade ao médico")
@@ -113,13 +105,9 @@ public class MedicoController {
     @PostMapping("/{id}/especialidades/{especialidadeId}")
     public ResponseEntity<MedicoResponse> associarEspecialidade(@PathVariable("id") Long id,
                                                                  @PathVariable("especialidadeId") Long especialidadeId) {
-        try {
-            return medicoService.associarEspecialidade(id, especialidadeId)
-                    .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        return medicoService.associarEspecialidade(id, especialidadeId)
+                .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @Operation(summary = "Remove especialidade do médico")
