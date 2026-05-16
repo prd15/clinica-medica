@@ -4,6 +4,7 @@ import br.edu.imepac.commons.entities.AtendimentoEntity;
 import br.edu.imepac.commons.entities.AnotacaoEntity;
 import br.edu.imepac.commons.entities.ProntuarioEntity;
 import br.edu.imepac.commons.entities.SolicitacaoExameEntity;
+import br.edu.imepac.commons.entities.StatusAtendimento;
 import br.edu.imepac.commons.repositories.AtendimentoRepository;
 import br.edu.imepac.commons.repositories.AnotacaoRepository;
 import br.edu.imepac.commons.repositories.ProntuarioRepository;
@@ -33,14 +34,13 @@ public class AtendimentoService {
         this.exameRepository = exameRepository;
     }
 
-    // salva o atendimento e cria o prontuário na mesma transação
     @Transactional
     public AtendimentoEntity registrar(AtendimentoEntity atendimento,
                                        String descricao,
                                        String diagnostico,
                                        String observacoes) {
         atendimento.setDataHora(LocalDateTime.now());
-        atendimento.setStatus("REALIZADO");
+        atendimento.setStatus(StatusAtendimento.REALIZADO);
         AtendimentoEntity salvo = atendimentoRepository.save(atendimento);
 
         ProntuarioEntity prontuario = new ProntuarioEntity();
@@ -91,5 +91,18 @@ public class AtendimentoService {
         return prontuarioRepository
                 .findFirstByAtendimentoIdOrderByIdDesc(atendimentoId)
                 .orElseThrow(() -> new NoSuchElementException("Prontuario nao encontrado para atendimentoId: " + atendimentoId));
+    }
+
+    public List<AnotacaoEntity> listarAnotacoes(Long atendimentoId) {
+        ProntuarioEntity prontuario = prontuarioRepository
+                .findFirstByAtendimentoIdOrderByIdDesc(atendimentoId)
+                .orElseThrow(() -> new NoSuchElementException("Prontuario nao encontrado para atendimentoId: " + atendimentoId));
+        return anotacaoRepository.findByProntuarioId(prontuario.getId());
+    }
+
+    public List<SolicitacaoExameEntity> listarExames(Long atendimentoId) {
+        atendimentoRepository.findById(atendimentoId)
+                .orElseThrow(() -> new NoSuchElementException("Atendimento nao encontrado: " + atendimentoId));
+        return exameRepository.findByAtendimentoId(atendimentoId);
     }
 }

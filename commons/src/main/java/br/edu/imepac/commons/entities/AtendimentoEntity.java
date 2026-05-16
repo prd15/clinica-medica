@@ -18,11 +18,9 @@ public class AtendimentoEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // id da consulta — referencia ao servico de agendamento, sem FK entre bancos
     @Column(nullable = false)
     private Long consultaId;
 
-    // ids como Long — bancos separados, sem @ManyToOne entre servicos
     @Column(nullable = false)
     private Long medicoId;
 
@@ -31,6 +29,6 @@ public class AtendimentoEntity {
 
     private LocalDateTime dataHora;
 
-    // ex: "REALIZADO", "EM_ANDAMENTO"
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private StatusAtendimento status;
 }
