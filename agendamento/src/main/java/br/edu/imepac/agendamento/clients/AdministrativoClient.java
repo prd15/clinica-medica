@@ -51,4 +51,16 @@ public class AdministrativoClient {
             return false;
         }
     }
+
+    // paciente nao tem campo ativo — valida somente existencia antes de agendar
+    public boolean isPacienteExistente(Long pacienteId) {
+        try {
+            ResponseEntity<Map> response = restTemplate.getForEntity(adminUrl + "/v1/pacientes/" + pacienteId, Map.class);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (HttpClientErrorException.NotFound e) {
+            return false;
+        } catch (RestClientException e) {
+            return false;
+        }
+    }
 }
