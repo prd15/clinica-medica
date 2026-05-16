@@ -49,11 +49,37 @@ public class AdministrativoClient {
         }
     }
 
+    public boolean isMedicoAtivo(Long medicoId) {
+        try {
+            ResponseEntity<MedicoRefDTO> response = buscarMedico(medicoId);
+            MedicoRefDTO body = response.getBody();
+            if (body == null) {
+                return false;
+            }
+            return Boolean.TRUE.equals(body.getAtivo());
+        } catch (HttpClientErrorException.NotFound e) {
+            return false;
+        } catch (RestClientException e) {
+            return false;
+        }
+    }
+
     public ResponseEntity<PacienteRefDTO> buscarPaciente(Long id) {
         try {
             return restTemplate.getForEntity(adminUrl + "/v1/pacientes/" + id, PacienteRefDTO.class);
         } catch (HttpClientErrorException.NotFound e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    public boolean isPacienteExistente(Long pacienteId) {
+        try {
+            ResponseEntity<PacienteRefDTO> response = buscarPaciente(pacienteId);
+            return response.getStatusCode().is2xxSuccessful() && response.getBody() != null;
+        } catch (HttpClientErrorException.NotFound e) {
+            return false;
+        } catch (RestClientException e) {
+            return false;
         }
     }
 }

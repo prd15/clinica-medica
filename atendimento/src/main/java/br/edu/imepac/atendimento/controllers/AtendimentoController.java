@@ -18,21 +18,19 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/v1/atendimentos")
 @Tag(name = "Atendimentos", description = "Registro clínico de consultas realizadas")
 public class AtendimentoController {
-
-    private static final Logger log = LoggerFactory.getLogger(AtendimentoController.class);
 
     private final AtendimentoService atendimentoService;
     private final AgendamentoClient agendamentoClient;
@@ -63,6 +61,8 @@ public class AtendimentoController {
                 request.getObservacoes()
         );
 
+        Long prontuarioId = atendimentoService.buscarProntuario(salvo.getId()).getId();
+
         try {
             agendamentoClient.confirmarRealizacao(request.getConsultaId());
         } catch (Exception e) {
@@ -70,8 +70,9 @@ public class AtendimentoController {
                     request.getConsultaId(), e.getMessage());
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(modelMapper.map(salvo, AtendimentoResponse.class));
+        AtendimentoResponse response = modelMapper.map(salvo, AtendimentoResponse.class);
+        response.setProntuarioId(prontuarioId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/historico")

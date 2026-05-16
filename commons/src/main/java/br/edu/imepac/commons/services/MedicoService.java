@@ -5,6 +5,7 @@ import br.edu.imepac.commons.entities.MedicoEntity;
 import br.edu.imepac.commons.repositories.EspecialidadeRepository;
 import br.edu.imepac.commons.repositories.MedicoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,10 +21,12 @@ public class MedicoService {
         this.especialidadeRepository = especialidadeRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<MedicoEntity> findAll() {
         return medicoRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<MedicoEntity> findByAtivo(Boolean ativo) {
         return medicoRepository.findByAtivo(ativo);
     }

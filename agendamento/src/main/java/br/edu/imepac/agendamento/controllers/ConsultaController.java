@@ -46,6 +46,12 @@ public class ConsultaController {
         if (!administrativoClient.isConvenioAtivo(request.getConvenioId())) {
             throw new IllegalArgumentException("Convenio inativo ou nao encontrado");
         }
+        if (!administrativoClient.isMedicoAtivo(request.getMedicoId())) {
+            throw new IllegalArgumentException("Medico inativo ou nao encontrado");
+        }
+        if (!administrativoClient.isPacienteExistente(request.getPacienteId())) {
+            throw new IllegalArgumentException("Paciente nao encontrado");
+        }
         ConsultaEntity entity = new ConsultaEntity();
         entity.setPacienteId(request.getPacienteId());
         entity.setMedicoId(request.getMedicoId());
