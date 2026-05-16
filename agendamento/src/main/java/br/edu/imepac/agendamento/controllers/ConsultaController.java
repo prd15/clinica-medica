@@ -35,6 +35,9 @@ public class ConsultaController {
         if (!administrativoClient.isMedicoAtivo(request.getMedicoId())) {
             return ResponseEntity.badRequest().body("Medico inativo ou nao encontrado");
         }
+        if (!administrativoClient.isPacienteExistente(request.getPacienteId())) {
+            return ResponseEntity.badRequest().body("Paciente nao encontrado");
+        }
 
         ConsultaEntity entidade = modelMapper.map(request, ConsultaEntity.class);
         ConsultaEntity salva = consultaService.agendar(entidade);
