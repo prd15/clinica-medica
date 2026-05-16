@@ -431,6 +431,139 @@
           "query": [{ "key": "pacienteId", "value": "999999" }]
         }
       }
+    },
+    {
+      "name": "Atendimento — GET prontuario consulta inexistente",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{atend_url}}/v1/atendimentos/999999",
+          "host": ["{{atend_url}}"],
+          "path": ["v1", "atendimentos", "999999"]
+        }
+      }
+    },
+    {
+      "name": "Atendimento — POST anotacao em atendimento inexistente",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"texto\": \"qualquer coisa\"\n}"
+        },
+        "url": {
+          "raw": "{{atend_url}}/v1/atendimentos/999999/anotacoes",
+          "host": ["{{atend_url}}"],
+          "path": ["v1", "atendimentos", "999999", "anotacoes"]
+        }
+      }
+    },
+    {
+      "name": "Atendimento — POST exame em atendimento inexistente",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"descricao\": \"Hemograma\",\n  \"tipo\": \"LABORATORIAL\"\n}"
+        },
+        "url": {
+          "raw": "{{atend_url}}/v1/atendimentos/999999/exames",
+          "host": ["{{atend_url}}"],
+          "path": ["v1", "atendimentos", "999999", "exames"]
+        }
+      }
+    },
+    {
+      "name": "Atendimento — GET listar anotacoes",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "if (!pm.collectionVariables.get('atendimento_id')) throw new Error('Rode POST realizar antes');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/anotacoes",
+          "host": ["{{atend_url}}"],
+          "path": ["v1", "atendimentos", "{{atendimento_id}}", "anotacoes"]
+        }
+      }
+    },
+    {
+      "name": "Atendimento — GET listar exames",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "if (!pm.collectionVariables.get('atendimento_id')) throw new Error('Rode POST realizar antes');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/exames",
+          "host": ["{{atend_url}}"],
+          "path": ["v1", "atendimentos", "{{atendimento_id}}", "exames"]
+        }
+      }
     }
   ]
 }
