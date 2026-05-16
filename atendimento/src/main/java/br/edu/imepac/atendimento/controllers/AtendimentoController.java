@@ -42,6 +42,7 @@ public class AtendimentoController {
                 request.getObservacoes()
         );
 
+        // busca prontuarioId antes de notificar o agendamento para incluir no response
         Long prontuarioId = atendimentoService.buscarProntuario(salvo.getId()).getId();
 
         try {
