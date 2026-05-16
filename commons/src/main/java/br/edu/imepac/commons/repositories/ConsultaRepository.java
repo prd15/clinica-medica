@@ -26,4 +26,9 @@ public interface ConsultaRepository extends JpaRepository<ConsultaEntity, Long> 
     // validacao critica de conflito: existe consulta no mesmo medico+horario que NAO esteja CANCELADA?
     // Spring Data deriva a query a partir do nome do metodo — sem precisar escrever JPQL/SQL
     boolean existsByMedicoIdAndDataHoraAndStatusNot(Long medicoId, LocalDateTime dataHora, StatusConsulta status);
+
+    List<ConsultaEntity> findByMedicoIdAndDataHoraBetweenAndStatusNot(Long medicoId,
+                                                                     LocalDateTime inicio,
+                                                                     LocalDateTime fim,
+                                                                     StatusConsulta status);
 }

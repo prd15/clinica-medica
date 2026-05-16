@@ -27,23 +27,19 @@ class ConsultaServiceTest {
     @InjectMocks
     private ConsultaService consultaService;
 
-    // helper pra montar entidade rapidinho — evita repeticao em todo teste
-    // dataHora relativa (hoje + 30 dias) pra teste nao virar time-bomb depois que a validacao
-    // de data no passado entrou no service
     private ConsultaEntity novaConsulta(Long id, StatusConsulta status) {
         LocalDateTime dataHora = LocalDateTime.now().plusDays(30).withSecond(0).withNano(0);
         return new ConsultaEntity(id, 1L, 1L, 1L, dataHora, status, "consulta de rotina");
     }
 
-    // caminho feliz do agendamento: sem conflito, salva com status PENDENTE
     @Test
     void testAgendar_SemConflito_RetornaConsultaSalva() {
         ConsultaEntity nova = novaConsulta(null, null);
         ConsultaEntity salva = novaConsulta(1L, StatusConsulta.PENDENTE);
 
-        when(consultaRepository.existsByMedicoIdAndDataHoraAndStatusNot(
-                eq(1L), any(LocalDateTime.class), eq(StatusConsulta.CANCELADA)))
-                .thenReturn(false);
+        when(consultaRepository.findByMedicoIdAndDataHoraBetweenAndStatusNot(
+                eq(1L), any(LocalDateTime.class), any(LocalDateTime.class), eq(StatusConsulta.CANCELADA)))
+                .thenReturn(List.of());
         when(consultaRepository.save(any(ConsultaEntity.class))).thenReturn(salva);
 
         ConsultaEntity resultado = consultaService.agendar(nova);
@@ -54,14 +50,14 @@ class ConsultaServiceTest {
         verify(consultaRepository).save(any(ConsultaEntity.class));
     }
 
-    // conflito de horario tem que abortar antes de chamar o save
     @Test
     void testAgendar_ComConflito_LancaException() {
         ConsultaEntity nova = novaConsulta(null, null);
+        ConsultaEntity existente = novaConsulta(5L, StatusConsulta.PENDENTE);
 
-        when(consultaRepository.existsByMedicoIdAndDataHoraAndStatusNot(
-                eq(1L), any(LocalDateTime.class), eq(StatusConsulta.CANCELADA)))
-                .thenReturn(true);
+        when(consultaRepository.findByMedicoIdAndDataHoraBetweenAndStatusNot(
+                eq(1L), any(LocalDateTime.class), any(LocalDateTime.class), eq(StatusConsulta.CANCELADA)))
+                .thenReturn(List.of(existente));
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> consultaService.agendar(nova));
         assertTrue(ex.getMessage().toLowerCase().contains("horario"));
@@ -69,7 +65,23 @@ class ConsultaServiceTest {
         verify(consultaRepository, never()).save(any(ConsultaEntity.class));
     }
 
-    // cancelar deve mudar status para CANCELADA quando a consulta existe
+    @Test
+    void testAgendar_ConflitoDentroDoSlotDe30Minutos_LancaException() {
+        ConsultaEntity nova = novaConsulta(null, null);
+        ConsultaEntity proxima = novaConsulta(7L, StatusConsulta.PENDENTE);
+        proxima.setDataHora(nova.getDataHora().plusMinutes(15));
+
+        when(consultaRepository.findByMedicoIdAndDataHoraBetweenAndStatusNot(
+                eq(1L), any(LocalDateTime.class), any(LocalDateTime.class), eq(StatusConsulta.CANCELADA)))
+                .thenReturn(List.of(proxima));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> consultaService.agendar(nova));
+        assertTrue(ex.getMessage().toLowerCase().contains("horario"));
+
+        verify(consultaRepository, never()).save(any(ConsultaEntity.class));
+    }
+
     @Test
     void testCancelar_Encontrado_RetornaCancelada() {
         ConsultaEntity existente = novaConsulta(1L, StatusConsulta.PENDENTE);
@@ -84,7 +96,6 @@ class ConsultaServiceTest {
         verify(consultaRepository).save(existente);
     }
 
-    // cancelar consulta inexistente devolve Optional.empty sem chamar save
     @Test
     void testCancelar_NaoEncontrado_RetornaEmpty() {
         when(consultaRepository.findById(99L)).thenReturn(Optional.empty());
@@ -96,16 +107,15 @@ class ConsultaServiceTest {
         verify(consultaRepository, never()).save(any(ConsultaEntity.class));
     }
 
-    // reagendar atualiza dataHora se a consulta existe e nao ha conflito no novo horario
     @Test
     void testReagendar_Encontrado_SemConflito() {
         ConsultaEntity existente = novaConsulta(1L, StatusConsulta.PENDENTE);
         LocalDateTime novaDataHora = LocalDateTime.now().plusDays(45).withSecond(0).withNano(0);
 
         when(consultaRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(consultaRepository.existsByMedicoIdAndDataHoraAndStatusNot(
-                eq(1L), eq(novaDataHora), eq(StatusConsulta.CANCELADA)))
-                .thenReturn(false);
+        when(consultaRepository.findByMedicoIdAndDataHoraBetweenAndStatusNot(
+                eq(1L), any(LocalDateTime.class), any(LocalDateTime.class), eq(StatusConsulta.CANCELADA)))
+                .thenReturn(List.of());
         when(consultaRepository.save(any(ConsultaEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Optional<ConsultaEntity> resultado = consultaService.reagendar(1L, novaDataHora);
@@ -115,7 +125,24 @@ class ConsultaServiceTest {
         verify(consultaRepository).save(existente);
     }
 
-    // confirmar muda status de PENDENTE para CONFIRMADA
+    @Test
+    void testReagendar_IgnoraProprioRegistroNaCheckDeConflito() {
+        ConsultaEntity existente = novaConsulta(1L, StatusConsulta.PENDENTE);
+        LocalDateTime novaDataHora = existente.getDataHora().plusMinutes(10);
+
+        when(consultaRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(consultaRepository.findByMedicoIdAndDataHoraBetweenAndStatusNot(
+                eq(1L), any(LocalDateTime.class), any(LocalDateTime.class), eq(StatusConsulta.CANCELADA)))
+                .thenReturn(List.of(existente));
+        when(consultaRepository.save(any(ConsultaEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Optional<ConsultaEntity> resultado = consultaService.reagendar(1L, novaDataHora);
+
+        assertTrue(resultado.isPresent());
+        assertEquals(novaDataHora, resultado.get().getDataHora());
+        verify(consultaRepository).save(existente);
+    }
+
     @Test
     void testConfirmar_Encontrado_RetornaConfirmada() {
         ConsultaEntity existente = novaConsulta(1L, StatusConsulta.PENDENTE);
@@ -129,7 +156,6 @@ class ConsultaServiceTest {
         verify(consultaRepository).save(existente);
     }
 
-    // findByMedicoId delega direto pro repository — confirma que nao filtra nada
     @Test
     void testFindByMedicoId_RetornaLista() {
         List<ConsultaEntity> consultas = List.of(
@@ -144,7 +170,6 @@ class ConsultaServiceTest {
         verify(consultaRepository).findByMedicoId(1L);
     }
 
-    // historico do paciente
     @Test
     void testFindByPacienteId_RetornaLista() {
         List<ConsultaEntity> consultas = List.of(novaConsulta(1L, StatusConsulta.REALIZADA));
@@ -156,7 +181,6 @@ class ConsultaServiceTest {
         verify(consultaRepository).findByPacienteId(1L);
     }
 
-    // minha-agenda traz somente PENDENTE — confirma que o service passa o status certo
     @Test
     void testFindMinhaAgenda_RetornaApenasPendentes() {
         List<ConsultaEntity> pendentes = List.of(
@@ -173,7 +197,6 @@ class ConsultaServiceTest {
         verify(consultaRepository).findByMedicoIdAndStatus(1L, StatusConsulta.PENDENTE);
     }
 
-    // agendamento retroativo nao faz sentido — service tem que abortar antes de tocar no repository
     @Test
     void testAgendar_DataNoPassado_LancaException() {
         ConsultaEntity nova = novaConsulta(null, null);
@@ -183,11 +206,11 @@ class ConsultaServiceTest {
                 () -> consultaService.agendar(nova));
         assertTrue(ex.getMessage().toLowerCase().contains("passado"));
 
-        verify(consultaRepository, never()).existsByMedicoIdAndDataHoraAndStatusNot(any(), any(), any());
+        verify(consultaRepository, never())
+                .findByMedicoIdAndDataHoraBetweenAndStatusNot(any(), any(), any(), any());
         verify(consultaRepository, never()).save(any(ConsultaEntity.class));
     }
 
-    // tentativa de confirmar uma cancelada (ou qualquer status diferente de PENDENTE) deve falhar
     @Test
     void testConfirmar_ConsultaCancelada_LancaException() {
         ConsultaEntity cancelada = novaConsulta(1L, StatusConsulta.CANCELADA);
@@ -200,7 +223,6 @@ class ConsultaServiceTest {
         verify(consultaRepository, never()).save(any(ConsultaEntity.class));
     }
 
-    // consulta REALIZADA e historico — cancelar depois deturparia o registro
     @Test
     void testCancelar_ConsultaRealizada_LancaException() {
         ConsultaEntity realizada = novaConsulta(1L, StatusConsulta.REALIZADA);
@@ -213,7 +235,6 @@ class ConsultaServiceTest {
         verify(consultaRepository, never()).save(any(ConsultaEntity.class));
     }
 
-    // reagendar e operacao para consulta viva — CANCELADA/REALIZADA sao terminais
     @Test
     void testReagendar_ConsultaCancelada_LancaException() {
         ConsultaEntity cancelada = novaConsulta(1L, StatusConsulta.CANCELADA);
@@ -223,8 +244,8 @@ class ConsultaServiceTest {
                 () -> consultaService.reagendar(1L, LocalDateTime.now().plusDays(5)));
         assertTrue(ex.getMessage().toLowerCase().contains("nao pode ser reagendada"));
 
-        // conflito nao deve ser consultado e save nao deve ser chamado
-        verify(consultaRepository, never()).existsByMedicoIdAndDataHoraAndStatusNot(any(), any(), any());
+        verify(consultaRepository, never())
+                .findByMedicoIdAndDataHoraBetweenAndStatusNot(any(), any(), any(), any());
         verify(consultaRepository, never()).save(any(ConsultaEntity.class));
     }
 }
