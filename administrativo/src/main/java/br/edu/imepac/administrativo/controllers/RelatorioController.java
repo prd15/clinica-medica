@@ -4,6 +4,7 @@ import br.edu.imepac.administrativo.dtos.ConsultaDiariaRelatorioResponse;
 import br.edu.imepac.administrativo.dtos.PacienteResponse;
 import br.edu.imepac.administrativo.dtos.PacientesPorConvenioRelatorioResponse;
 import br.edu.imepac.commons.services.PacienteService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,7 +33,9 @@ public class RelatorioController {
         this.modelMapper = modelMapper;
     }
 
-    @Operation(summary = "Relatorio de consultas diarias")
+    // pendente integracao com o microsservico de agendamento — retorna 0 enquanto nao implementado
+    @Hidden
+    @Operation(summary = "Relatorio de consultas diarias (pendente integracao com agendamento)")
     @ApiResponse(responseCode = "200", description = "Relatorio retornado com sucesso")
     @GetMapping("/consultas-diarias")
     public ResponseEntity<ConsultaDiariaRelatorioResponse> consultasDiarias(
