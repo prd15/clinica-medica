@@ -2,9 +2,13 @@ package br.edu.imepac.atendimento.controllers;
 
 import br.edu.imepac.atendimento.clients.AgendamentoClient;
 import br.edu.imepac.atendimento.dtos.AnotacaoRequest;
+import br.edu.imepac.atendimento.dtos.AnotacaoResponse;
 import br.edu.imepac.atendimento.dtos.AtendimentoRequest;
 import br.edu.imepac.atendimento.dtos.AtendimentoResponse;
 import br.edu.imepac.atendimento.dtos.ExameRequest;
+import br.edu.imepac.atendimento.dtos.ExameResponse;
+import br.edu.imepac.atendimento.dtos.HistoricoResponse;
+import br.edu.imepac.atendimento.dtos.ProntuarioResponse;
 import br.edu.imepac.commons.entities.AnotacaoEntity;
 import br.edu.imepac.commons.entities.AtendimentoEntity;
 import br.edu.imepac.commons.entities.ProntuarioEntity;
@@ -14,6 +18,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,13 +32,18 @@ import java.util.List;
 @Tag(name = "Atendimentos", description = "Registro clínico de consultas realizadas")
 public class AtendimentoController {
 
+    private static final Logger log = LoggerFactory.getLogger(AtendimentoController.class);
+
     private final AtendimentoService atendimentoService;
     private final AgendamentoClient agendamentoClient;
+    private final ModelMapper modelMapper;
 
     public AtendimentoController(AtendimentoService atendimentoService,
-                                 AgendamentoClient agendamentoClient) {
+                                 AgendamentoClient agendamentoClient,
+                                 ModelMapper modelMapper) {
         this.atendimentoService = atendimentoService;
         this.agendamentoClient = agendamentoClient;
+        this.modelMapper = modelMapper;
     }
 
     @PostMapping
@@ -54,58 +66,78 @@ public class AtendimentoController {
         try {
             agendamentoClient.confirmarRealizacao(request.getConsultaId());
         } catch (Exception e) {
-            System.err.println("Aviso: nao foi possivel notificar o agendamento. " + e.getMessage());
+            log.warn("Nao foi possivel notificar o agendamento sobre consultaId={}: {}",
+                    request.getConsultaId(), e.getMessage());
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(salvo, null));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(modelMapper.map(salvo, AtendimentoResponse.class));
     }
 
     @GetMapping("/historico")
     @Operation(summary = "Retorna histórico de atendimentos de um paciente")
     @ApiResponse(responseCode = "200", description = "Histórico retornado")
-    public ResponseEntity<List<AtendimentoEntity>> historico(@RequestParam Long pacienteId) {
-        return ResponseEntity.ok(atendimentoService.buscarHistoricoPorPaciente(pacienteId));
+    public ResponseEntity<List<HistoricoResponse>> historico(@RequestParam Long pacienteId) {
+        List<HistoricoResponse> response = atendimentoService.buscarHistoricoPorPaciente(pacienteId)
+                .stream()
+                .map(entity -> modelMapper.map(entity, HistoricoResponse.class))
+                .toList();
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{consultaId}")
     @Operation(summary = "Retorna o prontuário de uma consulta específica")
     @ApiResponse(responseCode = "200", description = "Prontuário encontrado")
     @ApiResponse(responseCode = "404", description = "Consulta não encontrada")
-    public ResponseEntity<ProntuarioEntity> prontuarioPorConsulta(@PathVariable Long consultaId) {
+    public ResponseEntity<ProntuarioResponse> prontuarioPorConsulta(@PathVariable Long consultaId) {
         AtendimentoEntity atendimento = atendimentoService.buscarPorConsulta(consultaId);
         ProntuarioEntity prontuario = atendimentoService.buscarProntuario(atendimento.getId());
-        return ResponseEntity.ok(prontuario);
+        return ResponseEntity.ok(modelMapper.map(prontuario, ProntuarioResponse.class));
     }
 
     @PostMapping("/{id}/anotacoes")
     @Operation(summary = "Adiciona anotação ao prontuário do atendimento")
     @ApiResponse(responseCode = "201", description = "Anotação registrada")
     @ApiResponse(responseCode = "404", description = "Atendimento não encontrado")
-    public ResponseEntity<AnotacaoEntity> adicionarAnotacao(@PathVariable Long id,
-                                                             @RequestBody @Valid AnotacaoRequest request) {
+    public ResponseEntity<AnotacaoResponse> adicionarAnotacao(@PathVariable Long id,
+                                                              @RequestBody @Valid AnotacaoRequest request) {
         AnotacaoEntity anotacao = atendimentoService.adicionarAnotacao(id, request.getTexto());
-        return ResponseEntity.status(HttpStatus.CREATED).body(anotacao);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(modelMapper.map(anotacao, AnotacaoResponse.class));
     }
 
     @PostMapping("/{id}/exames")
     @Operation(summary = "Solicita exame vinculado ao atendimento")
     @ApiResponse(responseCode = "201", description = "Exame solicitado")
     @ApiResponse(responseCode = "404", description = "Atendimento não encontrado")
-    public ResponseEntity<SolicitacaoExameEntity> solicitarExame(@PathVariable Long id,
-                                                                  @RequestBody @Valid ExameRequest request) {
+    public ResponseEntity<ExameResponse> solicitarExame(@PathVariable Long id,
+                                                        @RequestBody @Valid ExameRequest request) {
         SolicitacaoExameEntity exame = atendimentoService.solicitarExame(id, request.getDescricao(), request.getTipo());
-        return ResponseEntity.status(HttpStatus.CREATED).body(exame);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(modelMapper.map(exame, ExameResponse.class));
     }
 
-    private AtendimentoResponse toResponse(AtendimentoEntity entidade, Long prontuarioId) {
-        AtendimentoResponse r = new AtendimentoResponse();
-        r.setId(entidade.getId());
-        r.setConsultaId(entidade.getConsultaId());
-        r.setMedicoId(entidade.getMedicoId());
-        r.setPacienteId(entidade.getPacienteId());
-        r.setDataHora(entidade.getDataHora());
-        r.setStatus(entidade.getStatus());
-        r.setProntuarioId(prontuarioId);
-        return r;
+    @GetMapping("/{id}/anotacoes")
+    @Operation(summary = "Lista anotacoes do prontuario do atendimento")
+    @ApiResponse(responseCode = "200", description = "Anotacoes retornadas")
+    @ApiResponse(responseCode = "404", description = "Atendimento ou prontuario nao encontrado")
+    public ResponseEntity<List<AnotacaoResponse>> listarAnotacoes(@PathVariable Long id) {
+        List<AnotacaoResponse> response = atendimentoService.listarAnotacoes(id)
+                .stream()
+                .map(entity -> modelMapper.map(entity, AnotacaoResponse.class))
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/exames")
+    @Operation(summary = "Lista exames solicitados no atendimento")
+    @ApiResponse(responseCode = "200", description = "Exames retornados")
+    @ApiResponse(responseCode = "404", description = "Atendimento nao encontrado")
+    public ResponseEntity<List<ExameResponse>> listarExames(@PathVariable Long id) {
+        List<ExameResponse> response = atendimentoService.listarExames(id)
+                .stream()
+                .map(entity -> modelMapper.map(entity, ExameResponse.class))
+                .toList();
+        return ResponseEntity.ok(response);
     }
 }
