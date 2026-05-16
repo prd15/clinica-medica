@@ -53,13 +53,16 @@ public class AtendimentoController {
                 request.getObservacoes()
         );
 
+        // busca o id do prontuario criado na mesma transacao para incluir no response
+        Long prontuarioId = atendimentoService.buscarProntuario(salvo.getId()).getId();
+
         try {
             agendamentoClient.confirmarRealizacao(request.getConsultaId());
         } catch (Exception e) {
             log.warn("Nao foi possivel notificar o agendamento para consultaId {}: {}", request.getConsultaId(), e.getMessage());
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(salvo, null));
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(salvo, prontuarioId));
     }
 
     @GetMapping("/historico")
