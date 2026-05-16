@@ -44,11 +44,12 @@ public class MedicoService {
 
     public Optional<MedicoEntity> update(Long id, MedicoEntity dadosAtualizados) {
         return medicoRepository.findById(id).map(existing -> {
-            // valida CRM mas ignora o proprio registro (permite manter o mesmo CRM)
             validarCrmDisponivel(dadosAtualizados.getCrm(), id);
             existing.setNome(dadosAtualizados.getNome());
             existing.setCrm(dadosAtualizados.getCrm());
-            existing.setSenha(dadosAtualizados.getSenha());
+            if (dadosAtualizados.getSenha() != null && !dadosAtualizados.getSenha().isBlank()) {
+                existing.setSenha(dadosAtualizados.getSenha());
+            }
             existing.setTelefone(dadosAtualizados.getTelefone());
             return medicoRepository.save(existing);
         });

@@ -114,6 +114,34 @@ class AtendenteServiceTest {
     }
 
     @Test
+    void updateNaoDeveSobrescreverSenhaQuandoVierNula() {
+        AtendenteEntity existente = new AtendenteEntity(1L, "Ana Souza", "ana", "senhaOriginal", true);
+        AtendenteEntity dados = new AtendenteEntity(null, "Ana Atualizada", "ana", null, true);
+        when(atendenteRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(atendenteRepository.findByUsuario("ana")).thenReturn(Optional.of(existente));
+        when(atendenteRepository.save(any(AtendenteEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Optional<AtendenteEntity> resultado = atendenteService.update(1L, dados);
+
+        assertTrue(resultado.isPresent());
+        assertEquals("senhaOriginal", resultado.get().getSenha());
+    }
+
+    @Test
+    void updateNaoDeveSobrescreverSenhaQuandoVierEmBranco() {
+        AtendenteEntity existente = new AtendenteEntity(1L, "Ana Souza", "ana", "senhaOriginal", true);
+        AtendenteEntity dados = new AtendenteEntity(null, "Ana Atualizada", "ana", "   ", true);
+        when(atendenteRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(atendenteRepository.findByUsuario("ana")).thenReturn(Optional.of(existente));
+        when(atendenteRepository.save(any(AtendenteEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Optional<AtendenteEntity> resultado = atendenteService.update(1L, dados);
+
+        assertTrue(resultado.isPresent());
+        assertEquals("senhaOriginal", resultado.get().getSenha());
+    }
+
+    @Test
     void deleteByIdDeveExcluirQuandoExistir() {
         when(atendenteRepository.existsById(1L)).thenReturn(true);
 
