@@ -31,6 +31,7 @@ public class GlobalExceptionHandler {
     // argumento invalido — data no passado, etc
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("Argumento invalido: {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
