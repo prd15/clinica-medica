@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 // controller de atendentes — senha nunca aparece em AtendenteResponse
-// usuario duplicado retorna 409, mesmo padrao do MedicoController
+// excecoes delegadas ao GlobalExceptionHandler: IllegalStateException → 409, validacao → 400
 @Tag(name = "Atendentes", description = "Gerenciamento de atendentes e recepcionistas")
 @RestController
 @RequestMapping("/v1/atendentes")
