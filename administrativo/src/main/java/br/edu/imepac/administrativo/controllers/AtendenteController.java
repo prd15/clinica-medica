@@ -67,14 +67,11 @@ public class AtendenteController {
     @PutMapping("/{id}")
     public ResponseEntity<AtendenteResponse> update(@PathVariable("id") Long id,
                                                     @Valid @RequestBody AtendenteRequest request) {
-        try {
-            AtendenteEntity entity = modelMapper.map(request, AtendenteEntity.class);
-            return atendenteService.update(id, entity)
-                    .map(updated -> ResponseEntity.ok(modelMapper.map(updated, AtendenteResponse.class)))
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        // IllegalStateException (usuario duplicado) tratada pelo GlobalExceptionHandler → 409
+        AtendenteEntity entity = modelMapper.map(request, AtendenteEntity.class);
+        return atendenteService.update(id, entity)
+                .map(updated -> ResponseEntity.ok(modelMapper.map(updated, AtendenteResponse.class)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @Operation(summary = "Remove atendente por ID")
