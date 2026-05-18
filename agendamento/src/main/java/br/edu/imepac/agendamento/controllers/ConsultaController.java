@@ -71,13 +71,10 @@ public class ConsultaController {
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> cancelar(@PathVariable("id") Long id) {
-        try {
-            return consultaService.cancelar(id)
-                    .<ResponseEntity<Object>>map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
-                    .orElseGet(() -> ResponseEntity.notFound().build());
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        // IllegalStateException tratada pelo GlobalExceptionHandler
+        return consultaService.cancelar(id)
+                .<ResponseEntity<Object>>map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @Operation(summary = "Reagenda uma consulta para outra data e hora")
