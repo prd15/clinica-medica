@@ -94,12 +94,9 @@ public class ConvenioController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<ConvenioResponse> alterarStatus(@PathVariable("id") Long id,
                                                           @Valid @RequestBody AlterarStatusRequest request) {
-        try {
-            ConvenioEntity atualizado = convenioService.alterarStatus(id, request.getAtivo());
-            return ResponseEntity.ok(modelMapper.map(atualizado, ConvenioResponse.class));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        // NoSuchElementException tratada pelo GlobalExceptionHandler → 404
+        ConvenioEntity atualizado = convenioService.alterarStatus(id, request.getAtivo());
+        return ResponseEntity.ok(modelMapper.map(atualizado, ConvenioResponse.class));
     }
 }
 
