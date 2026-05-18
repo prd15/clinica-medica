@@ -96,13 +96,10 @@ public class ConsultaController {
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
     @PatchMapping("/{id}/confirmar")
     public ResponseEntity<Object> confirmar(@PathVariable("id") Long id) {
-        try {
-            return consultaService.confirmar(id)
-                    .<ResponseEntity<Object>>map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
-                    .orElseGet(() -> ResponseEntity.notFound().build());
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        // IllegalStateException tratada pelo GlobalExceptionHandler
+        return consultaService.confirmar(id)
+                .<ResponseEntity<Object>>map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @Operation(summary = "Lista consultas com filtros opcionais",
