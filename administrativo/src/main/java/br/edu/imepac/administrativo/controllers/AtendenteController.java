@@ -39,14 +39,11 @@ public class AtendenteController {
     })
     @PostMapping
     public ResponseEntity<AtendenteResponse> create(@Valid @RequestBody AtendenteRequest request) {
-        try {
-            AtendenteEntity entity = modelMapper.map(request, AtendenteEntity.class);
-            AtendenteEntity saved = atendenteService.save(entity);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(modelMapper.map(saved, AtendenteResponse.class));
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        // IllegalStateException (usuario duplicado) tratada pelo GlobalExceptionHandler → 409
+        AtendenteEntity entity = modelMapper.map(request, AtendenteEntity.class);
+        AtendenteEntity saved = atendenteService.save(entity);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(modelMapper.map(saved, AtendenteResponse.class));
     }
 
     @Operation(summary = "Lista todos os atendentes")
