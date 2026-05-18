@@ -19,6 +19,7 @@ public class GlobalExceptionHandler {
     // CRM ou usuario duplicado — services lancam IllegalStateException para conflitos
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleConflict(IllegalStateException ex) {
+        log.warn("Conflito de dados: {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
