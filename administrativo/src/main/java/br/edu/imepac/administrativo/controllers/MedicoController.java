@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 // controller de medicos — leitura/escrita via MedicoService, mapeamento com ModelMapper
-// senha nunca entra em MedicoResponse, nem chega a passar pelo mapper
+// excecoes delegadas ao GlobalExceptionHandler: IllegalStateException → 409, validacao → 400
 @Tag(name = "Médicos", description = "Gerenciamento de médicos")
 @RestController
 @RequestMapping("/v1/medicos")
