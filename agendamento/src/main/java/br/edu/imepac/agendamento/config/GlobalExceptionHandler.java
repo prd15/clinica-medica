@@ -18,6 +18,7 @@ public class GlobalExceptionHandler {
     // regra de negocio violada — conflito de horario, status invalido
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
+        log.warn("Regra de negocio violada: {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
