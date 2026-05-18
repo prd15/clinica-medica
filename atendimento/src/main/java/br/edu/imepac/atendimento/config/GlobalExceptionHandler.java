@@ -1,6 +1,7 @@
 package br.edu.imepac.atendimento.config;
 
 import br.edu.imepac.atendimento.dtos.ErrorResponse;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -24,6 +25,18 @@ public class GlobalExceptionHandler {
                 ex.getMessage()
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    // consulta retornou mais de um resultado — dado duplicado no banco
+    @ExceptionHandler(IncorrectResultSizeDataAccessException.class)
+    public ResponseEntity<ErrorResponse> handleIncorrectResultSize(IncorrectResultSizeDataAccessException ex) {
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                "Registro duplicado encontrado: " + ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     // @Valid falhou — junta as mensagens de erro num texto so
