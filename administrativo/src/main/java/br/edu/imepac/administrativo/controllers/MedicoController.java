@@ -107,13 +107,10 @@ public class MedicoController {
     @PostMapping("/{id}/especialidades/{especialidadeId}")
     public ResponseEntity<MedicoResponse> associarEspecialidade(@PathVariable("id") Long id,
                                                                  @PathVariable("especialidadeId") Long especialidadeId) {
-        try {
-            return medicoService.associarEspecialidade(id, especialidadeId)
-                    .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        // IllegalStateException (especialidade duplicada) tratada pelo GlobalExceptionHandler → 409
+        return medicoService.associarEspecialidade(id, especialidadeId)
+                .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @Operation(summary = "Remove especialidade do médico")
