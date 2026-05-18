@@ -33,6 +33,7 @@ public class GlobalExceptionHandler {
     // consulta retornou mais de um resultado — dado duplicado no banco
     @ExceptionHandler(IncorrectResultSizeDataAccessException.class)
     public ResponseEntity<ErrorResponse> handleIncorrectResultSize(IncorrectResultSizeDataAccessException ex) {
+        log.warn("Registro duplicado no banco: {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
