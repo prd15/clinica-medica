@@ -75,14 +75,11 @@ public class MedicoController {
     })
     @PostMapping
     public ResponseEntity<MedicoResponse> create(@Valid @RequestBody MedicoRequest request) {
-        try {
-            MedicoEntity entity = modelMapper.map(request, MedicoEntity.class);
-            MedicoEntity saved = medicoService.save(entity);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(modelMapper.map(saved, MedicoResponse.class));
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        // IllegalStateException (CRM duplicado) tratada pelo GlobalExceptionHandler → 409
+        MedicoEntity entity = modelMapper.map(request, MedicoEntity.class);
+        MedicoEntity saved = medicoService.save(entity);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(modelMapper.map(saved, MedicoResponse.class));
     }
 
     @Operation(summary = "Atualiza médico existente")
