@@ -32,6 +32,7 @@ public class GlobalExceptionHandler {
     // recurso nao encontrado — convenio, medico, paciente, etc
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(NoSuchElementException ex) {
+        log.warn("Recurso nao encontrado: {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.NOT_FOUND.value(),
