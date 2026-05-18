@@ -51,24 +51,18 @@ public class ConsultaController {
         if (!administrativoClient.isPacienteExistente(request.getPacienteId())) {
             return ResponseEntity.badRequest().body("Paciente nao encontrado");
         }
-        try {
-            // mapping manual: ModelMapper em matching loose confunde *Id com setId()
-            // (qualquer get*Id na origem vira candidato pra setId no destino)
-            ConsultaEntity entity = new ConsultaEntity();
-            entity.setPacienteId(request.getPacienteId());
-            entity.setMedicoId(request.getMedicoId());
-            entity.setConvenioId(request.getConvenioId());
-            entity.setDataHora(request.getDataHora());
-            entity.setObservacoes(request.getObservacoes());
+        // mapping manual: ModelMapper em matching loose confunde *Id com setId()
+        ConsultaEntity entity = new ConsultaEntity();
+        entity.setPacienteId(request.getPacienteId());
+        entity.setMedicoId(request.getMedicoId());
+        entity.setConvenioId(request.getConvenioId());
+        entity.setDataHora(request.getDataHora());
+        entity.setObservacoes(request.getObservacoes());
 
-            ConsultaEntity salva = consultaService.agendar(entity);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(modelMapper.map(salva, ConsultaResponse.class));
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            // erros de regra de negocio (conflito, data passado) — 400 com mensagem clara
-            // NPE/etc nao sao capturados aqui de proposito; deixa o Spring tratar como 500
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        // IllegalArgumentException/IllegalStateException tratadas pelo GlobalExceptionHandler
+        ConsultaEntity salva = consultaService.agendar(entity);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(modelMapper.map(salva, ConsultaResponse.class));
     }
 
     @Operation(summary = "Cancela uma consulta agendada")
