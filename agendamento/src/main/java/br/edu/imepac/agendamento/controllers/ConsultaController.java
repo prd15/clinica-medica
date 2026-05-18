@@ -84,13 +84,10 @@ public class ConsultaController {
     @PatchMapping("/{id}/reagendar")
     public ResponseEntity<Object> reagendar(@PathVariable("id") Long id,
                                             @Valid @RequestBody ReagendarRequest request) {
-        try {
-            return consultaService.reagendar(id, request.getDataHora())
-                    .<ResponseEntity<Object>>map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
-                    .orElseGet(() -> ResponseEntity.notFound().build());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        // IllegalArgumentException/IllegalStateException tratadas pelo GlobalExceptionHandler
+        return consultaService.reagendar(id, request.getDataHora())
+                .<ResponseEntity<Object>>map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @Operation(summary = "Confirma uma consulta pendente")
