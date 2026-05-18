@@ -44,6 +44,7 @@ public class GlobalExceptionHandler {
     // @Valid falhou — junta as mensagens de erro num texto so
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        log.warn("Validacao falhou: {}", ex.getBindingResult().getFieldErrorCount() + " campo(s) invalido(s)");
         String mensagem = ex.getBindingResult().getFieldErrors().stream()
                 .map(f -> f.getField() + ": " + f.getDefaultMessage())
                 .collect(Collectors.joining("; "));
