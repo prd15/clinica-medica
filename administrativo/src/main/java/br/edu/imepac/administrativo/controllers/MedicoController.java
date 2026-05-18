@@ -91,14 +91,11 @@ public class MedicoController {
     @PutMapping("/{id}")
     public ResponseEntity<MedicoResponse> update(@PathVariable("id") Long id,
                                                   @Valid @RequestBody MedicoRequest request) {
-        try {
-            MedicoEntity entity = modelMapper.map(request, MedicoEntity.class);
-            return medicoService.update(id, entity)
-                    .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        // IllegalStateException (CRM duplicado) tratada pelo GlobalExceptionHandler → 409
+        MedicoEntity entity = modelMapper.map(request, MedicoEntity.class);
+        return medicoService.update(id, entity)
+                .map(updated -> ResponseEntity.ok(modelMapper.map(updated, MedicoResponse.class)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @Operation(summary = "Associa especialidade ao médico")
