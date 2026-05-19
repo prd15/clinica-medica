@@ -192,3 +192,10 @@ O administrativo também expõe operações para vincular e remover especialidad
 |---|---|
 | Associar especialidade | `POST /v1/medicos/{id}/especialidades/{especialidadeId}` |
 | Remover especialidade | `DELETE /v1/medicos/{id}/especialidades/{especialidadeId}` |
+
+### Relatórios Administrativos
+
+| Relatório | Rota | Observação |
+|---|---|---|
+| Pacientes por convênio | `GET /v1/relatorios/pacientes-por-convenio?convenioId={id}` | Retorna pacientes vinculados ao convênio informado |
+| Consultas diárias | `GET /v1/relatorios/consultas-diarias?data=yyyy-MM-dd` | Endpoint oculto no Swagger até a integração com agendamento ser finalizada |
