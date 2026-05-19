@@ -110,3 +110,19 @@ DB_PASS=sua_senha
 ```
 
 O arquivo `.env.example` já existe no repositório e serve como referência mínima. As aplicações também possuem valores padrão para desenvolvimento local, mas o Docker Compose espera essas variáveis para subir os bancos e serviços.
+
+## Executando com Docker
+
+Suba toda a stack com:
+
+```bash
+docker compose up --build
+```
+
+O Compose cria três bancos MySQL, aguarda os healthchecks e inicia os microsserviços na mesma rede interna.
+
+Para parar a stack:
+
+```bash
+docker compose down
+```
