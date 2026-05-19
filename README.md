@@ -212,3 +212,13 @@ Base URL: `http://localhost:8082`
 | Confirmar consulta | `PATCH /v1/consultas/{id}/confirmar` |
 | Listar por médico, paciente ou data | `GET /v1/consultas?medicoId={id}` / `?pacienteId={id}` / `?data=yyyy-MM-dd` |
 | Agenda do médico | `GET /v1/consultas/minha-agenda?medicoId={id}` |
+
+### Regras do Agendamento
+
+Antes de registrar uma consulta, o serviço valida:
+
+- se o convênio informado existe e está ativo;
+- se o médico existe e está ativo;
+- se o paciente existe;
+- se não há conflito de horário para o médico;
+- se a data de reagendamento não está no passado.
