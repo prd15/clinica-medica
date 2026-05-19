@@ -371,3 +371,11 @@ Além deste README, o repositório inclui materiais auxiliares:
 - Prefira endpoints pequenos, explícitos e documentados no Swagger.
 - Atualize ou crie collections quando adicionar novas rotas.
 - Cubra regras críticas com testes no módulo adequado.
+
+## Próximos Passos Sugeridos
+
+- Integrar o relatório de consultas diárias com o serviço de agendamento.
+- Adicionar autenticação e autorização por perfil.
+- Criar testes de integração entre microsserviços.
+- Versionar contratos OpenAPI gerados.
+- Adicionar pipeline CI para build e testes.
