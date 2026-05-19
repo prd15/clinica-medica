@@ -161,3 +161,13 @@ Execute cada `spring-boot:run` em um terminal próprio. O módulo `commons` é u
 | `DB_PASS` | Todos | vazio | Senha do MySQL |
 | `ADMINISTRATIVO_URL` | `agendamento` | `http://localhost:8081` | Base URL do administrativo |
 | `AGENDAMENTO_URL` | `atendimento` | `http://localhost:8082` | Base URL do agendamento |
+
+## Swagger
+
+Cada microsserviço expõe documentação interativa com SpringDoc:
+
+| Serviço | Swagger UI | OpenAPI JSON |
+|---|---|---|
+| Administrativo | `http://localhost:8081/swagger-ui.html` | `http://localhost:8081/v3/api-docs` |
+| Agendamento | `http://localhost:8082/swagger-ui.html` | `http://localhost:8082/v3/api-docs` |
+| Atendimento | `http://localhost:8083/swagger-ui.html` | `http://localhost:8083/v3/api-docs` |
