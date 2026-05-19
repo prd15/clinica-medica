@@ -362,3 +362,12 @@ Além deste README, o repositório inclui materiais auxiliares:
 - `docs/CODE_REVIEW.md`: achados e observações de revisão.
 - `docs/*-collection.json`: collections Postman por domínio.
 - `CLAUDE.md`: notas operacionais do projeto para agentes de desenvolvimento.
+
+## Convenções de Desenvolvimento
+
+- Mantenha regras de negócio em services.
+- Use DTOs para entrada e saída de dados.
+- Evite relacionamento JPA direto entre contextos de bancos diferentes.
+- Prefira endpoints pequenos, explícitos e documentados no Swagger.
+- Atualize ou crie collections quando adicionar novas rotas.
+- Cubra regras críticas com testes no módulo adequado.
