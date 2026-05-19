@@ -254,3 +254,9 @@ Ao registrar um atendimento, o serviço cria o atendimento, gera o prontuário c
 | `ProntuarioEntity` | Descrição, diagnóstico e observações do atendimento |
 | `AnotacaoEntity` | Anotações adicionais do prontuário |
 | `SolicitacaoExameEntity` | Exames solicitados durante o atendimento |
+
+## Status de Negócio
+
+O agendamento usa status próprios para controlar o ciclo de vida de uma consulta. O atendimento também possui status para representar o andamento do registro clínico. Esses enums ficam no módulo `commons`, junto das entidades compartilhadas.
+
+Na prática, a API evita transições inválidas, como confirmar uma consulta que não está pendente ou cancelar uma consulta que já chegou a um estado terminal.
