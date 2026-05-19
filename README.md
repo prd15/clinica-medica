@@ -236,3 +236,7 @@ Base URL: `http://localhost:8083`
 | Listar anotações | `GET /v1/atendimentos/{id}/anotacoes` |
 | Solicitar exame | `POST /v1/atendimentos/{id}/exames` |
 | Listar exames | `GET /v1/atendimentos/{id}/exames` |
+
+### Fluxo do Atendimento
+
+Ao registrar um atendimento, o serviço cria o atendimento, gera o prontuário com descrição, diagnóstico e observações, e tenta notificar o agendamento sobre a realização da consulta. Se a notificação falhar, o atendimento continua registrado e a falha é registrada em log para análise.
