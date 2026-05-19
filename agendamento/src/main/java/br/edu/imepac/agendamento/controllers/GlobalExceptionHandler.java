@@ -47,6 +47,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DateTimeParseException.class)
     public ResponseEntity<ErrorResponse> handleDateParse(DateTimeParseException ex) {
+        log.warn("Formato de data invalido: {}", ex.getParsedString());
         return build(HttpStatus.BAD_REQUEST, "Formato de data invalido: " + ex.getParsedString());
     }
 
