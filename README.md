@@ -66,3 +66,12 @@ clinica-medica/
 ├── docker-compose.yml   # Orquestração local dos serviços e bancos MySQL
 └── pom.xml              # Projeto Maven agregador
 ```
+
+## Módulos
+
+| Módulo | Tipo | Porta | Banco | Responsabilidade |
+|---|---:|---:|---|---|
+| `commons` | Biblioteca interna | - | - | Regras compartilhadas, entidades, repositories e services |
+| `administrativo` | Microsserviço | `8081` | `clinica_administrativo` | Cadastros, atendentes, convênios, médicos, pacientes e relatórios |
+| `agendamento` | Microsserviço | `8082` | `clinica_agendamento` | Agenda médica, status da consulta e validações com administrativo |
+| `atendimento` | Microsserviço | `8083` | `clinica_atendimento` | Atendimento clínico, prontuário, anotações, exames e histórico |
