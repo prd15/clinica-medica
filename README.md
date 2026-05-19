@@ -81,3 +81,12 @@ clinica-medica/
 Cada microsserviço possui seu próprio banco de dados e não compartilha relacionamentos JPA diretos com tabelas de outro módulo. Quando um serviço precisa referenciar dados externos, ele armazena apenas o identificador (`Long id`) e consulta o serviço dono da informação por HTTP.
 
 Esse desenho mantém o isolamento entre contextos e evita acoplamento por `@ManyToOne` entre bancos diferentes.
+
+## Comunicação Entre Serviços
+
+| Origem | Destino | Uso |
+|---|---|---|
+| `agendamento` | `administrativo` | Valida se convênio, médico e paciente existem e estão aptos antes de agendar |
+| `atendimento` | `agendamento` | Notifica a realização da consulta depois do registro clínico |
+
+No Docker, os serviços se comunicam pelos nomes dos containers (`http://administrativo:8081` e `http://agendamento:8082`). Em execução local, os fallbacks usam `localhost`.
