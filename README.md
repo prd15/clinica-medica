@@ -334,3 +334,12 @@ Como o projeto é multi-módulo, o Maven usa o `pom.xml` da raiz como agregador 
 5. Confirmar ou reagendar consultas conforme o cenário.
 6. Registrar o atendimento, adicionar anotações e solicitar exames.
 7. Consultar histórico, prontuário e relatórios.
+
+## Decisões de Design
+
+- **Banco por serviço**: preserva a autonomia de cada contexto.
+- **Módulo `commons`**: evita duplicação de entidades, repositories e regras compartilhadas neste projeto acadêmico.
+- **DTOs por serviço**: impede exposição direta das entidades nas APIs.
+- **Handlers globais**: padronizam respostas de erro e reduzem repetição nos controllers.
+- **Swagger por serviço**: facilita validação independente de cada microsserviço.
+- **Collections Postman**: documentam fluxos completos e apoiam testes manuais.
