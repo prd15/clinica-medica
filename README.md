@@ -53,3 +53,16 @@ flowchart LR
 | Infraestrutura local | Docker Compose |
 | Produtividade | Lombok, spring-dotenv |
 | Testes | Spring Boot Starter Test, JUnit |
+
+## Estrutura do Repositório
+
+```text
+clinica-medica/
+├── administrativo/      # Microsserviço de cadastros, usuários administrativos e relatórios
+├── agendamento/         # Microsserviço responsável pelo ciclo de vida das consultas
+├── atendimento/         # Microsserviço de prontuário, anotações, exames e histórico
+├── commons/             # Entidades, repositories, services e configurações compartilhadas
+├── docs/                # Collections Postman, changelog técnico e material de revisão
+├── docker-compose.yml   # Orquestração local dos serviços e bancos MySQL
+└── pom.xml              # Projeto Maven agregador
+```
