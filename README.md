@@ -137,3 +137,16 @@ docker compose down
 | MySQL administrativo | `3307` | Banco `clinica_administrativo` |
 | MySQL agendamento | `3308` | Banco `clinica_agendamento` |
 | MySQL atendimento | `3309` | Banco `clinica_atendimento` |
+
+## Executando Localmente sem Docker
+
+Com os bancos MySQL disponíveis nas portas esperadas, instale os módulos e inicie os serviços separadamente:
+
+```bash
+mvn clean install
+mvn -pl administrativo spring-boot:run
+mvn -pl agendamento spring-boot:run
+mvn -pl atendimento spring-boot:run
+```
+
+Execute cada `spring-boot:run` em um terminal próprio. O módulo `commons` é uma biblioteca interna e não sobe como aplicação web.
