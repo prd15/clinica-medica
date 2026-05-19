@@ -277,3 +277,18 @@ Os microsserviços possuem handlers globais para padronizar respostas de erro. A
 Os DTOs de entrada usam Bean Validation para impedir payloads incompletos ou inconsistentes antes de chegar à camada de serviço. Além das validações estruturais, os services concentram regras como unicidade de CRM, unicidade de usuário, status ativo de convênios e médicos, e conflitos de horário em consultas.
 
 Esse desenho mantém os controllers enxutos e deixa as decisões de negócio testáveis no módulo `commons`.
+
+## Collections Postman
+
+O diretório `docs/` contém collections prontas para exercitar os principais fluxos da API:
+
+- `docs/convenio-collection.json`
+- `docs/paciente-collection.json`
+- `docs/medico-collection.json`
+- `docs/especialidade-collection.json`
+- `docs/atendente-collection.json`
+- `docs/consulta-collection.json`
+- `docs/atendimento-collection.json`
+- `docs/relatorios-collection.json`
+
+Importe as collections no Postman e ajuste as variáveis de host conforme o serviço testado.
