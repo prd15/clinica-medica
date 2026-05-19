@@ -222,3 +222,17 @@ Antes de registrar uma consulta, o serviço valida:
 - se o paciente existe;
 - se não há conflito de horário para o médico;
 - se a data de reagendamento não está no passado.
+
+## Endpoints - Atendimento
+
+Base URL: `http://localhost:8083`
+
+| Operação | Rota |
+|---|---|
+| Registrar atendimento | `POST /v1/atendimentos` |
+| Buscar prontuário por consulta | `GET /v1/atendimentos/{consultaId}` |
+| Histórico por paciente | `GET /v1/atendimentos/historico?pacienteId={id}` |
+| Adicionar anotação | `POST /v1/atendimentos/{id}/anotacoes` |
+| Listar anotações | `GET /v1/atendimentos/{id}/anotacoes` |
+| Solicitar exame | `POST /v1/atendimentos/{id}/exames` |
+| Listar exames | `GET /v1/atendimentos/{id}/exames` |
