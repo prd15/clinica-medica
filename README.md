@@ -260,3 +260,14 @@ Ao registrar um atendimento, o serviço cria o atendimento, gera o prontuário c
 O agendamento usa status próprios para controlar o ciclo de vida de uma consulta. O atendimento também possui status para representar o andamento do registro clínico. Esses enums ficam no módulo `commons`, junto das entidades compartilhadas.
 
 Na prática, a API evita transições inválidas, como confirmar uma consulta que não está pendente ou cancelar uma consulta que já chegou a um estado terminal.
+
+## Tratamento de Erros
+
+Os microsserviços possuem handlers globais para padronizar respostas de erro. As APIs retornam status HTTP coerentes com o cenário:
+
+| Status | Cenário comum |
+|---:|---|
+| `400` | Payload inválido, filtro obrigatório ausente ou regra de negócio violada |
+| `404` | Recurso inexistente |
+| `409` | Conflito de estado, CRM duplicado, usuário duplicado ou horário indisponível |
+| `500` | Erro inesperado |
