@@ -292,3 +292,19 @@ O diretório `docs/` contém collections prontas para exercitar os principais fl
 - `docs/relatorios-collection.json`
 
 Importe as collections no Postman e ajuste as variáveis de host conforme o serviço testado.
+
+## Testes
+
+Execute a suíte completa com:
+
+```bash
+mvn test
+```
+
+Para testar apenas o módulo compartilhado:
+
+```bash
+mvn -pl commons test
+```
+
+Os testes atuais cobrem regras de services como convênios, pacientes, especialidades, médicos, atendentes, consultas e atendimentos.
