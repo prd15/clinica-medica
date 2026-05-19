@@ -90,3 +90,12 @@ Esse desenho mantém o isolamento entre contextos e evita acoplamento por `@Many
 | `atendimento` | `agendamento` | Notifica a realização da consulta depois do registro clínico |
 
 No Docker, os serviços se comunicam pelos nomes dos containers (`http://administrativo:8081` e `http://agendamento:8082`). Em execução local, os fallbacks usam `localhost`.
+
+## Pré-requisitos
+
+Para executar o projeto com conforto, tenha instalado:
+
+- JDK 17.
+- Maven 3.9 ou superior.
+- Docker e Docker Compose.
+- Um cliente HTTP, como Postman, Insomnia ou o próprio Swagger UI.
