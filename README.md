@@ -183,3 +183,12 @@ Base URL: `http://localhost:8081`
 | Médicos | `GET /v1/medicos`, `GET /v1/medicos/ativos`, `GET /v1/medicos/{id}`, `POST /v1/medicos`, `PUT /v1/medicos/{id}`, `PATCH /v1/medicos/{id}/inativar`, `DELETE /v1/medicos/{id}` |
 | Especialidades | `GET /v1/especialidades`, `GET /v1/especialidades/{id}`, `POST /v1/especialidades`, `PUT /v1/especialidades/{id}`, `DELETE /v1/especialidades/{id}` |
 | Atendentes | `GET /v1/atendentes`, `POST /v1/atendentes`, `PUT /v1/atendentes/{id}`, `DELETE /v1/atendentes/{id}` |
+
+### Relação Médico e Especialidade
+
+O administrativo também expõe operações para vincular e remover especialidades de um médico:
+
+| Operação | Rota |
+|---|---|
+| Associar especialidade | `POST /v1/medicos/{id}/especialidades/{especialidadeId}` |
+| Remover especialidade | `DELETE /v1/medicos/{id}/especialidades/{especialidadeId}` |
