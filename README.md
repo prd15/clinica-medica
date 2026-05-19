@@ -199,3 +199,16 @@ O administrativo também expõe operações para vincular e remover especialidad
 |---|---|---|
 | Pacientes por convênio | `GET /v1/relatorios/pacientes-por-convenio?convenioId={id}` | Retorna pacientes vinculados ao convênio informado |
 | Consultas diárias | `GET /v1/relatorios/consultas-diarias?data=yyyy-MM-dd` | Endpoint oculto no Swagger até a integração com agendamento ser finalizada |
+
+## Endpoints - Agendamento
+
+Base URL: `http://localhost:8082`
+
+| Operação | Rota |
+|---|---|
+| Agendar consulta | `POST /v1/consultas` |
+| Cancelar consulta | `DELETE /v1/consultas/{id}` |
+| Reagendar consulta | `PATCH /v1/consultas/{id}/reagendar` |
+| Confirmar consulta | `PATCH /v1/consultas/{id}/confirmar` |
+| Listar por médico, paciente ou data | `GET /v1/consultas?medicoId={id}` / `?pacienteId={id}` / `?data=yyyy-MM-dd` |
+| Agenda do médico | `GET /v1/consultas/minha-agenda?medicoId={id}` |
