@@ -99,3 +99,14 @@ Para executar o projeto com conforto, tenha instalado:
 - Maven 3.9 ou superior.
 - Docker e Docker Compose.
 - Um cliente HTTP, como Postman, Insomnia ou o próprio Swagger UI.
+
+## Configuração de Ambiente
+
+Crie um arquivo `.env` na raiz do projeto a partir do exemplo:
+
+```env
+DB_USER=root
+DB_PASS=sua_senha
+```
+
+O arquivo `.env.example` já existe no repositório e serve como referência mínima. As aplicações também possuem valores padrão para desenvolvimento local, mas o Docker Compose espera essas variáveis para subir os bancos e serviços.
