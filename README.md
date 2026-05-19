@@ -126,3 +126,14 @@ Para parar a stack:
 ```bash
 docker compose down
 ```
+
+## Portas Locais
+
+| Recurso | Porta local | Observação |
+|---|---:|---|
+| Administrativo | `8081` | API de cadastros e relatórios |
+| Agendamento | `8082` | API de consultas |
+| Atendimento | `8083` | API clínica |
+| MySQL administrativo | `3307` | Banco `clinica_administrativo` |
+| MySQL agendamento | `3308` | Banco `clinica_agendamento` |
+| MySQL atendimento | `3309` | Banco `clinica_atendimento` |
