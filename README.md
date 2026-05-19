@@ -16,3 +16,25 @@ A aplicação foi desenhada para separar responsabilidades de negócio em três 
 - **Atendimento**: registro clínico da consulta, prontuário, anotações, exames e histórico do paciente.
 
 O módulo **commons** centraliza entidades, repositories, services compartilhados, configurações comuns e testes de regra de negócio.
+
+## Arquitetura
+
+```mermaid
+flowchart LR
+    Cliente["Cliente / Postman / Swagger UI"]
+    ADM["administrativo :8081"]
+    AGE["agendamento :8082"]
+    ATE["atendimento :8083"]
+    CADM[("clinica_administrativo")]
+    CAGE[("clinica_agendamento")]
+    CATE[("clinica_atendimento")]
+
+    Cliente --> ADM
+    Cliente --> AGE
+    Cliente --> ATE
+    AGE --> ADM
+    ATE --> AGE
+    ADM --> CADM
+    AGE --> CAGE
+    ATE --> CATE
+```
