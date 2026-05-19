@@ -343,3 +343,13 @@ Como o projeto é multi-módulo, o Maven usa o `pom.xml` da raiz como agregador 
 - **Handlers globais**: padronizam respostas de erro e reduzem repetição nos controllers.
 - **Swagger por serviço**: facilita validação independente de cada microsserviço.
 - **Collections Postman**: documentam fluxos completos e apoiam testes manuais.
+
+## Troubleshooting
+
+| Problema | Possível causa | Solução |
+|---|---|---|
+| Serviço não conecta ao banco | MySQL ainda não está pronto | Aguarde o healthcheck do Docker ou reinicie o serviço |
+| Porta ocupada | Outro processo usando `8081`, `8082`, `8083`, `3307`, `3308` ou `3309` | Pare o processo conflitante ou altere a porta local |
+| Erro de autenticação no MySQL | `.env` incompleto ou senha divergente | Revise `DB_USER` e `DB_PASS` |
+| Agendamento recusa consulta | Convênio, médico ou paciente inválido/inativo | Cadastre e valide os dados no administrativo |
+| Reagendamento falha | Data no passado ou conflito de horário | Use data futura e horário disponível |
