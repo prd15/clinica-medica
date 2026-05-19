@@ -20,6 +20,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        log.warn("Validacao falhou: {} campo(s) invalido(s)", ex.getBindingResult().getFieldErrorCount());
         Map<String, String> campos = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 campos.put(error.getField(), error.getDefaultMessage()));
