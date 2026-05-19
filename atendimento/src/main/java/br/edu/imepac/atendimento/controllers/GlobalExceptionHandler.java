@@ -2,6 +2,7 @@ package br.edu.imepac.atendimento.controllers;
 
 import br.edu.imepac.atendimento.dtos.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -49,6 +50,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDateParse(DateTimeParseException ex) {
         log.warn("Formato de data invalido: {}", ex.getParsedString());
         return build(HttpStatus.BAD_REQUEST, "Formato de data invalido: " + ex.getParsedString());
+    }
+
+    // consulta retornou mais de um resultado — dado duplicado no banco (ex: findByConsultaId com Optional)
+    @ExceptionHandler(IncorrectResultSizeDataAccessException.class)
+    public ResponseEntity<ErrorResponse> handleIncorrectResultSize(IncorrectResultSizeDataAccessException ex) {
+        log.warn("Registro duplicado no banco: {}", ex.getMessage());
+        return build(HttpStatus.CONFLICT, "Registro duplicado encontrado: " + ex.getMessage());
     }
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status, Object message) {
