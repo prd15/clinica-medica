@@ -308,3 +308,19 @@ mvn -pl commons test
 ```
 
 Os testes atuais cobrem regras de services como convênios, pacientes, especialidades, médicos, atendentes, consultas e atendimentos.
+
+## Build
+
+Para compilar todos os módulos:
+
+```bash
+mvn clean package
+```
+
+Para compilar sem rodar os testes:
+
+```bash
+mvn clean package -DskipTests
+```
+
+Como o projeto é multi-módulo, o Maven usa o `pom.xml` da raiz como agregador e respeita a ordem necessária entre `commons` e os microsserviços.
