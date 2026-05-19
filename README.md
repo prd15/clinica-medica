@@ -324,3 +324,13 @@ mvn clean package -DskipTests
 ```
 
 Como o projeto é multi-módulo, o Maven usa o `pom.xml` da raiz como agregador e respeita a ordem necessária entre `commons` e os microsserviços.
+
+## Fluxo Recomendado de Teste Manual
+
+1. Subir a stack com `docker compose up --build`.
+2. Criar convênios, especialidades, médicos, pacientes e atendentes no administrativo.
+3. Associar especialidades aos médicos.
+4. Criar consultas pelo agendamento.
+5. Confirmar ou reagendar consultas conforme o cenário.
+6. Registrar o atendimento, adicionar anotações e solicitar exames.
+7. Consultar histórico, prontuário e relatórios.
