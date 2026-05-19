@@ -150,3 +150,14 @@ mvn -pl atendimento spring-boot:run
 ```
 
 Execute cada `spring-boot:run` em um terminal próprio. O módulo `commons` é uma biblioteca interna e não sobe como aplicação web.
+
+## Variáveis por Serviço
+
+| Variável | Usada por | Valor padrão local | Finalidade |
+|---|---|---|---|
+| `DB_HOST` | Todos | `localhost` | Host do MySQL |
+| `DB_PORT` | Todos | `3307`, `3308` ou `3309` | Porta do banco de cada serviço |
+| `DB_USER` | Todos | `root` | Usuário do MySQL |
+| `DB_PASS` | Todos | vazio | Senha do MySQL |
+| `ADMINISTRATIVO_URL` | `agendamento` | `http://localhost:8081` | Base URL do administrativo |
+| `AGENDAMENTO_URL` | `atendimento` | `http://localhost:8082` | Base URL do agendamento |
