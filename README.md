@@ -353,3 +353,12 @@ Como o projeto é multi-módulo, o Maven usa o `pom.xml` da raiz como agregador 
 | Erro de autenticação no MySQL | `.env` incompleto ou senha divergente | Revise `DB_USER` e `DB_PASS` |
 | Agendamento recusa consulta | Convênio, médico ou paciente inválido/inativo | Cadastre e valide os dados no administrativo |
 | Reagendamento falha | Data no passado ou conflito de horário | Use data futura e horário disponível |
+
+## Documentação de Apoio
+
+Além deste README, o repositório inclui materiais auxiliares:
+
+- `docs/CHANGELOG_AGENTES.md`: histórico técnico das alterações feitas por agentes.
+- `docs/CODE_REVIEW.md`: achados e observações de revisão.
+- `docs/*-collection.json`: collections Postman por domínio.
+- `CLAUDE.md`: notas operacionais do projeto para agentes de desenvolvimento.
