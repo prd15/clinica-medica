@@ -38,3 +38,18 @@ flowchart LR
     AGE --> CAGE
     ATE --> CATE
 ```
+
+## Stack Técnica
+
+| Camada | Tecnologias |
+|---|---|
+| Linguagem | Java 17 |
+| Framework | Spring Boot 3.3.5 |
+| API | Spring Web, Bean Validation, SpringDoc OpenAPI |
+| Persistência | Spring Data JPA, Hibernate, MySQL 8 |
+| Integração interna | RestTemplate com Apache HttpClient 5 |
+| Mapeamento | ModelMapper |
+| Build | Maven multi-módulo |
+| Infraestrutura local | Docker Compose |
+| Produtividade | Lombok, spring-dotenv |
+| Testes | Spring Boot Starter Test, JUnit |
