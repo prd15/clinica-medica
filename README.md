@@ -240,3 +240,17 @@ Base URL: `http://localhost:8083`
 ### Fluxo do Atendimento
 
 Ao registrar um atendimento, o serviço cria o atendimento, gera o prontuário com descrição, diagnóstico e observações, e tenta notificar o agendamento sobre a realização da consulta. Se a notificação falhar, o atendimento continua registrado e a falha é registrada em log para análise.
+
+## Principais Entidades
+
+| Entidade | Contexto |
+|---|---|
+| `ConvenioEntity` | Convênios aceitos pela clínica e status de disponibilidade |
+| `PacienteEntity` | Dados cadastrais do paciente e vínculo com convênio |
+| `MedicoEntity` | Dados profissionais, CRM, status ativo e especialidades |
+| `AtendenteEntity` | Usuários administrativos e recepção |
+| `ConsultaEntity` | Agendamento, médico, paciente, convênio, data e status |
+| `AtendimentoEntity` | Registro clínico associado a uma consulta |
+| `ProntuarioEntity` | Descrição, diagnóstico e observações do atendimento |
+| `AnotacaoEntity` | Anotações adicionais do prontuário |
+| `SolicitacaoExameEntity` | Exames solicitados durante o atendimento |
