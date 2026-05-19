@@ -271,3 +271,9 @@ Os microsserviços possuem handlers globais para padronizar respostas de erro. A
 | `404` | Recurso inexistente |
 | `409` | Conflito de estado, CRM duplicado, usuário duplicado ou horário indisponível |
 | `500` | Erro inesperado |
+
+## Validações
+
+Os DTOs de entrada usam Bean Validation para impedir payloads incompletos ou inconsistentes antes de chegar à camada de serviço. Além das validações estruturais, os services concentram regras como unicidade de CRM, unicidade de usuário, status ativo de convênios e médicos, e conflitos de horário em consultas.
+
+Esse desenho mantém os controllers enxutos e deixa as decisões de negócio testáveis no módulo `commons`.
