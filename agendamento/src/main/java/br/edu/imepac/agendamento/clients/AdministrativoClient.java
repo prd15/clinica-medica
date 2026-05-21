@@ -10,6 +10,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
 @Component
 public class AdministrativoClient {
 
@@ -27,18 +30,7 @@ public class AdministrativoClient {
     }
 
     public boolean isConvenioAtivo(Long convenioId) {
-        try {
-            ResponseEntity<ConvenioRefDTO> response = buscarConvenio(convenioId);
-            ConvenioRefDTO body = response.getBody();
-            if (body == null) {
-                return false;
-            }
-            return Boolean.TRUE.equals(body.getAtivo());
-        } catch (HttpClientErrorException.NotFound e) {
-            return false;
-        } catch (RestClientException e) {
-            return false;
-        }
+        return consultarAtivo(() -> buscarConvenio(convenioId), ConvenioRefDTO::getAtivo);
     }
 
     public ResponseEntity<MedicoRefDTO> buscarMedico(Long id) {
@@ -50,18 +42,7 @@ public class AdministrativoClient {
     }
 
     public boolean isMedicoAtivo(Long medicoId) {
-        try {
-            ResponseEntity<MedicoRefDTO> response = buscarMedico(medicoId);
-            MedicoRefDTO body = response.getBody();
-            if (body == null) {
-                return false;
-            }
-            return Boolean.TRUE.equals(body.getAtivo());
-        } catch (HttpClientErrorException.NotFound e) {
-            return false;
-        } catch (RestClientException e) {
-            return false;
-        }
+        return consultarAtivo(() -> buscarMedico(medicoId), MedicoRefDTO::getAtivo);
     }
 
     public ResponseEntity<PacienteRefDTO> buscarPaciente(Long id) {
@@ -72,10 +53,17 @@ public class AdministrativoClient {
         }
     }
 
+    // paciente nao tem campo ativo — basta existir (corpo presente)
     public boolean isPacienteExistente(Long pacienteId) {
+        return consultarAtivo(() -> buscarPaciente(pacienteId), p -> true);
+    }
+
+    // fail-safe: qualquer falha de comunicacao (404, 5xx, timeout, conexao recusada) retorna false.
+    // melhor um falso negativo do que agendar contra um recurso invalido ou indisponivel.
+    private <T> boolean consultarAtivo(Supplier<ResponseEntity<T>> chamada, Predicate<T> ativo) {
         try {
-            ResponseEntity<PacienteRefDTO> response = buscarPaciente(pacienteId);
-            return response.getStatusCode().is2xxSuccessful() && response.getBody() != null;
+            T body = chamada.get().getBody();
+            return body != null && ativo.test(body);
         } catch (HttpClientErrorException.NotFound e) {
             return false;
         } catch (RestClientException e) {
