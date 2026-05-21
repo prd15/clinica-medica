@@ -3,6 +3,7 @@ package br.edu.imepac.commons.services;
 import br.edu.imepac.commons.entities.EspecialidadeEntity;
 import br.edu.imepac.commons.repositories.EspecialidadeRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,14 +17,17 @@ public class EspecialidadeService {
         this.especialidadeRepository = especialidadeRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<EspecialidadeEntity> findAll() {
         return especialidadeRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Optional<EspecialidadeEntity> findById(Long id) {
         return especialidadeRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public Optional<EspecialidadeEntity> findByNome(String nome) {
         return especialidadeRepository.findByNome(nome);
     }
