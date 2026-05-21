@@ -3,6 +3,7 @@ package br.edu.imepac.commons.services;
 import br.edu.imepac.commons.entities.ConvenioEntity;
 import br.edu.imepac.commons.repositories.ConvenioRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -17,15 +18,18 @@ public class ConvenioService {
         this.convenioRepository = convenioRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<ConvenioEntity> findAll() {
         return convenioRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Optional<ConvenioEntity> findById(Long id) {
         return convenioRepository.findById(id);
     }
 
     // filtra so os ativos (ou inativos) — depende do que o front precisar
+    @Transactional(readOnly = true)
     public List<ConvenioEntity> findByAtivo(Boolean ativo) {
         return convenioRepository.findByAtivo(ativo);
     }
