@@ -4,6 +4,7 @@ import br.edu.imepac.commons.entities.ConsultaEntity;
 import br.edu.imepac.commons.entities.StatusConsulta;
 import br.edu.imepac.commons.repositories.ConsultaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,6 +22,7 @@ public class ConsultaService {
         this.consultaRepository = consultaRepository;
     }
 
+    @Transactional(readOnly = true)
     public Optional<ConsultaEntity> findById(Long id) {
         return consultaRepository.findById(id);
     }
@@ -75,20 +77,24 @@ public class ConsultaService {
         });
     }
 
+    @Transactional(readOnly = true)
     public List<ConsultaEntity> findByMedicoId(Long medicoId) {
         return consultaRepository.findByMedicoId(medicoId);
     }
 
+    @Transactional(readOnly = true)
     public List<ConsultaEntity> findByPacienteId(Long pacienteId) {
         return consultaRepository.findByPacienteId(pacienteId);
     }
 
+    @Transactional(readOnly = true)
     public List<ConsultaEntity> findByData(LocalDate data) {
         LocalDateTime inicio = data.atStartOfDay();
         LocalDateTime fim = data.atTime(23, 59, 59, 999_999_999);
         return consultaRepository.findByDataHoraBetween(inicio, fim);
     }
 
+    @Transactional(readOnly = true)
     public List<ConsultaEntity> findMinhaAgenda(Long medicoId) {
         return consultaRepository.findByMedicoIdAndStatus(medicoId, StatusConsulta.PENDENTE);
     }
