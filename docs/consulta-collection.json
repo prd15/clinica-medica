@@ -6,16 +6,46 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "admin_url", "value": "http://localhost:8081" },
-    { "key": "agenda_url", "value": "http://localhost:8082" },
-    { "key": "convenio_ativo_id", "value": "" },
-    { "key": "convenio_inativo_id", "value": "" },
-    { "key": "medico_id", "value": "" },
-    { "key": "paciente_id", "value": "" },
-    { "key": "consulta_id", "value": "" },
-    { "key": "consulta_dataHora", "value": "" },
-    { "key": "consulta_dataHora_2", "value": "" },
-    { "key": "consulta_data", "value": "" }
+    {
+      "key": "admin_url",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "agenda_url",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "convenio_ativo_id",
+      "value": ""
+    },
+    {
+      "key": "convenio_inativo_id",
+      "value": ""
+    },
+    {
+      "key": "medico_id",
+      "value": ""
+    },
+    {
+      "key": "paciente_id",
+      "value": ""
+    },
+    {
+      "key": "consulta_id",
+      "value": ""
+    },
+    {
+      "key": "consulta_dataHora",
+      "value": ""
+    },
+    {
+      "key": "consulta_dataHora_2",
+      "value": ""
+    },
+    {
+      "key": "consulta_data",
+      "value": ""
+    }
   ],
   "item": [
     {
@@ -60,15 +90,25 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"Unimed Teste\",\n  \"descricao\": \"Convenio ativo para testes\",\n  \"cnpj\": \"{{setup_cnpj_ativo}}\",\n  \"telefone\": \"(34) 99999-0001\",\n  \"ativo\": true\n}"
             },
             "url": {
               "raw": "{{admin_url}}/v1/convenios",
-              "host": ["{{admin_url}}"],
-              "path": ["v1", "convenios"]
+              "host": [
+                "{{admin_url}}"
+              ],
+              "path": [
+                "v1",
+                "convenios"
+              ]
             }
           }
         },
@@ -98,15 +138,25 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"Convenio Inativo Teste\",\n  \"descricao\": \"Convenio inativo para testes de erro\",\n  \"cnpj\": \"{{setup_cnpj_inativo}}\",\n  \"telefone\": \"(34) 99999-0002\",\n  \"ativo\": false\n}"
             },
             "url": {
               "raw": "{{admin_url}}/v1/convenios",
-              "host": ["{{admin_url}}"],
-              "path": ["v1", "convenios"]
+              "host": [
+                "{{admin_url}}"
+              ],
+              "path": [
+                "v1",
+                "convenios"
+              ]
             }
           }
         },
@@ -134,15 +184,25 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"Dr. Carlos Teste\",\n  \"crm\": \"{{setup_crm}}\",\n  \"senha\": \"senha123\",\n  \"telefone\": \"(34) 98888-0000\",\n  \"ativo\": true\n}"
             },
             "url": {
               "raw": "{{admin_url}}/v1/medicos",
-              "host": ["{{admin_url}}"],
-              "path": ["v1", "medicos"]
+              "host": [
+                "{{admin_url}}"
+              ],
+              "path": [
+                "v1",
+                "medicos"
+              ]
             }
           }
         },
@@ -171,15 +231,25 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"Paciente Teste\",\n  \"cpf\": \"{{setup_cpf}}\",\n  \"telefone\": \"(34) 97777-0000\",\n  \"email\": \"paciente@teste.com\",\n  \"endereco\": \"Rua Teste, 123\",\n  \"convenioId\": {{convenio_ativo_id}}\n}"
             },
             "url": {
               "raw": "{{admin_url}}/v1/pacientes",
-              "host": ["{{admin_url}}"],
-              "path": ["v1", "pacientes"]
+              "host": [
+                "{{admin_url}}"
+              ],
+              "path": [
+                "v1",
+                "pacientes"
+              ]
             }
           }
         }
@@ -207,15 +277,25 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_ativo_id}},\n  \"dataHora\": \"{{consulta_dataHora}}\",\n  \"observacoes\": \"Consulta de rotina\"\n}"
             },
             "url": {
               "raw": "{{agenda_url}}/v1/consultas",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ]
             }
           }
         },
@@ -241,9 +321,19 @@
             "method": "GET",
             "url": {
               "raw": "{{agenda_url}}/v1/consultas?medicoId={{medico_id}}",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas"],
-              "query": [{ "key": "medicoId", "value": "{{medico_id}}" }]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ],
+              "query": [
+                {
+                  "key": "medicoId",
+                  "value": "{{medico_id}}"
+                }
+              ]
             }
           }
         },
@@ -264,9 +354,19 @@
             "method": "GET",
             "url": {
               "raw": "{{agenda_url}}/v1/consultas?pacienteId={{paciente_id}}",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas"],
-              "query": [{ "key": "pacienteId", "value": "{{paciente_id}}" }]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ],
+              "query": [
+                {
+                  "key": "pacienteId",
+                  "value": "{{paciente_id}}"
+                }
+              ]
             }
           }
         },
@@ -287,22 +387,32 @@
             "method": "GET",
             "url": {
               "raw": "{{agenda_url}}/v1/consultas?data={{consulta_data}}",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas"],
-              "query": [{ "key": "data", "value": "{{consulta_data}}" }]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ],
+              "query": [
+                {
+                  "key": "data",
+                  "value": "{{consulta_data}}"
+                }
+              ]
             }
           }
         },
         {
-          "name": "GET listar sem filtro - retorna vazio",
+          "name": "GET listar sem filtro - 400 (filtro obrigatorio)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Array vazio (controller exige filtro)', () => {",
-                  "  pm.expect(pm.response.json()).to.eql([]);",
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem exige filtro', () => {",
+                  "  pm.expect(pm.response.text().toLowerCase()).to.include('filtro');",
                   "});"
                 ]
               }
@@ -312,8 +422,13 @@
             "method": "GET",
             "url": {
               "raw": "{{agenda_url}}/v1/consultas",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ]
             }
           }
         },
@@ -337,9 +452,20 @@
             "method": "GET",
             "url": {
               "raw": "{{agenda_url}}/v1/consultas/minha-agenda?medicoId={{medico_id}}",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas", "minha-agenda"],
-              "query": [{ "key": "medicoId", "value": "{{medico_id}}" }]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "minha-agenda"
+              ],
+              "query": [
+                {
+                  "key": "medicoId",
+                  "value": "{{medico_id}}"
+                }
+              ]
             }
           }
         },
@@ -360,8 +486,15 @@
             "method": "PATCH",
             "url": {
               "raw": "{{agenda_url}}/v1/consultas/{{consulta_id}}/confirmar",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas", "{{consulta_id}}", "confirmar"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "{{consulta_id}}",
+                "confirmar"
+              ]
             }
           }
         },
@@ -386,9 +519,20 @@
             "method": "GET",
             "url": {
               "raw": "{{agenda_url}}/v1/consultas/minha-agenda?medicoId={{medico_id}}",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas", "minha-agenda"],
-              "query": [{ "key": "medicoId", "value": "{{medico_id}}" }]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "minha-agenda"
+              ],
+              "query": [
+                {
+                  "key": "medicoId",
+                  "value": "{{medico_id}}"
+                }
+              ]
             }
           }
         },
@@ -410,15 +554,27 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"dataHora\": \"{{consulta_dataHora_2}}\"\n}"
             },
             "url": {
               "raw": "{{agenda_url}}/v1/consultas/{{consulta_id}}/reagendar",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas", "{{consulta_id}}", "reagendar"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "{{consulta_id}}",
+                "reagendar"
+              ]
             }
           }
         },
@@ -439,8 +595,14 @@
             "method": "DELETE",
             "url": {
               "raw": "{{agenda_url}}/v1/consultas/{{consulta_id}}",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas", "{{consulta_id}}"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "{{consulta_id}}"
+              ]
             }
           }
         },
@@ -461,15 +623,25 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_ativo_id}},\n  \"dataHora\": \"{{consulta_dataHora_2}}\",\n  \"observacoes\": \"Reaproveita slot apos CANCELADA\"\n}"
             },
             "url": {
               "raw": "{{agenda_url}}/v1/consultas",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ]
             }
           }
         }
@@ -479,14 +651,14 @@
       "name": "3. Casos de erro",
       "item": [
         {
-          "name": "POST conflito de horario - 400",
+          "name": "POST conflito de horario - 409",
           "description": "Mesmo medico, mesma dataHora da consulta ativa do passo anterior. Deve falhar.",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));",
                   "pm.test('Mensagem fala sobre horario', () => {",
                   "  pm.expect(pm.response.text().toLowerCase()).to.include('horario');",
                   "});"
@@ -496,15 +668,25 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_ativo_id}},\n  \"dataHora\": \"{{consulta_dataHora_2}}\",\n  \"observacoes\": \"Tentativa de conflito\"\n}"
             },
             "url": {
               "raw": "{{agenda_url}}/v1/consultas",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ]
             }
           }
         },
@@ -525,15 +707,25 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": 999999,\n  \"dataHora\": \"{{consulta_dataHora}}\",\n  \"observacoes\": \"convenio nao existe\"\n}"
             },
             "url": {
               "raw": "{{agenda_url}}/v1/consultas",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ]
             }
           }
         },
@@ -554,15 +746,25 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_inativo_id}},\n  \"dataHora\": \"{{consulta_dataHora}}\",\n  \"observacoes\": \"convenio inativo\"\n}"
             },
             "url": {
               "raw": "{{agenda_url}}/v1/consultas",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ]
             }
           }
         },
@@ -580,15 +782,25 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"observacoes\": \"falta tudo\"\n}"
             },
             "url": {
               "raw": "{{agenda_url}}/v1/consultas",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ]
             }
           }
         },
@@ -606,20 +818,32 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"dataHora\": \"{{consulta_dataHora}}\"\n}"
             },
             "url": {
               "raw": "{{agenda_url}}/v1/consultas/999999/reagendar",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas", "999999", "reagendar"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "999999",
+                "reagendar"
+              ]
             }
           }
         },
         {
-          "name": "PATCH reagendar com conflito - 400",
+          "name": "PATCH reagendar com conflito - 409",
           "description": "Cria uma segunda consulta em outro horario e tenta reagendar a primeira para o horario da segunda.",
           "event": [
             {
@@ -655,22 +879,34 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 400 conflito', () => pm.response.to.have.status(400));"
+                  "pm.test('Status 409 conflito', () => pm.response.to.have.status(409));"
                 ]
               }
             }
           ],
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"dataHora\": \"{{conflito_dataHora}}\"\n}"
             },
             "url": {
               "raw": "{{agenda_url}}/v1/consultas/{{consulta_id}}/reagendar",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas", "{{consulta_id}}", "reagendar"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "{{consulta_id}}",
+                "reagendar"
+              ]
             }
           }
         },
@@ -690,8 +926,15 @@
             "method": "PATCH",
             "url": {
               "raw": "{{agenda_url}}/v1/consultas/999999/confirmar",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas", "999999", "confirmar"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "999999",
+                "confirmar"
+              ]
             }
           }
         },
@@ -711,8 +954,14 @@
             "method": "DELETE",
             "url": {
               "raw": "{{agenda_url}}/v1/consultas/999999",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas", "999999"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "999999"
+              ]
             }
           }
         },
@@ -745,20 +994,30 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_ativo_id}},\n  \"dataHora\": \"{{dataHora_passado}}\",\n  \"observacoes\": \"Agendamento retroativo nao permitido\"\n}"
             },
             "url": {
               "raw": "{{agenda_url}}/v1/consultas",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ]
             }
           }
         },
         {
-          "name": "PATCH confirmar consulta CANCELADA - 400",
+          "name": "PATCH confirmar consulta CANCELADA - 409",
           "description": "Prerequest cria uma consulta em horario novo, cancela, e a request principal tenta confirmar essa consulta cancelada. Service lanca IllegalStateException -> 400.",
           "event": [
             {
@@ -799,7 +1058,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));",
                   "pm.test('Mensagem cita CANCELADA', () => {",
                   "  pm.expect(pm.response.text()).to.include('CANCELADA');",
                   "});"
@@ -811,13 +1070,20 @@
             "method": "PATCH",
             "url": {
               "raw": "{{agenda_url}}/v1/consultas/{{cancelada_id_confirm}}/confirmar",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas", "{{cancelada_id_confirm}}", "confirmar"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "{{cancelada_id_confirm}}",
+                "confirmar"
+              ]
             }
           }
         },
         {
-          "name": "PATCH reagendar consulta CANCELADA - 400",
+          "name": "PATCH reagendar consulta CANCELADA - 409",
           "description": "Prerequest cria + cancela uma consulta. A request principal tenta reagendar a cancelada -> 400.",
           "event": [
             {
@@ -860,7 +1126,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));",
                   "pm.test('Mensagem cita reagendar', () => {",
                   "  pm.expect(pm.response.text().toLowerCase()).to.include('reagend');",
                   "});"
@@ -870,15 +1136,27 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"dataHora\": \"{{reagendar_nova_data}}\"\n}"
             },
             "url": {
               "raw": "{{agenda_url}}/v1/consultas/{{cancelada_id_reagendar}}/reagendar",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas", "{{cancelada_id_reagendar}}", "reagendar"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "{{cancelada_id_reagendar}}",
+                "reagendar"
+              ]
             }
           }
         },
@@ -931,15 +1209,27 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"dataHora\": \"{{reagendar_passado}}\"\n}"
             },
             "url": {
               "raw": "{{agenda_url}}/v1/consultas/{{consulta_reagendar_passado_id}}/reagendar",
-              "host": ["{{agenda_url}}"],
-              "path": ["v1", "consultas", "{{consulta_reagendar_passado_id}}", "reagendar"]
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "{{consulta_reagendar_passado_id}}",
+                "reagendar"
+              ]
             }
           }
         }
