@@ -3,6 +3,7 @@ package br.edu.imepac.commons.services;
 import br.edu.imepac.commons.entities.AtendenteEntity;
 import br.edu.imepac.commons.repositories.AtendenteRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,14 +18,17 @@ public class AtendenteService {
         this.atendenteRepository = atendenteRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<AtendenteEntity> findAll() {
         return atendenteRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Optional<AtendenteEntity> findById(Long id) {
         return atendenteRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public Optional<AtendenteEntity> findByUsuario(String usuario) {
         return atendenteRepository.findByUsuario(usuario);
     }

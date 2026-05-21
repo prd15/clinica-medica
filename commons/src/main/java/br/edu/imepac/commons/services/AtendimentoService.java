@@ -54,10 +54,12 @@ public class AtendimentoService {
         return salvo;
     }
 
+    @Transactional(readOnly = true)
     public List<AtendimentoEntity> buscarHistoricoPorPaciente(Long pacienteId) {
         return atendimentoRepository.findByPacienteId(pacienteId);
     }
 
+    @Transactional(readOnly = true)
     public AtendimentoEntity buscarPorConsulta(Long consultaId) {
         return atendimentoRepository.findByConsultaId(consultaId)
                 .orElseThrow(() -> new NoSuchElementException("Atendimento nao encontrado para consultaId: " + consultaId));
@@ -87,12 +89,14 @@ public class AtendimentoService {
         return exameRepository.save(exame);
     }
 
+    @Transactional(readOnly = true)
     public ProntuarioEntity buscarProntuario(Long atendimentoId) {
         return prontuarioRepository
                 .findFirstByAtendimentoIdOrderByIdDesc(atendimentoId)
                 .orElseThrow(() -> new NoSuchElementException("Prontuario nao encontrado para atendimentoId: " + atendimentoId));
     }
 
+    @Transactional(readOnly = true)
     public List<AnotacaoEntity> listarAnotacoes(Long atendimentoId) {
         ProntuarioEntity prontuario = prontuarioRepository
                 .findFirstByAtendimentoIdOrderByIdDesc(atendimentoId)
@@ -100,6 +104,7 @@ public class AtendimentoService {
         return anotacaoRepository.findByProntuarioId(prontuario.getId());
     }
 
+    @Transactional(readOnly = true)
     public List<SolicitacaoExameEntity> listarExames(Long atendimentoId) {
         atendimentoRepository.findById(atendimentoId)
                 .orElseThrow(() -> new NoSuchElementException("Atendimento nao encontrado: " + atendimentoId));

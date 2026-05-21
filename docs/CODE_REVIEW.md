@@ -1,6 +1,5 @@
 # Code Review — Clinica Medica (multi-modulo) — 2026-05-15
 
-**Revisor:** Claude Opus (Agente Code Reviewer)
 **Branch:** main
 **Escopo:** projeto inteiro (commons, administrativo, agendamento, atendimento, docs/postman)
 
@@ -123,3 +122,18 @@ Projeto em estado bom, padrao do Convenio replicado com consistencia em Paciente
 ## Status final
 
 **Aprovado com ressalvas.** O codigo esta solido e segue o padrao do projeto com qualidade acima da media para um trabalho academico. Os 6 itens criticos sao todos enderecaveis em PRs pequenas e isoladas. Nenhum deles bloqueia uso em ambiente de desenvolvimento; em producao apenas C1, C3 e C4 sao bloqueantes.
+
+---
+
+## Rodada de follow-up — melhorias pos review
+
+Depois que os PRs #13 e #14 fecharam praticamente todos os itens criticos e medios deste relatorio, sobraram apenas ajustes pequenos e seguros, tratados na branch `refactor/code-review-melhorias`:
+
+- **show-sql configuravel** nos tres modulos: deixou de ser `true` fixo e passou a `${SPRING_JPA_SHOW_SQL:false}`, com o `format_sql` seguindo o mesmo toggle. Padrao desligado em producao, ligavel por variavel de ambiente quando o dev quer ver as queries.
+- **DRY no AdministrativoClient**: os tres `isXAtivo` repetiam o mesmo try/catch; viraram um helper unico que centraliza o caminho fail-safe.
+- **`@Transactional(readOnly = true)`** nos metodos de leitura dos services. Em `MedicoService` resolve risco real de `LazyInitializationException` (especialidades LAZY); nos demais e convencao de camada.
+- **Collection da consulta** realinhada ao comportamento atual (409 para conflito/status terminal, 400 quando falta filtro).
+
+Verificacao: 100 testes unitarios verdes, 205 assertions no Postman (0 falhas) e Swagger carregando nos tres servicos.
+
+> Este projeto vem sendo documentado e os code reviews conduzidos com o apoio do Claude.

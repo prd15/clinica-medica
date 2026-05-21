@@ -3,6 +3,7 @@ package br.edu.imepac.commons.services;
 import br.edu.imepac.commons.entities.PacienteEntity;
 import br.edu.imepac.commons.repositories.PacienteRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,25 +20,30 @@ public class PacienteService {
         this.pacienteRepository = pacienteRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<PacienteEntity> findAll() {
         return pacienteRepository.findAll();
     }
 
     // busca parcial, "jo" ja retorna "Joao" e "Jorge"
+    @Transactional(readOnly = true)
     public List<PacienteEntity> findByNome(String nome) {
         return pacienteRepository.findByNomeContainingIgnoreCase(nome);
     }
 
     // retorna Optional porque pode nao existir, quem chama decide o que fazer
+    @Transactional(readOnly = true)
     public Optional<PacienteEntity> findByCpf(String cpf) {
         return pacienteRepository.findByCpf(cpf);
     }
 
     // util pra saber quais pacientes pertencem a um convenio
+    @Transactional(readOnly = true)
     public List<PacienteEntity> findByConvenioId(Long convenioId) {
         return pacienteRepository.findByConvenioId(convenioId);
     }
 
+    @Transactional(readOnly = true)
     public Optional<PacienteEntity> findById(Long id) {
         return pacienteRepository.findById(id);
     }
@@ -62,6 +68,7 @@ public class PacienteService {
 
     // prioridade: nome > cpf > convenioId > sem filtro
     // so um filtro por vez por enquanto — suficiente pra maioria dos casos
+    @Transactional(readOnly = true)
     public List<PacienteEntity> buscarComFiltros(String nome, String cpf, Long convenioId) {
         if (nome != null && !nome.isBlank()) {
             return pacienteRepository.findByNomeContainingIgnoreCase(nome);
