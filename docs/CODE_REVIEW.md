@@ -1,6 +1,5 @@
 # Code Review — Clinica Medica (multi-modulo) — 2026-05-15
 
-**Revisor:** Claude Opus (Agente Code Reviewer)
 **Branch:** main
 **Escopo:** projeto inteiro (commons, administrativo, agendamento, atendimento, docs/postman)
 
