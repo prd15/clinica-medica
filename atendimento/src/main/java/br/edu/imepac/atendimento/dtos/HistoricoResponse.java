@@ -31,4 +31,10 @@ public class HistoricoResponse {
 
     @Schema(description = "Status do atendimento", example = "REALIZADO")
     private StatusAtendimento status;
+
+    @Schema(description = "Data e hora de criacao do registro", example = "2026-05-22T10:30:00")
+    private LocalDateTime createdAt;
+
+    @Schema(description = "Data e hora da ultima atualizacao do registro", example = "2026-05-22T11:00:00")
+    private LocalDateTime updatedAt;
 }

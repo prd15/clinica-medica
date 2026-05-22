@@ -5,8 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// response de atendente — sem campo senha, igual ao padrao do MedicoResponse
-@Schema(description = "Dados retornados de um atendente (senha omitida por segurança)")
+import java.time.LocalDateTime;
+
+@Schema(description = "Dados retornados de um atendente, com senha omitida por seguranca")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,4 +24,10 @@ public class AtendenteResponse {
 
     @Schema(description = "Indica se o atendente esta ativo", example = "true")
     private Boolean ativo;
+
+    @Schema(description = "Data e hora de criacao do registro", example = "2026-05-22T10:30:00")
+    private LocalDateTime createdAt;
+
+    @Schema(description = "Data e hora da ultima atualizacao do registro", example = "2026-05-22T11:00:00")
+    private LocalDateTime updatedAt;
 }

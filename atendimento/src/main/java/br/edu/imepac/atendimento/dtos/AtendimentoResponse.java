@@ -20,7 +20,7 @@ public class AtendimentoResponse {
     @Schema(description = "ID da consulta relacionada", example = "1")
     private Long consultaId;
 
-    @Schema(description = "ID do médico", example = "3")
+    @Schema(description = "ID do medico", example = "3")
     private Long medicoId;
 
     @Schema(description = "ID do paciente", example = "7")
@@ -33,9 +33,15 @@ public class AtendimentoResponse {
             allowableValues = {"EM_ANDAMENTO", "REALIZADO"})
     private StatusAtendimento status;
 
-    @Schema(description = "ID do prontuário gerado")
+    @Schema(description = "ID do prontuario gerado")
     private Long prontuarioId;
 
     @Schema(description = "Indica se o agendamento foi atualizado para REALIZADA com sucesso", example = "true")
     private boolean consultaAtualizada;
+
+    @Schema(description = "Data e hora de criacao do registro", example = "2026-05-22T10:30:00")
+    private LocalDateTime createdAt;
+
+    @Schema(description = "Data e hora da ultima atualizacao do registro", example = "2026-05-22T11:00:00")
+    private LocalDateTime updatedAt;
 }

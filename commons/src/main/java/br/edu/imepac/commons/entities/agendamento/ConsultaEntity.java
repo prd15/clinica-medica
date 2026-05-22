@@ -1,13 +1,16 @@
 package br.edu.imepac.commons.entities.agendamento;
 
+import br.edu.imepac.commons.entities.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -19,7 +22,7 @@ import java.time.LocalDateTime;
                 @Index(name = "idx_consulta_medico_data_hora", columnList = "medico_id, data_hora"),
                 @Index(name = "idx_consulta_paciente", columnList = "paciente_id")
         })
-public class ConsultaEntity {
+public class ConsultaEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
