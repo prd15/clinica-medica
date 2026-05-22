@@ -108,9 +108,12 @@ public class ConsultaService {
         return consultaRepository.findByDataHoraBetween(inicio, fim);
     }
 
+    // agenda do medico = o que ele ainda vai atender: pendentes e confirmadas
+    // (canceladas e realizadas saem da agenda)
     @Transactional(readOnly = true)
     public List<ConsultaEntity> findMinhaAgenda(Long medicoId) {
-        return consultaRepository.findByMedicoIdAndStatus(medicoId, StatusConsulta.PENDENTE);
+        return consultaRepository.findByMedicoIdAndStatusIn(
+                medicoId, List.of(StatusConsulta.PENDENTE, StatusConsulta.CONFIRMADA));
     }
 
     private boolean existeConflito(Long medicoId, LocalDateTime dataHora, Long ignorarConsultaId) {
