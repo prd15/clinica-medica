@@ -32,11 +32,21 @@ spec:
                 configMapKeyRef:
                   name: agendamento-config
                   key: DB_USER
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: agendamento-config
+                  key: DB_PORT
             - name: ADMIN_SERVICE_URL
               valueFrom:
                 configMapKeyRef:
                   name: agendamento-config
                   key: ADMIN_SERVICE_URL
+            - name: ADMINISTRATIVO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: agendamento-config
+                  key: ADMINISTRATIVO_URL
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:

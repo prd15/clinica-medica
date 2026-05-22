@@ -5,5 +5,7 @@ metadata:
   namespace: clinica
 data:
   DB_HOST: db-atendimento
+  DB_PORT: "3306"
   DB_USER: root
   AGEND_SERVICE_URL: http://agendamento:8082
+  AGENDAMENTO_URL: http://agendamento:8082

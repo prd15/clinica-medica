@@ -32,6 +32,11 @@ spec:
                 configMapKeyRef:
                   name: administrativo-config
                   key: DB_USER
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: administrativo-config
+                  key: DB_PORT
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:

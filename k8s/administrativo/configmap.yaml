@@ -5,4 +5,5 @@ metadata:
   namespace: clinica
 data:
   DB_HOST: db-administrativo
+  DB_PORT: "3306"
   DB_USER: root

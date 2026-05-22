@@ -32,11 +32,21 @@ spec:
                 configMapKeyRef:
                   name: atendimento-config
                   key: DB_USER
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: atendimento-config
+                  key: DB_PORT
             - name: AGEND_SERVICE_URL
               valueFrom:
                 configMapKeyRef:
                   name: atendimento-config
                   key: AGEND_SERVICE_URL
+            - name: AGENDAMENTO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: atendimento-config
+                  key: AGENDAMENTO_URL
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:
