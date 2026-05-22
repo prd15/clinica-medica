@@ -73,7 +73,7 @@ public class AtendimentoService {
     @Transactional
     public AnotacaoEntity adicionarAnotacao(Long atendimentoId, String texto) {
         ProntuarioEntity prontuario = prontuarioRepository
-                .findFirstByAtendimentoIdOrderByIdDesc(atendimentoId)
+                .findByAtendimentoId(atendimentoId)
                 .orElseThrow(() -> new NoSuchElementException("Prontuario nao encontrado para atendimentoId: " + atendimentoId));
 
         AnotacaoEntity anotacao = new AnotacaoEntity();
@@ -99,14 +99,14 @@ public class AtendimentoService {
     @Transactional(readOnly = true)
     public ProntuarioEntity buscarProntuario(Long atendimentoId) {
         return prontuarioRepository
-                .findFirstByAtendimentoIdOrderByIdDesc(atendimentoId)
+                .findByAtendimentoId(atendimentoId)
                 .orElseThrow(() -> new NoSuchElementException("Prontuario nao encontrado para atendimentoId: " + atendimentoId));
     }
 
     @Transactional(readOnly = true)
     public List<AnotacaoEntity> listarAnotacoes(Long atendimentoId) {
         ProntuarioEntity prontuario = prontuarioRepository
-                .findFirstByAtendimentoIdOrderByIdDesc(atendimentoId)
+                .findByAtendimentoId(atendimentoId)
                 .orElseThrow(() -> new NoSuchElementException("Prontuario nao encontrado para atendimentoId: " + atendimentoId));
         return anotacaoRepository.findByProntuarioId(prontuario.getId());
     }

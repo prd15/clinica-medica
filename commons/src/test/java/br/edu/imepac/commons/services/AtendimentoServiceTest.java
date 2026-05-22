@@ -114,7 +114,7 @@ class AtendimentoServiceTest {
         salva.setId(20L);
         salva.setTexto("anotacao");
 
-        when(prontuarioRepository.findFirstByAtendimentoIdOrderByIdDesc(3L))
+        when(prontuarioRepository.findByAtendimentoId(3L))
                 .thenReturn(Optional.of(prontuario));
         when(anotacaoRepository.save(any(AnotacaoEntity.class))).thenReturn(salva);
 
@@ -127,13 +127,13 @@ class AtendimentoServiceTest {
 
     @Test
     void deveLancarExcecaoQuandoProntuarioNaoExiste() {
-        when(prontuarioRepository.findFirstByAtendimentoIdOrderByIdDesc(5L)).thenReturn(Optional.empty());
+        when(prontuarioRepository.findByAtendimentoId(5L)).thenReturn(Optional.empty());
 
         NoSuchElementException ex = assertThrows(NoSuchElementException.class,
                 () -> atendimentoService.adicionarAnotacao(5L, "algum texto"));
 
         assertTrue(ex.getMessage().contains("5"));
-        verify(prontuarioRepository).findFirstByAtendimentoIdOrderByIdDesc(5L);
+        verify(prontuarioRepository).findByAtendimentoId(5L);
         verify(anotacaoRepository, never()).save(any());
     }
 
@@ -204,7 +204,7 @@ class AtendimentoServiceTest {
         AnotacaoEntity a2 = new AnotacaoEntity();
         a2.setId(2L);
 
-        when(prontuarioRepository.findFirstByAtendimentoIdOrderByIdDesc(3L))
+        when(prontuarioRepository.findByAtendimentoId(3L))
                 .thenReturn(Optional.of(prontuario));
         when(anotacaoRepository.findByProntuarioId(7L)).thenReturn(List.of(a1, a2));
 
