@@ -1,6 +1,6 @@
 package br.edu.imepac.atendimento.dtos;
 
-import br.edu.imepac.commons.entities.StatusAtendimento;
+import br.edu.imepac.commons.entities.atendimento.StatusAtendimento;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
