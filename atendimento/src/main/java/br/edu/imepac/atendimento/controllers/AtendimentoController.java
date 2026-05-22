@@ -1,6 +1,7 @@
 package br.edu.imepac.atendimento.controllers;
 
 import br.edu.imepac.atendimento.clients.AgendamentoClient;
+import br.edu.imepac.atendimento.clients.dto.ConsultaRefDTO;
 import br.edu.imepac.atendimento.dtos.AnotacaoRequest;
 import br.edu.imepac.atendimento.dtos.AnotacaoResponse;
 import br.edu.imepac.atendimento.dtos.AtendimentoRequest;
@@ -25,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Slf4j
 @RestController
@@ -48,7 +50,18 @@ public class AtendimentoController {
     @Operation(summary = "Realiza atendimento e registra prontuário")
     @ApiResponse(responseCode = "201", description = "Atendimento registrado")
     @ApiResponse(responseCode = "400", description = "Dados inválidos")
+    @ApiResponse(responseCode = "404", description = "Consulta nao encontrada no agendamento")
+    @ApiResponse(responseCode = "409", description = "Consulta cancelada/realizada ou ja atendida")
     public ResponseEntity<AtendimentoResponse> realizar(@RequestBody @Valid AtendimentoRequest request) {
+        // valida no agendamento antes de salvar: a consulta precisa existir e nao estar cancelada/realizada
+        ConsultaRefDTO consulta = agendamentoClient.buscarConsulta(request.getConsultaId())
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Consulta " + request.getConsultaId() + " nao encontrada ou indisponivel no agendamento"));
+        if ("CANCELADA".equals(consulta.getStatus()) || "REALIZADA".equals(consulta.getStatus())) {
+            throw new IllegalStateException(
+                    "Consulta no status " + consulta.getStatus() + " nao pode gerar atendimento");
+        }
+
         AtendimentoEntity entidade = new AtendimentoEntity();
         entidade.setConsultaId(request.getConsultaId());
         entidade.setMedicoId(request.getMedicoId());

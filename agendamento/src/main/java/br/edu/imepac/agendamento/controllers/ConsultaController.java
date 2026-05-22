@@ -64,6 +64,16 @@ public class ConsultaController {
                 .body(modelMapper.map(salva, ConsultaResponse.class));
     }
 
+    @Operation(summary = "Busca uma consulta por ID")
+    @ApiResponse(responseCode = "200", description = "Consulta encontrada")
+    @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
+    @GetMapping("/{id}")
+    public ResponseEntity<ConsultaResponse> buscarPorId(@PathVariable("id") Long id) {
+        return consultaService.findById(id)
+                .map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @Operation(summary = "Cancela uma consulta agendada")
     @ApiResponse(responseCode = "200", description = "Consulta cancelada")
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
@@ -99,8 +109,20 @@ public class ConsultaController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // chamado pelo microsservico de atendimento quando o atendimento e registrado
+    @Operation(summary = "Marca uma consulta como realizada")
+    @ApiResponse(responseCode = "200", description = "Consulta marcada como realizada")
+    @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
+    @ApiResponse(responseCode = "409", description = "Consulta cancelada ou ja realizada")
+    @PatchMapping("/{id}/realizar")
+    public ResponseEntity<ConsultaResponse> realizar(@PathVariable("id") Long id) {
+        return consultaService.realizar(id)
+                .map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @Operation(summary = "Lista consultas com filtros opcionais",
-            description = "Prioridade dos filtros: medicoId > pacienteId > data. Informe ao menos um filtro.")
+            description = "Combina medicoId + data (agenda do medico no dia). Sozinhos: medicoId, pacienteId ou data. Informe ao menos um filtro.")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
     @ApiResponse(responseCode = "400", description = "Nenhum filtro informado ou data invalida")
     @GetMapping
@@ -111,7 +133,9 @@ public class ConsultaController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
 
         List<ConsultaEntity> consultas;
-        if (medicoId != null) {
+        if (medicoId != null && data != null) {
+            consultas = consultaService.findByMedicoIdAndData(medicoId, data);
+        } else if (medicoId != null) {
             consultas = consultaService.findByMedicoId(medicoId);
         } else if (pacienteId != null) {
             consultas = consultaService.findByPacienteId(pacienteId);

@@ -1,0 +1,524 @@
+{
+  "info": {
+    "name": "Clinica Medica — Fluxo Atendimento -> Agendamento (regressao)",
+    "_postman_id": "clinica-fluxo-realizar-002",
+    "description": "Valida o fluxo corrigido: ao registrar um atendimento, a consulta no agendamento passa a REALIZADA (endpoint PATCH /v1/consultas/{id}/realizar). Tambem cobre os bugs 2 e 3: nao deixa registrar atendimento duplicado nem para consulta cancelada.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "admin_url",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "agenda_url",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "atend_url",
+      "value": "http://localhost:8083"
+    },
+    {
+      "key": "convenio_id",
+      "value": ""
+    },
+    {
+      "key": "convenio_cnpj",
+      "value": ""
+    },
+    {
+      "key": "medico_id",
+      "value": ""
+    },
+    {
+      "key": "medico_crm",
+      "value": ""
+    },
+    {
+      "key": "paciente_id",
+      "value": ""
+    },
+    {
+      "key": "paciente_cpf",
+      "value": ""
+    },
+    {
+      "key": "consulta_id",
+      "value": ""
+    },
+    {
+      "key": "consulta_dataHora",
+      "value": ""
+    },
+    {
+      "key": "consulta_cancelada_id",
+      "value": ""
+    },
+    {
+      "key": "consulta_cancelada_dataHora",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Setup",
+      "item": [
+        {
+          "name": "Setup — POST Convenio",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = String(Date.now()).slice(-8).padStart(8, '0');",
+                  "pm.collectionVariables.set('convenio_cnpj', d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5,8)+'/0001-'+d.slice(0,2));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Convenio 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('convenio_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{admin_url}}/v1/convenios",
+              "host": [
+                "{{admin_url}}"
+              ],
+              "path": [
+                "v1",
+                "convenios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Convenio Fluxo\",\n  \"descricao\": \"Setup\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 90000-0000\",\n  \"ativo\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Setup — POST Medico",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('medico_crm', 'CRM-FL-'+Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Medico 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('medico_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{admin_url}}/v1/medicos",
+              "host": [
+                "{{admin_url}}"
+              ],
+              "path": [
+                "v1",
+                "medicos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Dr. Fluxo\",\n  \"crm\": \"{{medico_crm}}\",\n  \"senha\": \"senha123\",\n  \"telefone\": \"3499999\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Setup — POST Paciente",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(!pm.collectionVariables.get('convenio_id')) throw new Error('rode setup convenio');",
+                  "const cpf=String(Date.now()).slice(-11).padStart(11,'0');",
+                  "pm.collectionVariables.set('paciente_cpf', cpf.slice(0,3)+'.'+cpf.slice(3,6)+'.'+cpf.slice(6,9)+'-'+cpf.slice(9,11));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Paciente 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('paciente_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{admin_url}}/v1/pacientes",
+              "host": [
+                "{{admin_url}}"
+              ],
+              "path": [
+                "v1",
+                "pacientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Paciente Fluxo\",\n  \"cpf\": \"{{paciente_cpf}}\",\n  \"dataNascimento\": \"1990-01-01\",\n  \"telefone\": \"3499998\",\n  \"email\": \"fluxo@email.com\",\n  \"endereco\": \"Rua X\",\n  \"convenioId\": {{convenio_id}}\n}"
+            }
+          }
+        },
+        {
+          "name": "Setup — POST Consulta (sera atendida)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d=new Date(Date.now()+86400000);",
+                  "pm.collectionVariables.set('consulta_dataHora', d.toISOString().slice(0,19));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Consulta 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('consulta_id', pm.response.json().id);",
+                  "pm.test('Nasce PENDENTE', () => pm.expect(pm.response.json().status).to.eql('PENDENTE'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas",
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_id}},\n  \"dataHora\": \"{{consulta_dataHora}}\",\n  \"observacoes\": \"Sera atendida\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Setup — POST Consulta (sera cancelada)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d=new Date(Date.now()+172800000);",
+                  "pm.collectionVariables.set('consulta_cancelada_dataHora', d.toISOString().slice(0,19));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Consulta 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('consulta_cancelada_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas",
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_id}},\n  \"dataHora\": \"{{consulta_cancelada_dataHora}}\",\n  \"observacoes\": \"Sera cancelada\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Setup — DELETE cancela a segunda consulta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Cancelada 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status CANCELADA', () => pm.expect(pm.response.json().status).to.eql('CANCELADA'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/{{consulta_cancelada_id}}",
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "{{consulta_cancelada_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Fluxo corrigido",
+      "item": [
+        {
+          "name": "Atendimento — registra (201) e dispara a notificacao",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Atendimento 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Tem prontuarioId', () => pm.expect(pm.response.json().prontuarioId).to.be.a('number'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{atend_url}}/v1/atendimentos",
+              "host": [
+                "{{atend_url}}"
+              ],
+              "path": [
+                "v1",
+                "atendimentos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultaId\": {{consulta_id}},\n  \"medicoId\": {{medico_id}},\n  \"pacienteId\": {{paciente_id}},\n  \"descricao\": \"Consulta realizada\",\n  \"diagnostico\": \"Quadro estavel\",\n  \"observacoes\": \"Retorno em 30 dias\"\n}"
+            }
+          }
+        },
+        {
+          "name": "CORRIGIDO — consulta virou REALIZADA apos o atendimento",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('GET consulta 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Consulta agora esta REALIZADA (notificacao funcionou)', () => pm.expect(pm.response.json().status).to.eql('REALIZADA'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas/{{consulta_id}}",
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas",
+                "{{consulta_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bug 2 — registrar de novo a mesma consulta retorna 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 atendimento duplicado', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{atend_url}}/v1/atendimentos",
+              "host": [
+                "{{atend_url}}"
+              ],
+              "path": [
+                "v1",
+                "atendimentos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultaId\": {{consulta_id}},\n  \"medicoId\": {{medico_id}},\n  \"pacienteId\": {{paciente_id}},\n  \"descricao\": \"tentativa duplicada\",\n  \"diagnostico\": \"x\",\n  \"observacoes\": \"y\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Bug 3 — atendimento para consulta CANCELADA retorna 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 consulta cancelada', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{atend_url}}/v1/atendimentos",
+              "host": [
+                "{{atend_url}}"
+              ],
+              "path": [
+                "v1",
+                "atendimentos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultaId\": {{consulta_cancelada_id}},\n  \"medicoId\": {{medico_id}},\n  \"pacienteId\": {{paciente_id}},\n  \"descricao\": \"nao deveria entrar\",\n  \"diagnostico\": \"x\",\n  \"observacoes\": \"y\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Bug 3 — atendimento para consulta inexistente retorna 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 consulta inexistente', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{atend_url}}/v1/atendimentos",
+              "host": [
+                "{{atend_url}}"
+              ],
+              "path": [
+                "v1",
+                "atendimentos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultaId\": 999999,\n  \"medicoId\": {{medico_id}},\n  \"pacienteId\": {{paciente_id}},\n  \"descricao\": \"nao existe\",\n  \"diagnostico\": \"x\",\n  \"observacoes\": \"y\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

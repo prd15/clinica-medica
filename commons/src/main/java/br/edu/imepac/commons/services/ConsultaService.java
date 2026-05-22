@@ -77,6 +77,20 @@ public class ConsultaService {
         });
     }
 
+    // marca a consulta como realizada — chamado pelo atendimento apos registrar o atendimento
+    // so vale a partir de PENDENTE ou CONFIRMADA; cancelada ou ja realizada nao retrocede nem repete
+    public Optional<ConsultaEntity> realizar(Long id) {
+        return consultaRepository.findById(id).map(consulta -> {
+            if (consulta.getStatus() == StatusConsulta.CANCELADA
+                    || consulta.getStatus() == StatusConsulta.REALIZADA) {
+                throw new IllegalStateException(
+                        "Consulta no status " + consulta.getStatus() + " nao pode ser marcada como realizada");
+            }
+            consulta.setStatus(StatusConsulta.REALIZADA);
+            return consultaRepository.save(consulta);
+        });
+    }
+
     @Transactional(readOnly = true)
     public List<ConsultaEntity> findByMedicoId(Long medicoId) {
         return consultaRepository.findByMedicoId(medicoId);
@@ -94,9 +108,20 @@ public class ConsultaService {
         return consultaRepository.findByDataHoraBetween(inicio, fim);
     }
 
+    // agenda de um medico num dia especifico — combina os dois filtros
+    @Transactional(readOnly = true)
+    public List<ConsultaEntity> findByMedicoIdAndData(Long medicoId, LocalDate data) {
+        LocalDateTime inicio = data.atStartOfDay();
+        LocalDateTime fim = data.atTime(23, 59, 59, 999_999_999);
+        return consultaRepository.findByMedicoIdAndDataHoraBetween(medicoId, inicio, fim);
+    }
+
+    // agenda do medico = o que ele ainda vai atender: pendentes e confirmadas
+    // (canceladas e realizadas saem da agenda)
     @Transactional(readOnly = true)
     public List<ConsultaEntity> findMinhaAgenda(Long medicoId) {
-        return consultaRepository.findByMedicoIdAndStatus(medicoId, StatusConsulta.PENDENTE);
+        return consultaRepository.findByMedicoIdAndStatusIn(
+                medicoId, List.of(StatusConsulta.PENDENTE, StatusConsulta.CONFIRMADA));
     }
 
     private boolean existeConflito(Long medicoId, LocalDateTime dataHora, Long ignorarConsultaId) {
