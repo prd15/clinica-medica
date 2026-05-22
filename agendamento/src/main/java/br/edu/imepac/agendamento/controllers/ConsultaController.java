@@ -99,6 +99,18 @@ public class ConsultaController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // chamado pelo microsservico de atendimento quando o atendimento e registrado
+    @Operation(summary = "Marca uma consulta como realizada")
+    @ApiResponse(responseCode = "200", description = "Consulta marcada como realizada")
+    @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
+    @ApiResponse(responseCode = "409", description = "Consulta cancelada ou ja realizada")
+    @PatchMapping("/{id}/realizar")
+    public ResponseEntity<ConsultaResponse> realizar(@PathVariable("id") Long id) {
+        return consultaService.realizar(id)
+                .map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @Operation(summary = "Lista consultas com filtros opcionais",
             description = "Prioridade dos filtros: medicoId > pacienteId > data. Informe ao menos um filtro.")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
