@@ -19,6 +19,7 @@ spec:
       containers:
         - name: agendamento
           image: clinica/agendamento:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
           env:
@@ -37,11 +38,6 @@ spec:
                 configMapKeyRef:
                   name: agendamento-config
                   key: DB_PORT
-            - name: ADMIN_SERVICE_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: agendamento-config
-                  key: ADMIN_SERVICE_URL
             - name: ADMINISTRATIVO_URL
               valueFrom:
                 configMapKeyRef:

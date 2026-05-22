@@ -7,5 +7,4 @@ data:
   DB_HOST: db-agendamento
   DB_PORT: "3306"
   DB_USER: root
-  ADMIN_SERVICE_URL: http://administrativo:8081
   ADMINISTRATIVO_URL: http://administrativo:8081

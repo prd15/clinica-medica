@@ -19,6 +19,7 @@ spec:
       containers:
         - name: atendimento
           image: clinica/atendimento:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8083
           env:
@@ -37,11 +38,6 @@ spec:
                 configMapKeyRef:
                   name: atendimento-config
                   key: DB_PORT
-            - name: AGEND_SERVICE_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: atendimento-config
-                  key: AGEND_SERVICE_URL
             - name: AGENDAMENTO_URL
               valueFrom:
                 configMapKeyRef:
