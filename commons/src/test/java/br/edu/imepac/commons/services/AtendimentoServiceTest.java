@@ -64,6 +64,23 @@ class AtendimentoServiceTest {
     }
 
     @Test
+    void deveLancarExcecaoAoRegistrarAtendimentoDuplicadoParaMesmaConsulta() {
+        AtendimentoEntity entrada = new AtendimentoEntity();
+        entrada.setConsultaId(1L);
+        entrada.setMedicoId(2L);
+        entrada.setPacienteId(3L);
+
+        when(atendimentoRepository.existsByConsultaId(1L)).thenReturn(true);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> atendimentoService.registrar(entrada, "descricao", "diagnostico", "obs"));
+
+        assertTrue(ex.getMessage().contains("1"));
+        verify(atendimentoRepository, never()).save(any());
+        verify(prontuarioRepository, never()).save(any());
+    }
+
+    @Test
     void deveLancarExcecaoQuandoConsultaNaoEncontrada() {
         when(atendimentoRepository.findByConsultaId(99L)).thenReturn(Optional.empty());
 
