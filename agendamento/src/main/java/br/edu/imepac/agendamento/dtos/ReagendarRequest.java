@@ -17,6 +17,6 @@ public class ReagendarRequest {
 
     @Schema(description = "Nova data e hora", example = "2026-08-10T14:00:00")
     @NotNull(message = "A nova data e hora são obrigatórias")
-    @Future(message = "A nova data deve estar no futuro")
+    @Future(message = "A nova data nao pode estar no passado")
     private LocalDateTime dataHora;
 }

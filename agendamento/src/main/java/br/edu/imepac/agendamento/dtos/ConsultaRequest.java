@@ -30,7 +30,7 @@ public class ConsultaRequest {
 
     @Schema(description = "Data e hora da consulta", example = "2026-08-01T10:00:00")
     @NotNull(message = "A data e hora são obrigatórias")
-    @Future(message = "A data da consulta deve estar no futuro")
+    @Future(message = "A data da consulta nao pode estar no passado")
     private LocalDateTime dataHora;
 
     @Schema(description = "Observações adicionais", example = "Consulta de rotina")
