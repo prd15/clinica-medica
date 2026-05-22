@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-atendimento-config
+  namespace: clinica
+data:
+  MYSQL_DATABASE: clinica_atendimento
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-atendimento
+  namespace: clinica
+  labels:
+    app: db-atendimento
+spec:
+  type: ClusterIP
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+  selector:
+    app: db-atendimento
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db-atendimento
+  namespace: clinica
+  labels:
+    app: db-atendimento
+spec:
+  serviceName: db-atendimento
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-atendimento
+  template:
+    metadata:
+      labels:
+        app: db-atendimento
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-secrets
+                  key: db-password
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: db-atendimento-config
+                  key: MYSQL_DATABASE
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
