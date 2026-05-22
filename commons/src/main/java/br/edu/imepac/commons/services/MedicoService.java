@@ -40,12 +40,14 @@ public class MedicoService {
         return medicoRepository.findById(id);
     }
 
+    @Transactional
     public MedicoEntity save(MedicoEntity medico) {
         // garante que nao cadastra dois medicos com o mesmo CRM
         validarCrmDisponivel(medico.getCrm(), null);
         return medicoRepository.save(medico);
     }
 
+    @Transactional
     public Optional<MedicoEntity> update(Long id, MedicoEntity dadosAtualizados) {
         return medicoRepository.findById(id).map(existing -> {
             validarCrmDisponivel(dadosAtualizados.getCrm(), id);
@@ -59,6 +61,7 @@ public class MedicoService {
         });
     }
 
+    @Transactional
     public Optional<MedicoEntity> inativar(Long id) {
         return medicoRepository.findById(id).map(medico -> {
             medico.setAtivo(false);
@@ -66,6 +69,7 @@ public class MedicoService {
         });
     }
 
+    @Transactional
     public Optional<MedicoEntity> associarEspecialidade(Long medicoId, Long especialidadeId) {
         Optional<MedicoEntity> medicoOpt = medicoRepository.findById(medicoId);
         Optional<EspecialidadeEntity> especialidadeOpt = especialidadeRepository.findById(especialidadeId);
@@ -81,6 +85,7 @@ public class MedicoService {
         return Optional.of(medicoRepository.save(medico));
     }
 
+    @Transactional
     public Optional<MedicoEntity> removerEspecialidade(Long medicoId, Long especialidadeId) {
         Optional<MedicoEntity> medicoOpt = medicoRepository.findById(medicoId);
         Optional<EspecialidadeEntity> especialidadeOpt = especialidadeRepository.findById(especialidadeId);
@@ -92,6 +97,7 @@ public class MedicoService {
         return Optional.of(medicoRepository.save(medico));
     }
 
+    @Transactional
     public boolean deleteById(Long id) {
         if (medicoRepository.existsById(id)) {
             medicoRepository.deleteById(id);

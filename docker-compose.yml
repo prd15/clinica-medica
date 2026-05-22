@@ -79,6 +79,8 @@ services:
       DB_PORT: 3306
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
+      # Hostname interno do Docker — administrativo chama agendamento para o relatorio de consultas-diarias
+      AGENDAMENTO_URL: http://agendamento:8082
     depends_on:
       db-administrativo:
         condition: service_healthy

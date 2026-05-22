@@ -34,13 +34,17 @@ public class ConvenioService {
         return convenioRepository.findByAtivo(ativo);
     }
 
+    @Transactional
     public ConvenioEntity save(ConvenioEntity convenio) {
+        validarNomeDisponivel(convenio.getNome(), null);
         return convenioRepository.save(convenio);
     }
 
     // atualiza tudo exceto o id — ativo so muda se vier no request
+    @Transactional
     public Optional<ConvenioEntity> update(Long id, ConvenioEntity dadosAtualizados) {
         return convenioRepository.findById(id).map(existing -> {
+            validarNomeDisponivel(dadosAtualizados.getNome(), id);
             existing.setNome(dadosAtualizados.getNome());
             existing.setDescricao(dadosAtualizados.getDescricao());
             existing.setCnpj(dadosAtualizados.getCnpj());
@@ -53,6 +57,16 @@ public class ConvenioService {
         });
     }
 
+    // garante que nao cadastra dois convenios com o mesmo nome (case-insensitive)
+    private void validarNomeDisponivel(String nome, Long idAtual) {
+        convenioRepository.findByNomeIgnoreCase(nome)
+                .filter(c -> idAtual == null || !c.getId().equals(idAtual))
+                .ifPresent(c -> {
+                    throw new IllegalStateException("Convenio ja cadastrado com este nome");
+                });
+    }
+
+    @Transactional
     public boolean deleteById(Long id) {
         if (convenioRepository.existsById(id)) {
             convenioRepository.deleteById(id);
@@ -62,6 +76,7 @@ public class ConvenioService {
     }
 
     // PATCH especifico pra status — evita mandar o objeto inteiro so pra ativar/desativar
+    @Transactional
     public ConvenioEntity alterarStatus(Long id, Boolean ativo) {
         ConvenioEntity convenio = convenioRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Convenio nao encontrado com id: " + id));

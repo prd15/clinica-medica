@@ -17,16 +17,20 @@ import java.util.function.Supplier;
 public class AdministrativoClient {
 
     private final RestTemplate restTemplate;
+    private final String adminUrl;
 
-    @Value("${administrativo.url}")
-    private String adminUrl;
-
-    public AdministrativoClient(RestTemplate restTemplate) {
+    public AdministrativoClient(RestTemplate restTemplate,
+                                @Value("${administrativo.url}") String adminUrl) {
         this.restTemplate = restTemplate;
+        this.adminUrl = adminUrl;
     }
 
     public ResponseEntity<ConvenioRefDTO> buscarConvenio(Long id) {
-        return restTemplate.getForEntity(adminUrl + "/v1/convenios/" + id, ConvenioRefDTO.class);
+        try {
+            return restTemplate.getForEntity(adminUrl + "/v1/convenios/" + id, ConvenioRefDTO.class);
+        } catch (HttpClientErrorException.NotFound e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     public boolean isConvenioAtivo(Long convenioId) {

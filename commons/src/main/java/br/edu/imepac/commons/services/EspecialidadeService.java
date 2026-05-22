@@ -32,23 +32,37 @@ public class EspecialidadeService {
         return especialidadeRepository.findByNome(nome);
     }
 
+    @Transactional
     public EspecialidadeEntity save(EspecialidadeEntity especialidade) {
+        validarNomeDisponivel(especialidade.getNome(), null);
         return especialidadeRepository.save(especialidade);
     }
 
+    @Transactional
     public Optional<EspecialidadeEntity> update(Long id, EspecialidadeEntity dadosAtualizados) {
         return especialidadeRepository.findById(id).map(existing -> {
+            validarNomeDisponivel(dadosAtualizados.getNome(), id);
             existing.setNome(dadosAtualizados.getNome());
             existing.setDescricao(dadosAtualizados.getDescricao());
             return especialidadeRepository.save(existing);
         });
     }
 
+    @Transactional
     public boolean deleteById(Long id) {
         if (especialidadeRepository.existsById(id)) {
             especialidadeRepository.deleteById(id);
             return true;
         }
         return false;
+    }
+
+    // garante que nao cadastra duas especialidades com o mesmo nome
+    private void validarNomeDisponivel(String nome, Long idAtual) {
+        especialidadeRepository.findByNome(nome)
+                .filter(e -> idAtual == null || !e.getId().equals(idAtual))
+                .ifPresent(e -> {
+                    throw new IllegalStateException("Especialidade ja cadastrada com este nome");
+                });
     }
 }

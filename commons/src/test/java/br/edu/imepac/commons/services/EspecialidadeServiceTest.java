@@ -116,4 +116,33 @@ class EspecialidadeServiceTest {
         verify(especialidadeRepository).existsById(99L);
         verify(especialidadeRepository, never()).deleteById(anyLong());
     }
+
+    // save com nome ja em uso — deve lancar IllegalStateException
+    @Test
+    void saveDeveLancarQuandoNomeJaCadastrado() {
+        EspecialidadeEntity nova = new EspecialidadeEntity(null, "Cardiologia", "Doencas do coracao");
+        EspecialidadeEntity existente = new EspecialidadeEntity(7L, "Cardiologia", "Outra desc");
+        when(especialidadeRepository.findByNome("Cardiologia")).thenReturn(Optional.of(existente));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> especialidadeService.save(nova));
+        assertTrue(ex.getMessage().toLowerCase().contains("especialidade"));
+        verify(especialidadeRepository, never()).save(any(EspecialidadeEntity.class));
+    }
+
+    // update mantendo o mesmo nome — deve passar
+    @Test
+    void updateDevePermitirManterMesmoNome() {
+        EspecialidadeEntity existente = new EspecialidadeEntity(1L, "Cardiologia", "Antigo");
+        EspecialidadeEntity dadosAtualizados = new EspecialidadeEntity(null, "Cardiologia", "Novo");
+
+        when(especialidadeRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(especialidadeRepository.findByNome("Cardiologia")).thenReturn(Optional.of(existente));
+        when(especialidadeRepository.save(any(EspecialidadeEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Optional<EspecialidadeEntity> resultado = especialidadeService.update(1L, dadosAtualizados);
+
+        assertTrue(resultado.isPresent());
+        assertEquals("Novo", resultado.get().getDescricao());
+    }
 }

@@ -59,6 +59,7 @@
               "listen": "prerequest",
               "script": {
                 "exec": [
+                  "pm.collectionVariables.set('setup_conv_ativo_nome', 'UnimedTeste-' + Date.now());",
                   "const d = String(Date.now()).slice(-8).padStart(8, '0');",
                   "const cnpj = d.slice(0,2) + '.' + d.slice(2,5) + '.' + d.slice(5,8) + '/0001-' + d.slice(0,2);",
                   "pm.collectionVariables.set('setup_cnpj_ativo', cnpj);",
@@ -98,7 +99,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"Unimed Teste\",\n  \"descricao\": \"Convenio ativo para testes\",\n  \"cnpj\": \"{{setup_cnpj_ativo}}\",\n  \"telefone\": \"(34) 99999-0001\",\n  \"ativo\": true\n}"
+              "raw": "{\n  \"nome\": \"{{setup_conv_ativo_nome}}\",\n  \"descricao\": \"Convenio ativo para testes\",\n  \"cnpj\": \"{{setup_cnpj_ativo}}\",\n  \"telefone\": \"(34) 99999-0001\",\n  \"ativo\": true\n}"
             },
             "url": {
               "raw": "{{admin_url}}/v1/convenios",
@@ -119,6 +120,7 @@
               "listen": "prerequest",
               "script": {
                 "exec": [
+                  "pm.collectionVariables.set('setup_conv_inativo_nome', 'ConvenioInativoTeste-' + Date.now());",
                   "const d = String(Date.now() + 1).slice(-8).padStart(8, '0');",
                   "const cnpj = d.slice(0,2) + '.' + d.slice(2,5) + '.' + d.slice(5,8) + '/0002-' + d.slice(0,2);",
                   "pm.collectionVariables.set('setup_cnpj_inativo', cnpj);"
@@ -146,7 +148,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"Convenio Inativo Teste\",\n  \"descricao\": \"Convenio inativo para testes de erro\",\n  \"cnpj\": \"{{setup_cnpj_inativo}}\",\n  \"telefone\": \"(34) 99999-0002\",\n  \"ativo\": false\n}"
+              "raw": "{\n  \"nome\": \"{{setup_conv_inativo_nome}}\",\n  \"descricao\": \"Convenio inativo para testes de erro\",\n  \"cnpj\": \"{{setup_cnpj_inativo}}\",\n  \"telefone\": \"(34) 99999-0002\",\n  \"ativo\": false\n}"
             },
             "url": {
               "raw": "{{admin_url}}/v1/convenios",

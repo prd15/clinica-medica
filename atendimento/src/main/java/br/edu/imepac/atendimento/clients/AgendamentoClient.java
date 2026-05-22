@@ -22,7 +22,8 @@ public class AgendamentoClient {
     }
 
     // busca a consulta no agendamento antes de registrar o atendimento
-    // fail-safe: 404 ou falha de comunicacao retornam vazio — quem chama trata como "nao validavel"
+    // 404 -> Optional.empty() (consulta nao existe); qualquer outra falha de comunicacao
+    // (timeout, 5xx, conexao recusada) -> ServicoIndisponivelException -> handler vira 503
     public Optional<ConsultaRefDTO> buscarConsulta(Long consultaId) {
         try {
             ConsultaRefDTO consulta = restTemplate.getForObject(
@@ -31,7 +32,8 @@ public class AgendamentoClient {
         } catch (HttpClientErrorException.NotFound e) {
             return Optional.empty();
         } catch (RestClientException e) {
-            return Optional.empty();
+            throw new ServicoIndisponivelException(
+                    "Agendamento indisponivel ao buscar consulta " + consultaId, e);
         }
     }
 

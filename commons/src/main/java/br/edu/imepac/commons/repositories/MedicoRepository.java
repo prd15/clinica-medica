@@ -11,12 +11,18 @@ import java.util.Optional;
 @Repository
 public interface MedicoRepository extends JpaRepository<MedicoEntity, Long> {
 
+    @EntityGraph(attributePaths = "especialidades")
     Optional<MedicoEntity> findByCrm(String crm);
 
     // EntityGraph faz join fetch das especialidades em uma unica query — evita N+1
+    // e tambem evita LazyInitializationException quando open-in-view=false
     @Override
     @EntityGraph(attributePaths = "especialidades")
     List<MedicoEntity> findAll();
+
+    @Override
+    @EntityGraph(attributePaths = "especialidades")
+    Optional<MedicoEntity> findById(Long id);
 
     @EntityGraph(attributePaths = "especialidades")
     List<MedicoEntity> findByAtivo(Boolean ativo);
