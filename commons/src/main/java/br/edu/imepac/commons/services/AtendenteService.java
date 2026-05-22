@@ -30,6 +30,10 @@ public class AtendenteService {
 
     @Transactional
     public AtendenteEntity save(AtendenteEntity atendente) {
+        // normaliza usuario para evitar duplicatas tipo "maria" vs "Maria"
+        if (atendente.getUsuario() != null) {
+            atendente.setUsuario(atendente.getUsuario().toLowerCase());
+        }
         validarUsuarioDisponivel(atendente.getUsuario(), null);
         if (atendente.getAtivo() == null) {
             atendente.setAtivo(true);
@@ -40,9 +44,12 @@ public class AtendenteService {
     @Transactional
     public Optional<AtendenteEntity> update(Long id, AtendenteEntity dadosAtualizados) {
         return atendenteRepository.findById(id).map(existing -> {
-            validarUsuarioDisponivel(dadosAtualizados.getUsuario(), id);
+            String usuarioNormalizado = dadosAtualizados.getUsuario() != null
+                    ? dadosAtualizados.getUsuario().toLowerCase()
+                    : null;
+            validarUsuarioDisponivel(usuarioNormalizado, id);
             existing.setNome(dadosAtualizados.getNome());
-            existing.setUsuario(dadosAtualizados.getUsuario());
+            existing.setUsuario(usuarioNormalizado);
             if (dadosAtualizados.getSenha() != null && !dadosAtualizados.getSenha().isBlank()) {
                 existing.setSenha(dadosAtualizados.getSenha());
             }
