@@ -33,14 +33,11 @@ public class MedicoService {
 
     // readOnly tambem aqui: MedicoResponse expoe especialidades (LAZY) — mantem a sessao
     // aberta no mapeamento e evita LazyInitializationException, igual em findAll/findByAtivo
+    // readOnly: MedicoResponse expoe especialidades (LAZY) — mantem a sessao aberta no
+    // mapeamento e evita LazyInitializationException, igual em findAll/findByAtivo
     @Transactional(readOnly = true)
     public Optional<MedicoEntity> findById(Long id) {
         return medicoRepository.findById(id);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<MedicoEntity> findByCrm(String crm) {
-        return medicoRepository.findByCrm(crm);
     }
 
     public MedicoEntity save(MedicoEntity medico) {
