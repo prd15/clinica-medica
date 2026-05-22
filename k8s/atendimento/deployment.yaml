@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: atendimento
+  namespace: clinica
+  labels:
+    app: atendimento
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: atendimento
+  template:
+    metadata:
+      labels:
+        app: atendimento
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: atendimento
+          image: clinica/atendimento:latest
+          ports:
+            - containerPort: 8083
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: atendimento-config
+                  key: DB_HOST
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: atendimento-config
+                  key: DB_USER
+            - name: AGEND_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: atendimento-config
+                  key: AGEND_SERVICE_URL
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-secrets
+                  key: db-password
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

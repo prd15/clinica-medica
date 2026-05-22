@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agendamento-config
+  namespace: clinica
+data:
+  DB_HOST: db-agendamento
+  DB_USER: root
+  ADMIN_SERVICE_URL: http://administrativo:8081

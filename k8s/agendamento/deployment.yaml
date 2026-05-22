@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agendamento
+  namespace: clinica
+  labels:
+    app: agendamento
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agendamento
+  template:
+    metadata:
+      labels:
+        app: agendamento
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: agendamento
+          image: clinica/agendamento:latest
+          ports:
+            - containerPort: 8082
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: agendamento-config
+                  key: DB_HOST
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: agendamento-config
+                  key: DB_USER
+            - name: ADMIN_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: agendamento-config
+                  key: ADMIN_SERVICE_URL
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-secrets
+                  key: db-password
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
