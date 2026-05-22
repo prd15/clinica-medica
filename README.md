@@ -238,11 +238,26 @@ cp k8s/secrets.example.yaml k8s/secrets.yaml
 # editar k8s/secrets.yaml com db-username e db-password em base64
 ```
 
+Como as imagens `clinica/administrativo:latest`, `clinica/agendamento:latest` e `clinica/atendimento:latest` são locais de desenvolvimento, faça o build antes de aplicar os manifests:
+
+```bash
+docker compose build
+```
+
+Em clusters locais com Kind, carregue as imagens no cluster depois do build:
+
+```bash
+kind load docker-image clinica/administrativo:latest
+kind load docker-image clinica/agendamento:latest
+kind load docker-image clinica/atendimento:latest
+```
+
 Aplique os recursos no cluster:
 
 ```bash
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/secrets.yaml
+kubectl apply -f k8s/databases/
 kubectl apply -f k8s/administrativo/
 kubectl apply -f k8s/agendamento/
 kubectl apply -f k8s/atendimento/
