@@ -11,7 +11,15 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "consultas")
+@Table(name = "consultas",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_consulta_medico_data_hora",
+                columnNames = {"medico_id", "data_hora"}
+        ),
+        indexes = {
+                @Index(name = "idx_consulta_medico_data_hora", columnList = "medico_id, data_hora"),
+                @Index(name = "idx_consulta_paciente", columnList = "paciente_id")
+        })
 public class ConsultaEntity {
 
     @Id
