@@ -182,19 +182,22 @@ class ConsultaServiceTest {
     }
 
     @Test
-    void testFindMinhaAgenda_RetornaApenasPendentes() {
-        List<ConsultaEntity> pendentes = List.of(
+    void testFindMinhaAgenda_RetornaPendentesEConfirmadas() {
+        List<ConsultaEntity> agenda = List.of(
                 novaConsulta(1L, StatusConsulta.PENDENTE),
-                novaConsulta(2L, StatusConsulta.PENDENTE)
+                novaConsulta(2L, StatusConsulta.CONFIRMADA)
         );
-        when(consultaRepository.findByMedicoIdAndStatus(1L, StatusConsulta.PENDENTE))
-                .thenReturn(pendentes);
+        when(consultaRepository.findByMedicoIdAndStatusIn(
+                1L, List.of(StatusConsulta.PENDENTE, StatusConsulta.CONFIRMADA)))
+                .thenReturn(agenda);
 
         List<ConsultaEntity> resultado = consultaService.findMinhaAgenda(1L);
 
         assertEquals(2, resultado.size());
-        assertTrue(resultado.stream().allMatch(c -> c.getStatus() == StatusConsulta.PENDENTE));
-        verify(consultaRepository).findByMedicoIdAndStatus(1L, StatusConsulta.PENDENTE);
+        assertTrue(resultado.stream().noneMatch(
+                c -> c.getStatus() == StatusConsulta.CANCELADA || c.getStatus() == StatusConsulta.REALIZADA));
+        verify(consultaRepository).findByMedicoIdAndStatusIn(
+                1L, List.of(StatusConsulta.PENDENTE, StatusConsulta.CONFIRMADA));
     }
 
     @Test

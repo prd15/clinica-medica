@@ -499,7 +499,7 @@
           }
         },
         {
-          "name": "GET minha-agenda apos confirmar (deve nao listar)",
+          "name": "GET minha-agenda apos confirmar (deve listar — CONFIRMADA fica na agenda)",
           "event": [
             {
               "listen": "test",
@@ -507,9 +507,9 @@
                 "exec": [
                   "pm.test('Status 200', () => pm.response.to.have.status(200));",
                   "const arr = pm.response.json();",
-                  "pm.test('Consulta confirmada nao aparece em minha-agenda', () => {",
+                  "pm.test('Consulta confirmada continua na agenda', () => {",
                   "  const id = Number(pm.collectionVariables.get('consulta_id'));",
-                  "  pm.expect(arr.some(c => c.id === id)).to.be.false;",
+                  "  pm.expect(arr.some(c => c.id === id)).to.be.true;",
                   "});"
                 ]
               }
