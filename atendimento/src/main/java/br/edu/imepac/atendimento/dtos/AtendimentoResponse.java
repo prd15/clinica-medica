@@ -35,4 +35,7 @@ public class AtendimentoResponse {
 
     @Schema(description = "ID do prontuário gerado")
     private Long prontuarioId;
+
+    @Schema(description = "Indica se o agendamento foi atualizado para REALIZADA com sucesso", example = "true")
+    private boolean consultaAtualizada;
 }

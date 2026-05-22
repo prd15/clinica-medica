@@ -14,6 +14,7 @@ import br.edu.imepac.commons.entities.AnotacaoEntity;
 import br.edu.imepac.commons.entities.AtendimentoEntity;
 import br.edu.imepac.commons.entities.ProntuarioEntity;
 import br.edu.imepac.commons.entities.SolicitacaoExameEntity;
+import br.edu.imepac.commons.entities.StatusConsulta;
 import br.edu.imepac.commons.services.AtendimentoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -54,10 +55,13 @@ public class AtendimentoController {
     @ApiResponse(responseCode = "409", description = "Consulta cancelada/realizada ou ja atendida")
     public ResponseEntity<AtendimentoResponse> realizar(@RequestBody @Valid AtendimentoRequest request) {
         // valida no agendamento antes de salvar: a consulta precisa existir e nao estar cancelada/realizada
+        // se o agendamento esta offline, AgendamentoClient lanca ServicoIndisponivelException (503),
+        // distinto do 404 retornado quando a consulta realmente nao existe
         ConsultaRefDTO consulta = agendamentoClient.buscarConsulta(request.getConsultaId())
                 .orElseThrow(() -> new NoSuchElementException(
-                        "Consulta " + request.getConsultaId() + " nao encontrada ou indisponivel no agendamento"));
-        if ("CANCELADA".equals(consulta.getStatus()) || "REALIZADA".equals(consulta.getStatus())) {
+                        "Consulta " + request.getConsultaId() + " nao encontrada no agendamento"));
+        if (consulta.getStatus() == StatusConsulta.CANCELADA
+                || consulta.getStatus() == StatusConsulta.REALIZADA) {
             throw new IllegalStateException(
                     "Consulta no status " + consulta.getStatus() + " nao pode gerar atendimento");
         }
@@ -76,15 +80,22 @@ public class AtendimentoController {
 
         Long prontuarioId = atendimentoService.buscarProntuario(salvo.getId()).getId();
 
+        // notifica o agendamento DEPOIS do commit local (invariante crucial — nao inverter ordem)
+        // se a notificacao falhar, atendimento ja existe mas consulta fica no status anterior
+        // o flag consultaAtualizada na response avisa o cliente; log.error sinaliza pra observabilidade
+        boolean consultaAtualizada = false;
         try {
             agendamentoClient.confirmarRealizacao(request.getConsultaId());
+            consultaAtualizada = true;
         } catch (Exception e) {
-            log.warn("Nao foi possivel notificar o agendamento sobre consultaId={}: {}",
-                    request.getConsultaId(), e.getMessage());
+            log.error("Falha ao notificar agendamento sobre consultaId={} (tipo={}, msg={}). "
+                            + "Atendimento {} ja foi salvo mas a consulta nao foi marcada como REALIZADA.",
+                    request.getConsultaId(), e.getClass().getSimpleName(), e.getMessage(), salvo.getId());
         }
 
         AtendimentoResponse response = modelMapper.map(salvo, AtendimentoResponse.class);
         response.setProntuarioId(prontuarioId);
+        response.setConsultaAtualizada(consultaAtualizada);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
