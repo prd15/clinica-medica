@@ -28,11 +28,6 @@ public class AtendenteService {
         return atendenteRepository.findById(id);
     }
 
-    @Transactional(readOnly = true)
-    public Optional<AtendenteEntity> findByUsuario(String usuario) {
-        return atendenteRepository.findByUsuario(usuario);
-    }
-
     public AtendenteEntity save(AtendenteEntity atendente) {
         validarUsuarioDisponivel(atendente.getUsuario(), null);
         if (atendente.getAtivo() == null) {
