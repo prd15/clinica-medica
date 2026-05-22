@@ -64,6 +64,16 @@ public class ConsultaController {
                 .body(modelMapper.map(salva, ConsultaResponse.class));
     }
 
+    @Operation(summary = "Busca uma consulta por ID")
+    @ApiResponse(responseCode = "200", description = "Consulta encontrada")
+    @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
+    @GetMapping("/{id}")
+    public ResponseEntity<ConsultaResponse> buscarPorId(@PathVariable("id") Long id) {
+        return consultaService.findById(id)
+                .map(c -> ResponseEntity.ok(modelMapper.map(c, ConsultaResponse.class)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @Operation(summary = "Cancela uma consulta agendada")
     @ApiResponse(responseCode = "200", description = "Consulta cancelada")
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
