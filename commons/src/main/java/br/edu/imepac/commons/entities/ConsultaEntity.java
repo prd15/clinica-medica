@@ -11,11 +11,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+// nao usamos unique (medico_id, data_hora) porque uma consulta CANCELADA libera o slot
+// para nova marcacao no mesmo horario; a checagem fica por conta do ConsultaService.existeConflito
+// dentro do @Transactional do metodo agendar/reagendar (excluindo status CANCELADA)
 @Table(name = "consultas",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_consulta_medico_data_hora",
-                columnNames = {"medico_id", "data_hora"}
-        ),
         indexes = {
                 @Index(name = "idx_consulta_medico_data_hora", columnList = "medico_id, data_hora"),
                 @Index(name = "idx_consulta_paciente", columnList = "paciente_id")
