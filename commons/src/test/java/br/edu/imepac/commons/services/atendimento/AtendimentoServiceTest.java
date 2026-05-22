@@ -2,15 +2,19 @@ package br.edu.imepac.commons.services.atendimento;
 
 import br.edu.imepac.commons.entities.atendimento.AnotacaoEntity;
 import br.edu.imepac.commons.entities.atendimento.AtendimentoEntity;
+import br.edu.imepac.commons.entities.atendimento.OutboxEvent;
+import br.edu.imepac.commons.entities.atendimento.OutboxStatus;
 import br.edu.imepac.commons.entities.atendimento.ProntuarioEntity;
 import br.edu.imepac.commons.entities.atendimento.SolicitacaoExameEntity;
 import br.edu.imepac.commons.entities.atendimento.StatusAtendimento;
 import br.edu.imepac.commons.repositories.atendimento.AnotacaoRepository;
 import br.edu.imepac.commons.repositories.atendimento.AtendimentoRepository;
+import br.edu.imepac.commons.repositories.atendimento.OutboxEventRepository;
 import br.edu.imepac.commons.repositories.atendimento.ProntuarioRepository;
 import br.edu.imepac.commons.repositories.atendimento.SolicitacaoExameRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -38,11 +42,14 @@ class AtendimentoServiceTest {
     @Mock
     private SolicitacaoExameRepository exameRepository;
 
+    @Mock
+    private OutboxEventRepository outboxEventRepository;
+
     @InjectMocks
     private AtendimentoService atendimentoService;
 
     @Test
-    void deveRegistrarAtendimentoComProntuario() {
+    void deveRegistrarAtendimentoComProntuarioEEnfileirarEventoOutbox() {
         AtendimentoEntity entrada = new AtendimentoEntity();
         entrada.setConsultaId(1L);
         entrada.setMedicoId(2L);
@@ -50,6 +57,7 @@ class AtendimentoServiceTest {
 
         AtendimentoEntity salvo = new AtendimentoEntity();
         salvo.setId(10L);
+        salvo.setConsultaId(1L);
         salvo.setStatus(StatusAtendimento.REALIZADO);
 
         when(atendimentoRepository.save(any())).thenReturn(salvo);
@@ -61,6 +69,15 @@ class AtendimentoServiceTest {
         assertNotNull(resultado.getId());
         verify(atendimentoRepository, times(1)).save(any());
         verify(prontuarioRepository, times(1)).save(any());
+
+        // o evento de notificacao deve ser enfileirado na mesma operacao, PENDENTE
+        ArgumentCaptor<OutboxEvent> captor = ArgumentCaptor.forClass(OutboxEvent.class);
+        verify(outboxEventRepository, times(1)).save(captor.capture());
+        OutboxEvent evento = captor.getValue();
+        assertEquals(OutboxStatus.PENDENTE, evento.getStatus());
+        assertEquals("CONFIRMACAO_REALIZACAO", evento.getEventType());
+        assertEquals("1", evento.getAggregateId());
+        assertEquals(0, evento.getTentativas());
     }
 
     @Test
@@ -78,6 +95,7 @@ class AtendimentoServiceTest {
         assertTrue(ex.getMessage().contains("1"));
         verify(atendimentoRepository, never()).save(any());
         verify(prontuarioRepository, never()).save(any());
+        verify(outboxEventRepository, never()).save(any());
     }
 
     @Test
