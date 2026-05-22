@@ -171,6 +171,24 @@ class ConsultaServiceTest {
     }
 
     @Test
+    void testFindByMedicoIdAndData_RetornaConsultasDoDia() {
+        java.time.LocalDate dia = java.time.LocalDate.now().plusDays(30);
+        List<ConsultaEntity> doDia = List.of(
+                novaConsulta(1L, StatusConsulta.PENDENTE),
+                novaConsulta(2L, StatusConsulta.CONFIRMADA)
+        );
+        when(consultaRepository.findByMedicoIdAndDataHoraBetween(
+                eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(doDia);
+
+        List<ConsultaEntity> resultado = consultaService.findByMedicoIdAndData(1L, dia);
+
+        assertEquals(2, resultado.size());
+        verify(consultaRepository).findByMedicoIdAndDataHoraBetween(
+                eq(1L), any(LocalDateTime.class), any(LocalDateTime.class));
+    }
+
+    @Test
     void testFindByPacienteId_RetornaLista() {
         List<ConsultaEntity> consultas = List.of(novaConsulta(1L, StatusConsulta.REALIZADA));
         when(consultaRepository.findByPacienteId(1L)).thenReturn(consultas);

@@ -404,6 +404,63 @@
           }
         },
         {
+          "name": "GET listar por medicoId + data (agenda do dia)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('consulta_data', String(pm.collectionVariables.get('consulta_dataHora')).slice(0,10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const arr = pm.response.json();",
+                  "pm.test('Array', () => pm.expect(arr).to.be.an('array'));",
+                  "pm.test('Inclui a consulta criada (medico+dia)', () => {",
+                  "  const id = Number(pm.collectionVariables.get('consulta_id'));",
+                  "  pm.expect(arr.some(c => c.id === id)).to.be.true;",
+                  "});",
+                  "pm.test('So consultas do medico filtrado', () => {",
+                  "  const m = Number(pm.collectionVariables.get('medico_id'));",
+                  "  pm.expect(arr.every(c => c.medicoId === m)).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{agenda_url}}/v1/consultas?medicoId={{medico_id}}&data={{consulta_data}}",
+              "host": [
+                "{{agenda_url}}"
+              ],
+              "path": [
+                "v1",
+                "consultas"
+              ],
+              "query": [
+                {
+                  "key": "medicoId",
+                  "value": "{{medico_id}}"
+                },
+                {
+                  "key": "data",
+                  "value": "{{consulta_data}}"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "GET listar sem filtro - 400 (filtro obrigatorio)",
           "event": [
             {
