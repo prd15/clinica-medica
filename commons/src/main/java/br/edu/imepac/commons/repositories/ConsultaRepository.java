@@ -21,6 +21,9 @@ public interface ConsultaRepository extends JpaRepository<ConsultaEntity, Long> 
     // util pra buscar consultas de um dia inteiro: passa inicio e fim do dia
     List<ConsultaEntity> findByDataHoraBetween(LocalDateTime inicio, LocalDateTime fim);
 
+    // agenda do medico num dia especifico: combina medicoId + intervalo do dia
+    List<ConsultaEntity> findByMedicoIdAndDataHoraBetween(Long medicoId, LocalDateTime inicio, LocalDateTime fim);
+
     // filtra a agenda do medico por status — ex: somente PENDENTE
     List<ConsultaEntity> findByMedicoIdAndStatus(Long medicoId, StatusConsulta status);
 
