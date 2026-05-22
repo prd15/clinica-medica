@@ -77,6 +77,20 @@ public class ConsultaService {
         });
     }
 
+    // marca a consulta como realizada — chamado pelo atendimento apos registrar o atendimento
+    // so vale a partir de PENDENTE ou CONFIRMADA; cancelada ou ja realizada nao retrocede nem repete
+    public Optional<ConsultaEntity> realizar(Long id) {
+        return consultaRepository.findById(id).map(consulta -> {
+            if (consulta.getStatus() == StatusConsulta.CANCELADA
+                    || consulta.getStatus() == StatusConsulta.REALIZADA) {
+                throw new IllegalStateException(
+                        "Consulta no status " + consulta.getStatus() + " nao pode ser marcada como realizada");
+            }
+            consulta.setStatus(StatusConsulta.REALIZADA);
+            return consultaRepository.save(consulta);
+        });
+    }
+
     @Transactional(readOnly = true)
     public List<ConsultaEntity> findByMedicoId(Long medicoId) {
         return consultaRepository.findByMedicoId(medicoId);
