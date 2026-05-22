@@ -33,6 +33,6 @@ public class AtendimentoResponse {
             allowableValues = {"EM_ANDAMENTO", "REALIZADO"})
     private StatusAtendimento status;
 
-    @Schema(description = "ID do prontuário gerado")
+    @Schema(description = "ID do prontuário gerado", example = "1")
     private Long prontuarioId;
 }

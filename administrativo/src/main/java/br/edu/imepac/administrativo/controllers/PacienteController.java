@@ -54,6 +54,7 @@ public class PacienteController {
 
     @Operation(summary = "Busca paciente por ID")
     @ApiResponse(responseCode = "200", description = "Paciente encontrado")
+    @ApiResponse(responseCode = "400", description = "ID informado em formato invalido")
     @ApiResponse(responseCode = "404", description = "Paciente nao encontrado")
     @GetMapping("/{id}")
     public ResponseEntity<PacienteResponse> findById(@PathVariable("id") Long id) {
@@ -88,6 +89,7 @@ public class PacienteController {
 
     @Operation(summary = "Remove paciente por ID")
     @ApiResponse(responseCode = "204", description = "Paciente removido")
+    @ApiResponse(responseCode = "400", description = "ID informado em formato invalido")
     @ApiResponse(responseCode = "404", description = "Paciente nao encontrado")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable("id") Long id) {

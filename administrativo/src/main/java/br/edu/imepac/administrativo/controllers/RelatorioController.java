@@ -37,6 +37,7 @@ public class RelatorioController {
     @Hidden
     @Operation(summary = "Relatorio de consultas diarias (pendente integracao com agendamento)")
     @ApiResponse(responseCode = "200", description = "Relatorio retornado com sucesso")
+    @ApiResponse(responseCode = "400", description = "Data ausente ou em formato invalido")
     @GetMapping("/consultas-diarias")
     public ResponseEntity<ConsultaDiariaRelatorioResponse> consultasDiarias(
             @RequestParam
@@ -48,6 +49,7 @@ public class RelatorioController {
 
     @Operation(summary = "Relatorio de pacientes por convenio")
     @ApiResponse(responseCode = "200", description = "Relatorio retornado com sucesso")
+    @ApiResponse(responseCode = "400", description = "ID do convenio ausente ou em formato invalido")
     @GetMapping("/pacientes-por-convenio")
     public ResponseEntity<PacientesPorConvenioRelatorioResponse> pacientesPorConvenio(
             @Parameter(description = "ID do convenio", example = "1")

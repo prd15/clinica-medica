@@ -40,6 +40,7 @@ public class ConsultaController {
             description = "Valida conflito de horario e status do convenio antes de agendar")
     @ApiResponse(responseCode = "201", description = "Consulta agendada com sucesso")
     @ApiResponse(responseCode = "400", description = "Convenio inativo ou dados invalidos")
+    @ApiResponse(responseCode = "404", description = "Paciente, medico ou convenio nao encontrado")
     @ApiResponse(responseCode = "409", description = "Conflito de horario")
     @PostMapping
     public ResponseEntity<ConsultaResponse> agendar(@Valid @RequestBody ConsultaRequest request) {
@@ -66,6 +67,7 @@ public class ConsultaController {
 
     @Operation(summary = "Busca uma consulta por ID")
     @ApiResponse(responseCode = "200", description = "Consulta encontrada")
+    @ApiResponse(responseCode = "400", description = "ID informado em formato invalido")
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
     @GetMapping("/{id}")
     public ResponseEntity<ConsultaResponse> buscarPorId(@PathVariable("id") Long id) {
@@ -76,6 +78,7 @@ public class ConsultaController {
 
     @Operation(summary = "Cancela uma consulta agendada")
     @ApiResponse(responseCode = "200", description = "Consulta cancelada")
+    @ApiResponse(responseCode = "400", description = "ID informado em formato invalido")
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
     @ApiResponse(responseCode = "409", description = "Consulta nao pode ser cancelada no status atual")
     @DeleteMapping("/{id}")
@@ -87,7 +90,7 @@ public class ConsultaController {
 
     @Operation(summary = "Reagenda uma consulta para outra data e hora")
     @ApiResponse(responseCode = "200", description = "Consulta reagendada")
-    @ApiResponse(responseCode = "400", description = "Data no passado")
+    @ApiResponse(responseCode = "400", description = "ID invalido, data invalida ou data no passado")
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
     @ApiResponse(responseCode = "409", description = "Conflito de horario ou status terminal")
     @PatchMapping("/{id}/reagendar")
@@ -100,6 +103,7 @@ public class ConsultaController {
 
     @Operation(summary = "Confirma uma consulta pendente")
     @ApiResponse(responseCode = "200", description = "Consulta confirmada")
+    @ApiResponse(responseCode = "400", description = "ID informado em formato invalido")
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
     @ApiResponse(responseCode = "409", description = "Consulta nao esta no status PENDENTE")
     @PatchMapping("/{id}/confirmar")
@@ -112,6 +116,7 @@ public class ConsultaController {
     // chamado pelo microsservico de atendimento quando o atendimento e registrado
     @Operation(summary = "Marca uma consulta como realizada")
     @ApiResponse(responseCode = "200", description = "Consulta marcada como realizada")
+    @ApiResponse(responseCode = "400", description = "ID informado em formato invalido")
     @ApiResponse(responseCode = "404", description = "Consulta nao encontrada")
     @ApiResponse(responseCode = "409", description = "Consulta cancelada ou ja realizada")
     @PatchMapping("/{id}/realizar")
@@ -154,6 +159,7 @@ public class ConsultaController {
 
     @Operation(summary = "Retorna agenda do medico com consultas pendentes")
     @ApiResponse(responseCode = "200", description = "Agenda retornada")
+    @ApiResponse(responseCode = "400", description = "ID do medico ausente ou em formato invalido")
     @GetMapping("/minha-agenda")
     public ResponseEntity<List<ConsultaResponse>> minhaAgenda(@RequestParam Long medicoId) {
         List<ConsultaResponse> response = consultaService.findMinhaAgenda(medicoId).stream()

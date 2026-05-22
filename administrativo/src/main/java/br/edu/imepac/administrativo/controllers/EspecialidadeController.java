@@ -43,6 +43,7 @@ public class EspecialidadeController {
     @Operation(summary = "Busca especialidade por ID")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Especialidade encontrada"),
+        @ApiResponse(responseCode = "400", description = "ID informado em formato invalido"),
         @ApiResponse(responseCode = "404", description = "Especialidade não encontrada")
     })
     @GetMapping("/{id}")
@@ -68,6 +69,7 @@ public class EspecialidadeController {
     @Operation(summary = "Atualiza especialidade existente")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Especialidade atualizada com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados invalidos"),
         @ApiResponse(responseCode = "404", description = "Especialidade não encontrada")
     })
     @PutMapping("/{id}")
@@ -82,6 +84,7 @@ public class EspecialidadeController {
     @Operation(summary = "Remove especialidade por ID")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Especialidade removida com sucesso"),
+        @ApiResponse(responseCode = "400", description = "ID informado em formato invalido"),
         @ApiResponse(responseCode = "404", description = "Especialidade não encontrada")
     })
     @DeleteMapping("/{id}")
