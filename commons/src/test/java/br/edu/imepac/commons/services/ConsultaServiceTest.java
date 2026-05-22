@@ -248,4 +248,64 @@ class ConsultaServiceTest {
                 .findByMedicoIdAndDataHoraBetweenAndStatusNot(any(), any(), any(), any());
         verify(consultaRepository, never()).save(any(ConsultaEntity.class));
     }
+
+    @Test
+    void testRealizar_ConsultaConfirmada_RetornaRealizada() {
+        ConsultaEntity confirmada = novaConsulta(1L, StatusConsulta.CONFIRMADA);
+        when(consultaRepository.findById(1L)).thenReturn(Optional.of(confirmada));
+        when(consultaRepository.save(any(ConsultaEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Optional<ConsultaEntity> resultado = consultaService.realizar(1L);
+
+        assertTrue(resultado.isPresent());
+        assertEquals(StatusConsulta.REALIZADA, resultado.get().getStatus());
+        verify(consultaRepository).save(confirmada);
+    }
+
+    @Test
+    void testRealizar_ConsultaPendente_RetornaRealizada() {
+        ConsultaEntity pendente = novaConsulta(1L, StatusConsulta.PENDENTE);
+        when(consultaRepository.findById(1L)).thenReturn(Optional.of(pendente));
+        when(consultaRepository.save(any(ConsultaEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Optional<ConsultaEntity> resultado = consultaService.realizar(1L);
+
+        assertTrue(resultado.isPresent());
+        assertEquals(StatusConsulta.REALIZADA, resultado.get().getStatus());
+        verify(consultaRepository).save(pendente);
+    }
+
+    @Test
+    void testRealizar_ConsultaCancelada_LancaException() {
+        ConsultaEntity cancelada = novaConsulta(1L, StatusConsulta.CANCELADA);
+        when(consultaRepository.findById(1L)).thenReturn(Optional.of(cancelada));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> consultaService.realizar(1L));
+        assertTrue(ex.getMessage().contains("CANCELADA"));
+
+        verify(consultaRepository, never()).save(any(ConsultaEntity.class));
+    }
+
+    @Test
+    void testRealizar_ConsultaJaRealizada_LancaException() {
+        ConsultaEntity realizada = novaConsulta(1L, StatusConsulta.REALIZADA);
+        when(consultaRepository.findById(1L)).thenReturn(Optional.of(realizada));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> consultaService.realizar(1L));
+        assertTrue(ex.getMessage().contains("REALIZADA"));
+
+        verify(consultaRepository, never()).save(any(ConsultaEntity.class));
+    }
+
+    @Test
+    void testRealizar_ConsultaInexistente_RetornaVazio() {
+        when(consultaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Optional<ConsultaEntity> resultado = consultaService.realizar(99L);
+
+        assertTrue(resultado.isEmpty());
+        verify(consultaRepository, never()).save(any(ConsultaEntity.class));
+    }
 }
