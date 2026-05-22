@@ -20,7 +20,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-@Slf4j
 @RestController
 @RequestMapping("/v1/atendimentos")
 @Tag(name = "Atendimentos", description = "Registro clínico de consultas realizadas")
@@ -80,22 +78,12 @@ public class AtendimentoController {
 
         Long prontuarioId = atendimentoService.buscarProntuario(salvo.getId()).getId();
 
-        // notifica o agendamento DEPOIS do commit local (invariante crucial — nao inverter ordem)
-        // se a notificacao falhar, atendimento ja existe mas consulta fica no status anterior
-        // o flag consultaAtualizada na response avisa o cliente; log.error sinaliza pra observabilidade
-        boolean consultaAtualizada = false;
-        try {
-            agendamentoClient.confirmarRealizacao(request.getConsultaId());
-            consultaAtualizada = true;
-        } catch (Exception e) {
-            log.error("Falha ao notificar agendamento sobre consultaId={} (tipo={}, msg={}). "
-                            + "Atendimento {} ja foi salvo mas a consulta nao foi marcada como REALIZADA.",
-                    request.getConsultaId(), e.getClass().getSimpleName(), e.getMessage(), salvo.getId());
-        }
-
+        // a notificacao ao agendamento nao e mais sincrona: registrar() gravou um evento
+        // no outbox na mesma transacao, e o OutboxScheduler entrega com retry. Como o
+        // atendimento foi salvo (201), o evento esta garantidamente enfileirado.
         AtendimentoResponse response = modelMapper.map(salvo, AtendimentoResponse.class);
         response.setProntuarioId(prontuarioId);
-        response.setConsultaAtualizada(consultaAtualizada);
+        response.setConsultaAtualizada(true);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
