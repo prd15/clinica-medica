@@ -18,7 +18,8 @@ public class AtendimentoEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    // 1:1 com a consulta — cada consulta gera no maximo um atendimento
+    @Column(nullable = false, unique = true)
     private Long consultaId;
 
     @Column(nullable = false)
