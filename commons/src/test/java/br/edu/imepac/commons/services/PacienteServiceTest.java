@@ -260,4 +260,48 @@ class PacienteServiceTest {
         assertTrue(resultado.isEmpty());
         verify(pacienteRepository).findByConvenioId(99L);
     }
+
+    // save com CPF ja em uso por outro paciente — deve lancar IllegalStateException
+    @Test
+    void saveDeveLancarQuandoCpfJaCadastrado() {
+        PacienteEntity novo = new PacienteEntity(null, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A", 1L);
+        PacienteEntity existente = new PacienteEntity(7L, "Outro", "123.456.789-00", LocalDate.of(1980, 1, 1), null, null, null, null);
+        when(pacienteRepository.findByCpf("123.456.789-00")).thenReturn(Optional.of(existente));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> pacienteService.save(novo));
+        assertTrue(ex.getMessage().contains("CPF"));
+        verify(pacienteRepository, never()).save(any(PacienteEntity.class));
+    }
+
+    // update mantendo o mesmo CPF do proprio paciente — deve passar
+    @Test
+    void updateDevePermitirManterMesmoCpf() {
+        PacienteEntity existente = new PacienteEntity(1L, "Joao Silva", "123.456.789-00", LocalDate.of(1990, 5, 15), "(34)99999-0000", "joao@email.com", "Rua A", 1L);
+        PacienteEntity dadosAtualizados = new PacienteEntity(null, "Joao Novo", "123.456.789-00", LocalDate.of(1990, 5, 15), null, null, null, 1L);
+
+        when(pacienteRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(pacienteRepository.findByCpf("123.456.789-00")).thenReturn(Optional.of(existente));
+        when(pacienteRepository.save(any(PacienteEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Optional<PacienteEntity> resultado = pacienteService.update(1L, dadosAtualizados);
+
+        assertTrue(resultado.isPresent());
+        assertEquals("Joao Novo", resultado.get().getNome());
+    }
+
+    // update tentando setar CPF que ja pertence a outro paciente — deve falhar
+    @Test
+    void updateDeveLancarQuandoCpfPertenceOutroPaciente() {
+        PacienteEntity existente = new PacienteEntity(1L, "Joao Silva", "111.111.111-11", null, null, null, null, 1L);
+        PacienteEntity outroComCpf = new PacienteEntity(2L, "Maria", "222.222.222-22", null, null, null, null, 1L);
+        PacienteEntity dadosAtualizados = new PacienteEntity(null, "Joao", "222.222.222-22", null, null, null, null, 1L);
+
+        when(pacienteRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(pacienteRepository.findByCpf("222.222.222-22")).thenReturn(Optional.of(outroComCpf));
+
+        assertThrows(IllegalStateException.class,
+                () -> pacienteService.update(1L, dadosAtualizados));
+        verify(pacienteRepository, never()).save(any(PacienteEntity.class));
+    }
 }
