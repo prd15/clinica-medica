@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -22,6 +23,9 @@ public interface ConsultaRepository extends JpaRepository<ConsultaEntity, Long> 
 
     // filtra a agenda do medico por status — ex: somente PENDENTE
     List<ConsultaEntity> findByMedicoIdAndStatus(Long medicoId, StatusConsulta status);
+
+    // agenda do medico por varios status — ex: PENDENTE + CONFIRMADA (o que ainda vai atender)
+    List<ConsultaEntity> findByMedicoIdAndStatusIn(Long medicoId, Collection<StatusConsulta> status);
 
     // validacao critica de conflito: existe consulta no mesmo medico+horario que NAO esteja CANCELADA?
     // Spring Data deriva a query a partir do nome do metodo — sem precisar escrever JPQL/SQL
