@@ -24,16 +24,10 @@ public interface ConsultaRepository extends JpaRepository<ConsultaEntity, Long> 
     // agenda do medico num dia especifico: combina medicoId + intervalo do dia
     List<ConsultaEntity> findByMedicoIdAndDataHoraBetween(Long medicoId, LocalDateTime inicio, LocalDateTime fim);
 
-    // filtra a agenda do medico por status — ex: somente PENDENTE
-    List<ConsultaEntity> findByMedicoIdAndStatus(Long medicoId, StatusConsulta status);
-
     // agenda do medico por varios status — ex: PENDENTE + CONFIRMADA (o que ainda vai atender)
     List<ConsultaEntity> findByMedicoIdAndStatusIn(Long medicoId, Collection<StatusConsulta> status);
 
-    // validacao critica de conflito: existe consulta no mesmo medico+horario que NAO esteja CANCELADA?
-    // Spring Data deriva a query a partir do nome do metodo — sem precisar escrever JPQL/SQL
-    boolean existsByMedicoIdAndDataHoraAndStatusNot(Long medicoId, LocalDateTime dataHora, StatusConsulta status);
-
+    // validacao de conflito por slot: consultas do medico na janela de horario que NAO estejam CANCELADAS
     List<ConsultaEntity> findByMedicoIdAndDataHoraBetweenAndStatusNot(Long medicoId,
                                                                      LocalDateTime inicio,
                                                                      LocalDateTime fim,
