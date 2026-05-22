@@ -122,7 +122,7 @@ public class ConsultaController {
     }
 
     @Operation(summary = "Lista consultas com filtros opcionais",
-            description = "Prioridade dos filtros: medicoId > pacienteId > data. Informe ao menos um filtro.")
+            description = "Combina medicoId + data (agenda do medico no dia). Sozinhos: medicoId, pacienteId ou data. Informe ao menos um filtro.")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
     @ApiResponse(responseCode = "400", description = "Nenhum filtro informado ou data invalida")
     @GetMapping
@@ -133,7 +133,9 @@ public class ConsultaController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
 
         List<ConsultaEntity> consultas;
-        if (medicoId != null) {
+        if (medicoId != null && data != null) {
+            consultas = consultaService.findByMedicoIdAndData(medicoId, data);
+        } else if (medicoId != null) {
             consultas = consultaService.findByMedicoId(medicoId);
         } else if (pacienteId != null) {
             consultas = consultaService.findByPacienteId(pacienteId);
