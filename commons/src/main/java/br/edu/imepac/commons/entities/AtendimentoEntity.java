@@ -28,8 +28,10 @@ public class AtendimentoEntity {
     @Column(nullable = false)
     private Long pacienteId;
 
+    @Column(nullable = false)
     private LocalDateTime dataHora;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private StatusAtendimento status;
 }
