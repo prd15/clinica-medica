@@ -1,21 +1,24 @@
 package br.edu.imepac.commons.entities.administrativo;
 
+import br.edu.imepac.commons.entities.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
 // exclui senha do toString — mesma protecao aplicada em MedicoEntity
 @ToString(exclude = "senha")
 @Entity
 @Table(name = "atendentes")
-public class AtendenteEntity {
+public class AtendenteEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

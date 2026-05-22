@@ -1,9 +1,11 @@
 package br.edu.imepac.commons.entities.administrativo;
 
+import br.edu.imepac.commons.entities.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
@@ -13,11 +15,12 @@ import java.time.LocalDate;
  * Tabela: pacientes (banco clinica_administrativo)
  */
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "pacientes")
-public class PacienteEntity {
+public class PacienteEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

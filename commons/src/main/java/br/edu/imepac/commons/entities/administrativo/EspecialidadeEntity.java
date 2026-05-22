@@ -1,5 +1,6 @@
 package br.edu.imepac.commons.entities.administrativo;
 
+import br.edu.imepac.commons.entities.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -8,12 +9,12 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(of = "id", callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "especialidades")
-public class EspecialidadeEntity {
+public class EspecialidadeEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

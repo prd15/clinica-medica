@@ -22,6 +22,12 @@ public class AnotacaoResponse {
     @Schema(description = "Texto da anotacao")
     private String texto;
 
-    @Schema(description = "Data e hora de criacao", example = "2026-05-15T10:30:00")
+    @Schema(description = "Data e hora de criacao clinica da anotacao", example = "2026-05-15T10:30:00")
     private LocalDateTime dataCriacao;
+
+    @Schema(description = "Data e hora de criacao do registro", example = "2026-05-22T10:30:00")
+    private LocalDateTime createdAt;
+
+    @Schema(description = "Data e hora da ultima atualizacao do registro", example = "2026-05-22T11:00:00")
+    private LocalDateTime updatedAt;
 }
