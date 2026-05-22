@@ -36,6 +36,7 @@ public class ConvenioService {
 
     @Transactional
     public ConvenioEntity save(ConvenioEntity convenio) {
+        validarNomeDisponivel(convenio.getNome(), null);
         return convenioRepository.save(convenio);
     }
 
@@ -43,6 +44,7 @@ public class ConvenioService {
     @Transactional
     public Optional<ConvenioEntity> update(Long id, ConvenioEntity dadosAtualizados) {
         return convenioRepository.findById(id).map(existing -> {
+            validarNomeDisponivel(dadosAtualizados.getNome(), id);
             existing.setNome(dadosAtualizados.getNome());
             existing.setDescricao(dadosAtualizados.getDescricao());
             existing.setCnpj(dadosAtualizados.getCnpj());
@@ -53,6 +55,15 @@ public class ConvenioService {
             }
             return convenioRepository.save(existing);
         });
+    }
+
+    // garante que nao cadastra dois convenios com o mesmo nome (case-insensitive)
+    private void validarNomeDisponivel(String nome, Long idAtual) {
+        convenioRepository.findByNomeIgnoreCase(nome)
+                .filter(c -> idAtual == null || !c.getId().equals(idAtual))
+                .ifPresent(c -> {
+                    throw new IllegalStateException("Convenio ja cadastrado com este nome");
+                });
     }
 
     @Transactional
