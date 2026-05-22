@@ -23,6 +23,15 @@
       "name": "Setup — POST especialidade (pre-req)",
       "event": [
         {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.collectionVariables.set('setup_esp_nome', 'Cardiologia-Med-' + Date.now());"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
           "listen": "test",
           "script": {
             "exec": [
@@ -42,7 +51,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"nome\": \"Cardiologia Teste Medico\",\n  \"descricao\": \"Para chaining de testes\"\n}"
+          "raw": "{\n  \"nome\": \"{{setup_esp_nome}}\",\n  \"descricao\": \"Para chaining de testes\"\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/especialidades",

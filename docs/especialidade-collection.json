@@ -5,13 +5,28 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url", "value": "http://localhost:8081" },
-    { "key": "especialidade_id", "value": "" }
+    {
+      "key": "base_url",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "especialidade_id",
+      "value": ""
+    }
   ],
   "item": [
     {
       "name": "Especialidade — POST create",
       "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.collectionVariables.set('esp_nome', 'Cardiologia-' + Date.now());"
+            ],
+            "type": "text/javascript"
+          }
+        },
         {
           "listen": "test",
           "script": {
@@ -22,22 +37,32 @@
               "  pm.expect(json.id).to.be.a('number');",
               "  pm.collectionVariables.set('especialidade_id', json.id);",
               "});",
-              "pm.test('Nome correto', () => pm.expect(pm.response.json().nome).to.eql('Cardiologia'));"
+              "pm.test('Nome correto', () => pm.expect(pm.response.json().nome).to.eql(pm.collectionVariables.get('esp_nome')));"
             ]
           }
         }
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"nome\": \"Cardiologia\",\n  \"descricao\": \"Especialidade do coracao e sistema cardiovascular\"\n}"
+          "raw": "{\n  \"nome\": \"{{esp_nome}}\",\n  \"descricao\": \"Especialidade do coracao e sistema cardiovascular\"\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/especialidades",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "especialidades"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "especialidades"
+          ]
         }
       }
     },
@@ -55,15 +80,25 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"nome\": \"\",\n  \"descricao\": \"sem nome\"\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/especialidades",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "especialidades"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "especialidades"
+          ]
         }
       }
     },
@@ -85,8 +120,13 @@
         "method": "GET",
         "url": {
           "raw": "{{base_url}}/v1/especialidades",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "especialidades"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "especialidades"
+          ]
         }
       }
     },
@@ -98,7 +138,7 @@
           "script": {
             "exec": [
               "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('Nome correto', () => pm.expect(pm.response.json().nome).to.eql('Cardiologia'));"
+              "pm.test('Nome correto', () => pm.expect(pm.response.json().nome).to.eql(pm.collectionVariables.get('esp_nome')));"
             ]
           }
         }
@@ -107,8 +147,14 @@
         "method": "GET",
         "url": {
           "raw": "{{base_url}}/v1/especialidades/{{especialidade_id}}",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "especialidades", "{{especialidade_id}}"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "especialidades",
+            "{{especialidade_id}}"
+          ]
         }
       }
     },
@@ -128,8 +174,14 @@
         "method": "GET",
         "url": {
           "raw": "{{base_url}}/v1/especialidades/999999",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "especialidades", "999999"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "especialidades",
+            "999999"
+          ]
         }
       }
     },
@@ -137,26 +189,46 @@
       "name": "Especialidade — PUT update",
       "event": [
         {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.collectionVariables.set('esp_nome_upd', 'CardioPed-' + Date.now());"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
           "listen": "test",
           "script": {
             "exec": [
               "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('Nome atualizado', () => pm.expect(pm.response.json().nome).to.eql('Cardiologia Pediatrica'));"
+              "pm.test('Nome atualizado', () => pm.expect(pm.response.json().nome).to.eql(pm.collectionVariables.get('esp_nome_upd')));"
             ]
           }
         }
       ],
       "request": {
         "method": "PUT",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"nome\": \"Cardiologia Pediatrica\",\n  \"descricao\": \"Cardiologia voltada para criancas\"\n}"
+          "raw": "{\n  \"nome\": \"{{esp_nome_upd}}\",\n  \"descricao\": \"Cardiologia voltada para criancas\"\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/especialidades/{{especialidade_id}}",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "especialidades", "{{especialidade_id}}"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "especialidades",
+            "{{especialidade_id}}"
+          ]
         }
       }
     },
@@ -174,15 +246,26 @@
       ],
       "request": {
         "method": "PUT",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"nome\": \"Ghost\",\n  \"descricao\": \"x\"\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/especialidades/999999",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "especialidades", "999999"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "especialidades",
+            "999999"
+          ]
         }
       }
     },
@@ -202,8 +285,14 @@
         "method": "DELETE",
         "url": {
           "raw": "{{base_url}}/v1/especialidades/{{especialidade_id}}",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "especialidades", "{{especialidade_id}}"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "especialidades",
+            "{{especialidade_id}}"
+          ]
         }
       }
     },
@@ -223,8 +312,14 @@
         "method": "DELETE",
         "url": {
           "raw": "{{base_url}}/v1/especialidades/999999",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "especialidades", "999999"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "especialidades",
+            "999999"
+          ]
         }
       }
     }

@@ -71,6 +71,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.collectionVariables.set('notif_conv_nome', 'ConvNotif-' + Date.now());",
                   "const d = String(Date.now()).slice(-8).padStart(8, '0');",
                   "pm.collectionVariables.set('convenio_cnpj', d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5,8)+'/0001-'+d.slice(0,2));"
                 ]
@@ -107,7 +108,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"Convenio Fluxo\",\n  \"descricao\": \"Setup\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 90000-0000\",\n  \"ativo\": true\n}"
+              "raw": "{\n  \"nome\": \"{{notif_conv_nome}}\",\n  \"descricao\": \"Setup\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 90000-0000\",\n  \"ativo\": true\n}"
             }
           }
         },

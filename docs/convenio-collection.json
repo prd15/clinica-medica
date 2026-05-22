@@ -5,9 +5,18 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url", "value": "http://localhost:8081" },
-    { "key": "convenio_id", "value": "" },
-    { "key": "convenio_cnpj", "value": "" }
+    {
+      "key": "base_url",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "convenio_id",
+      "value": ""
+    },
+    {
+      "key": "convenio_cnpj",
+      "value": ""
+    }
   ],
   "item": [
     {
@@ -17,6 +26,7 @@
           "listen": "prerequest",
           "script": {
             "exec": [
+              "pm.collectionVariables.set('convenio_nome', 'Unimed-' + Date.now());",
               "const d = String(Date.now()).slice(-8).padStart(8, '0');",
               "const cnpj = d.slice(0,2) + '.' + d.slice(2,5) + '.' + d.slice(5,8) + '/0001-' + d.slice(0,2);",
               "pm.collectionVariables.set('convenio_cnpj', cnpj);"
@@ -33,7 +43,7 @@
               "  pm.expect(json.id).to.be.a('number');",
               "  pm.collectionVariables.set('convenio_id', json.id);",
               "});",
-              "pm.test('Nome correto', () => pm.expect(pm.response.json().nome).to.eql('Unimed'));",
+              "pm.test('Nome correto', () => pm.expect(pm.response.json().nome).to.eql(pm.collectionVariables.get('convenio_nome')));",
               "pm.test('Ativo true', () => pm.expect(pm.response.json().ativo).to.eql(true));"
             ]
           }
@@ -41,15 +51,25 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"nome\": \"Unimed\",\n  \"descricao\": \"Plano regional de saude\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 99999-9999\",\n  \"ativo\": true\n}"
+          "raw": "{\n  \"nome\": \"{{convenio_nome}}\",\n  \"descricao\": \"Plano regional de saude\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 99999-9999\",\n  \"ativo\": true\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/convenios",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "convenios"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "convenios"
+          ]
         }
       }
     },
@@ -71,8 +91,13 @@
         "method": "GET",
         "url": {
           "raw": "{{base_url}}/v1/convenios",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "convenios"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "convenios"
+          ]
         }
       }
     },
@@ -93,8 +118,14 @@
         "method": "GET",
         "url": {
           "raw": "{{base_url}}/v1/convenios/{{convenio_id}}",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "convenios", "{{convenio_id}}"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "convenios",
+            "{{convenio_id}}"
+          ]
         }
       }
     },
@@ -114,8 +145,14 @@
         "method": "GET",
         "url": {
           "raw": "{{base_url}}/v1/convenios/999999",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "convenios", "999999"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "convenios",
+            "999999"
+          ]
         }
       }
     },
@@ -123,26 +160,46 @@
       "name": "Convenio — PUT update",
       "event": [
         {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.collectionVariables.set('convenio_nome_upd', 'UnimedPremium-' + Date.now());"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
           "listen": "test",
           "script": {
             "exec": [
               "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('Nome atualizado', () => pm.expect(pm.response.json().nome).to.eql('Unimed Premium'));"
+              "pm.test('Nome atualizado', () => pm.expect(pm.response.json().nome).to.eql(pm.collectionVariables.get('convenio_nome_upd')));"
             ]
           }
         }
       ],
       "request": {
         "method": "PUT",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"nome\": \"Unimed Premium\",\n  \"descricao\": \"Plano premium nacional\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 98888-7777\",\n  \"ativo\": true\n}"
+          "raw": "{\n  \"nome\": \"{{convenio_nome_upd}}\",\n  \"descricao\": \"Plano premium nacional\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 98888-7777\",\n  \"ativo\": true\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/convenios/{{convenio_id}}",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "convenios", "{{convenio_id}}"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "convenios",
+            "{{convenio_id}}"
+          ]
         }
       }
     },
@@ -161,15 +218,27 @@
       ],
       "request": {
         "method": "PATCH",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"ativo\": false\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/convenios/{{convenio_id}}/status",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "convenios", "{{convenio_id}}", "status"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "convenios",
+            "{{convenio_id}}",
+            "status"
+          ]
         }
       }
     },
@@ -188,15 +257,27 @@
       ],
       "request": {
         "method": "PATCH",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"ativo\": true\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/convenios/{{convenio_id}}/status",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "convenios", "{{convenio_id}}", "status"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "convenios",
+            "{{convenio_id}}",
+            "status"
+          ]
         }
       }
     },
@@ -216,8 +297,14 @@
         "method": "DELETE",
         "url": {
           "raw": "{{base_url}}/v1/convenios/{{convenio_id}}",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "convenios", "{{convenio_id}}"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "convenios",
+            "{{convenio_id}}"
+          ]
         }
       }
     },
@@ -235,15 +322,25 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"nome\": \"\",\n  \"cnpj\": \"\"\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/convenios",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "convenios"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "convenios"
+          ]
         }
       }
     },
@@ -261,15 +358,26 @@
       ],
       "request": {
         "method": "PUT",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"nome\": \"X\",\n  \"cnpj\": \"00.000.000/0000-00\",\n  \"telefone\": \"(00) 00000-0000\",\n  \"ativo\": true\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/convenios/999999",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "convenios", "999999"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "convenios",
+            "999999"
+          ]
         }
       }
     },
@@ -287,15 +395,27 @@
       ],
       "request": {
         "method": "PATCH",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"ativo\": false\n}"
         },
         "url": {
           "raw": "{{base_url}}/v1/convenios/999999/status",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "convenios", "999999", "status"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "convenios",
+            "999999",
+            "status"
+          ]
         }
       }
     },
@@ -315,8 +435,14 @@
         "method": "DELETE",
         "url": {
           "raw": "{{base_url}}/v1/convenios/999999",
-          "host": ["{{base_url}}"],
-          "path": ["v1", "convenios", "999999"]
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "convenios",
+            "999999"
+          ]
         }
       }
     }
