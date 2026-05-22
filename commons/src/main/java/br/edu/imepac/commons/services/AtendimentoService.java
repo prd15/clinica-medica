@@ -39,6 +39,11 @@ public class AtendimentoService {
                                        String descricao,
                                        String diagnostico,
                                        String observacoes) {
+        // idempotencia: uma consulta so pode ter um atendimento
+        if (atendimentoRepository.existsByConsultaId(atendimento.getConsultaId())) {
+            throw new IllegalStateException(
+                    "Ja existe atendimento registrado para a consulta " + atendimento.getConsultaId());
+        }
         atendimento.setDataHora(LocalDateTime.now());
         atendimento.setStatus(StatusAtendimento.REALIZADO);
         AtendimentoEntity salvo = atendimentoRepository.save(atendimento);
