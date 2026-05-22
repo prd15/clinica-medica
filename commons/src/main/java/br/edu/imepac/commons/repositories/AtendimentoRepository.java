@@ -11,4 +11,6 @@ public interface AtendimentoRepository extends JpaRepository<AtendimentoEntity, 
     List<AtendimentoEntity> findByPacienteId(Long pacienteId);
 
     Optional<AtendimentoEntity> findByConsultaId(Long consultaId);
+
+    boolean existsByConsultaId(Long consultaId);
 }
