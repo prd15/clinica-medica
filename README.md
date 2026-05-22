@@ -1,146 +1,157 @@
-# Clínica Médica
+# 🏥 Clínica Médica — Sistema de Gestão em Microsserviços
 
-![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+## 📌 Sobre o projeto
 
-Sistema acadêmico de gestão clínica desenvolvido com Java 17, Spring Boot 3 e arquitetura de microsserviços. O projeto organiza as rotinas administrativas, o agendamento de consultas e o atendimento clínico em módulos independentes, cada um com seu próprio banco de dados MySQL.
+O projeto Clínica Médica é um sistema acadêmico de gestão clínica desenvolvido em arquitetura de microsserviços. A aplicação separa as responsabilidades de cadastro administrativo, agendamento de consultas e atendimento clínico em serviços independentes, cada um com sua própria porta, seu próprio banco MySQL e seu próprio contexto de negócio.
 
-## Visão Geral
+Os principais atores do sistema são o atendente e o médico. O atendente utiliza os recursos administrativos para cadastrar convênios, pacientes, médicos, especialidades e atendentes, além de operar o fluxo de agendamento. O médico consulta sua agenda e registra o atendimento clínico, incluindo prontuário, anotações e solicitações de exames.
 
-A aplicação foi desenhada para separar responsabilidades de negócio em três serviços principais:
+A solução é composta pelos módulos `administrativo`, `agendamento`, `atendimento` e `commons`. Os três primeiros são microsserviços Spring Boot executáveis; o `commons` é uma biblioteca compartilhada com entidades, repositories, services e regras comuns usadas pelos serviços.
 
-- **Administrativo**: cadastro e manutenção de pacientes, médicos, especialidades, convênios, atendentes e relatórios.
-- **Agendamento**: criação, consulta, confirmação, reagendamento e cancelamento de consultas.
-- **Atendimento**: registro clínico da consulta, prontuário, anotações, exames e histórico do paciente.
-
-O módulo **commons** centraliza entidades, repositories, services compartilhados, configurações comuns e testes de regra de negócio.
-
-## Arquitetura
-
-```mermaid
-flowchart LR
-    Cliente["Cliente / Postman / Swagger UI"]
-    ADM["administrativo :8081"]
-    AGE["agendamento :8082"]
-    ATE["atendimento :8083"]
-    CADM[("clinica_administrativo")]
-    CAGE[("clinica_agendamento")]
-    CATE[("clinica_atendimento")]
-
-    Cliente --> ADM
-    Cliente --> AGE
-    Cliente --> ATE
-    AGE --> ADM
-    ATE --> AGE
-    ADM --> CADM
-    AGE --> CAGE
-    ATE --> CATE
-```
-
-## Stack Técnica
-
-| Camada | Tecnologias |
-|---|---|
-| Linguagem | Java 17 |
-| Framework | Spring Boot 3.3.5 |
-| API | Spring Web, Bean Validation, SpringDoc OpenAPI |
-| Persistência | Spring Data JPA, Hibernate, MySQL 8 |
-| Integração interna | RestTemplate com Apache HttpClient 5 |
-| Mapeamento | ModelMapper |
-| Build | Maven multi-módulo |
-| Infraestrutura local | Docker Compose |
-| Produtividade | Lombok, spring-dotenv |
-| Testes | Spring Boot Starter Test, JUnit |
-
-## Estrutura do Repositório
+## 🧭 Arquitetura
 
 ```text
-clinica-medica/
-├── administrativo/      # Microsserviço de cadastros, usuários administrativos e relatórios
-├── agendamento/         # Microsserviço responsável pelo ciclo de vida das consultas
-├── atendimento/         # Microsserviço de prontuário, anotações, exames e histórico
-├── commons/             # Entidades, repositories, services e configurações compartilhadas
-├── docs/                # Collections Postman, changelog técnico e material de revisão
-├── docker-compose.yml   # Orquestração local dos serviços e bancos MySQL
-└── pom.xml              # Projeto Maven agregador
+                           HTTP REST
+                 +---------------------------+
+                 |                           v
++------------------------+        +------------------------+        +------------------------+
+| administrativo :8081   |<-------| agendamento :8082     |<-------| atendimento :8083      |
+| Cadastros e relatórios |        | Consultas e agenda    |        | Prontuário e exames   |
++-----------+------------+        +-----------+------------+        +-----------+------------+
+            |                                 |                                 |
+            | JDBC                            | JDBC                            | JDBC
+            v                                 v                                 v
++------------------------+        +------------------------+        +------------------------+
+| clinica_administrativo |        | clinica_agendamento    |        | clinica_atendimento    |
+| MySQL :3306            |        | MySQL :3306            |        | MySQL :3306            |
++------------------------+        +------------------------+        +------------------------+
+
+Fluxos HTTP:
+- agendamento -> administrativo: valida paciente, médico e convênio.
+- atendimento -> agendamento: consulta e atualiza status da consulta atendida.
 ```
 
-## Módulos
+## 🛠️ Stack
 
-| Módulo | Tipo | Porta | Banco | Responsabilidade |
-|---|---:|---:|---|---|
-| `commons` | Biblioteca interna | - | - | Regras compartilhadas, entidades, repositories e services |
-| `administrativo` | Microsserviço | `8081` | `clinica_administrativo` | Cadastros, atendentes, convênios, médicos, pacientes e relatórios |
-| `agendamento` | Microsserviço | `8082` | `clinica_agendamento` | Agenda médica, status da consulta e validações com administrativo |
-| `atendimento` | Microsserviço | `8083` | `clinica_atendimento` | Atendimento clínico, prontuário, anotações, exames e histórico |
+| Tecnologia | Versão | Papel |
+|---|---:|---|
+| Java | 17 | Linguagem principal dos microsserviços |
+| Spring Boot | 3.3.5 | Framework web e base das APIs REST |
+| Spring Web | Gerenciada pelo Spring Boot | Criação dos controllers REST |
+| Spring Data JPA | Gerenciada pelo Spring Boot | Persistência com repositories |
+| Hibernate | Gerenciada pelo Spring Boot | Implementação JPA |
+| MySQL | 8 | Banco de dados de cada microsserviço |
+| Maven | 3.9+ | Build multi-módulo e gerenciamento de dependências |
+| Lombok | 1.18.36 | Redução de boilerplate em entidades e DTOs |
+| ModelMapper | 3.2.1 | Conversão entre entidades e DTOs |
+| SpringDoc OpenAPI | 2.6.0 | Swagger UI e documentação OpenAPI |
+| Docker | Atual | Build das imagens dos microsserviços |
+| Docker Compose | Atual | Orquestração local dos serviços e bancos |
+| Kubernetes | networking.k8s.io/v1 | Deploy e exposição dos microsserviços em cluster |
 
-## Regras de Separação
+## ✅ Pré-requisitos
 
-Cada microsserviço possui seu próprio banco de dados e não compartilha relacionamentos JPA diretos com tabelas de outro módulo. Quando um serviço precisa referenciar dados externos, ele armazena apenas o identificador (`Long id`) e consulta o serviço dono da informação por HTTP.
-
-Esse desenho mantém o isolamento entre contextos e evita acoplamento por `@ManyToOne` entre bancos diferentes.
-
-## Comunicação Entre Serviços
-
-| Origem | Destino | Uso |
-|---|---|---|
-| `agendamento` | `administrativo` | Valida se convênio, médico e paciente existem e estão aptos antes de agendar |
-| `atendimento` | `agendamento` | Notifica a realização da consulta depois do registro clínico |
-
-No Docker, os serviços se comunicam pelos nomes dos containers (`http://administrativo:8081` e `http://agendamento:8082`). Em execução local, os fallbacks usam `localhost`.
-
-## Pré-requisitos
-
-Para executar o projeto com conforto, tenha instalado:
-
-- JDK 17.
+- Java 17 instalado e configurado.
 - Maven 3.9 ou superior.
-- Docker e Docker Compose.
-- Um cliente HTTP, como Postman, Insomnia ou o próprio Swagger UI.
+- Docker instalado.
+- Docker Compose instalado.
+- Opcional para Kubernetes: `kubectl` e um cluster local, como Minikube, Kind ou Docker Desktop Kubernetes.
+- Uma IDE Java, como IntelliJ IDEA, para execução individual dos módulos.
 
-## Configuração de Ambiente
+## 🐳 Como rodar com Docker Compose
 
-Crie um arquivo `.env` na raiz do projeto a partir do exemplo:
+Clone o repositório, crie o arquivo de ambiente e suba a stack:
+
+```bash
+git clone https://github.com/prd15/clinica-medica.git
+cd clinica-medica
+cp .env.example .env
+# editar .env com a senha do banco
+docker-compose up
+```
+
+Exemplo mínimo de `.env`:
 
 ```env
 DB_USER=root
-DB_PASS=sua_senha
+DB_PASS=suasenha
 ```
 
-O arquivo `.env.example` já existe no repositório e serve como referência mínima. As aplicações também possuem valores padrão para desenvolvimento local, mas o Docker Compose espera essas variáveis para subir os bancos e serviços.
+O Docker Compose sobe três bancos MySQL e três microsserviços:
 
-## Executando com Docker
-
-Suba toda a stack com:
-
-```bash
-docker compose up --build
-```
-
-O Compose cria três bancos MySQL, aguarda os healthchecks e inicia os microsserviços na mesma rede interna.
-
-Para parar a stack:
-
-```bash
-docker compose down
-```
-
-## Portas Locais
-
-| Recurso | Porta local | Observação |
+| Serviço | Porta local | Banco |
 |---|---:|---|
-| Administrativo | `8081` | API de cadastros e relatórios |
-| Agendamento | `8082` | API de consultas |
-| Atendimento | `8083` | API clínica |
-| MySQL administrativo | `3307` | Banco `clinica_administrativo` |
-| MySQL agendamento | `3308` | Banco `clinica_agendamento` |
-| MySQL atendimento | `3309` | Banco `clinica_atendimento` |
+| administrativo | 8081 | clinica_administrativo |
+| agendamento | 8082 | clinica_agendamento |
+| atendimento | 8083 | clinica_atendimento |
+| db-administrativo | 3307 -> 3306 | clinica_administrativo |
+| db-agendamento | 3308 -> 3306 | clinica_agendamento |
+| db-atendimento | 3309 -> 3306 | clinica_atendimento |
 
-## Executando Localmente sem Docker
+Para parar os containers:
 
-Com os bancos MySQL disponíveis nas portas esperadas, instale os módulos e inicie os serviços separadamente:
+```bash
+docker-compose down
+```
+
+Para parar e remover volumes dos bancos:
+
+```bash
+docker-compose down -v
+```
+
+## 💻 Como rodar individualmente (sem Docker)
+
+No IntelliJ IDEA, abra a pasta raiz `clinica-medica` como projeto Maven. Garanta que o SDK do projeto esteja configurado para Java 17.
+
+Crie três bancos MySQL locais:
+
+```sql
+CREATE DATABASE clinica_administrativo;
+CREATE DATABASE clinica_agendamento;
+CREATE DATABASE clinica_atendimento;
+```
+
+Configure as variáveis de ambiente de cada Run Configuration:
+
+Administrativo:
+
+```env
+DB_HOST=localhost
+DB_PORT=3307
+DB_USER=root
+DB_PASS=suasenha
+```
+
+Agendamento:
+
+```env
+DB_HOST=localhost
+DB_PORT=3308
+DB_USER=root
+DB_PASS=suasenha
+ADMINISTRATIVO_URL=http://localhost:8081
+```
+
+Atendimento:
+
+```env
+DB_HOST=localhost
+DB_PORT=3309
+DB_USER=root
+DB_PASS=suasenha
+AGENDAMENTO_URL=http://localhost:8082
+```
+
+Execute as classes principais nesta ordem:
+
+```text
+administrativo/src/main/java/br/edu/imepac/administrativo/AdministrativoApplication.java
+agendamento/src/main/java/br/edu/imepac/agendamento/AgendamentoApplication.java
+atendimento/src/main/java/br/edu/imepac/atendimento/AtendimentoApplication.java
+```
+
+Também é possível executar pelo terminal, caso o Maven esteja instalado:
 
 ```bash
 mvn clean install
@@ -149,233 +160,160 @@ mvn -pl agendamento spring-boot:run
 mvn -pl atendimento spring-boot:run
 ```
 
-Execute cada `spring-boot:run` em um terminal próprio. O módulo `commons` é uma biblioteca interna e não sobe como aplicação web.
+## 📚 Swagger UI
 
-## Variáveis por Serviço
+| Serviço | URL |
+|---------|-----|
+| Administrativo | http://localhost:8081/swagger-ui.html |
+| Agendamento | http://localhost:8082/swagger-ui.html |
+| Atendimento | http://localhost:8083/swagger-ui.html |
 
-| Variável | Usada por | Valor padrão local | Finalidade |
-|---|---|---|---|
-| `DB_HOST` | Todos | `localhost` | Host do MySQL |
-| `DB_PORT` | Todos | `3307`, `3308` ou `3309` | Porta do banco de cada serviço |
-| `DB_USER` | Todos | `root` | Usuário do MySQL |
-| `DB_PASS` | Todos | vazio | Senha do MySQL |
-| `ADMINISTRATIVO_URL` | `agendamento` | `http://localhost:8081` | Base URL do administrativo |
-| `AGENDAMENTO_URL` | `atendimento` | `http://localhost:8082` | Base URL do agendamento |
+Também podem ser usados os caminhos canônicos:
 
-## Swagger
+| Serviço | URL |
+|---|---|
+| Administrativo | http://localhost:8081/swagger-ui/index.html |
+| Agendamento | http://localhost:8082/swagger-ui/index.html |
+| Atendimento | http://localhost:8083/swagger-ui/index.html |
 
-Cada microsserviço expõe documentação interativa com SpringDoc:
+## 🗂️ Estrutura do repositório
 
-| Serviço | Swagger UI | OpenAPI JSON |
+```text
+clinica-medica/
+├── administrativo/
+│   ├── Dockerfile
+│   └── src/main/java/br/edu/imepac/administrativo/
+│       ├── controllers/    # Endpoints de cadastros e relatórios
+│       ├── dtos/           # DTOs de entrada e saída do administrativo
+│       └── config/         # Configurações do módulo, incluindo Swagger
+├── agendamento/
+│   ├── Dockerfile
+│   └── src/main/java/br/edu/imepac/agendamento/
+│       ├── clients/        # Cliente HTTP para o administrativo
+│       ├── controllers/    # Endpoints de consultas
+│       ├── dtos/           # DTOs de agendamento
+│       └── config/         # Swagger e RestTemplate
+├── atendimento/
+│   ├── Dockerfile
+│   └── src/main/java/br/edu/imepac/atendimento/
+│       ├── clients/        # Cliente HTTP para o agendamento
+│       ├── controllers/    # Endpoints de atendimento clínico
+│       ├── dtos/           # DTOs de prontuário, anotações e exames
+│       └── config/         # Swagger e configurações do módulo
+├── commons/
+│   └── src/main/java/br/edu/imepac/commons/
+│       ├── entities/       # Entidades compartilhadas
+│       ├── repositories/   # Repositories JPA
+│       └── services/       # Regras de negócio compartilhadas
+├── docs/                   # Collections, revisões e documentação auxiliar
+├── k8s/                    # Manifests Kubernetes
+├── docker-compose.yml      # Stack local com serviços e bancos
+├── .env.example            # Exemplo de variáveis de ambiente
+├── CLAUDE.md               # Guia operacional do projeto
+└── pom.xml                 # Maven multi-módulo
+```
+
+## 🔐 Variáveis de ambiente
+
+| Variável | Descrição | Valor padrão |
 |---|---|---|
-| Administrativo | `http://localhost:8081/swagger-ui.html` | `http://localhost:8081/v3/api-docs` |
-| Agendamento | `http://localhost:8082/swagger-ui.html` | `http://localhost:8082/v3/api-docs` |
-| Atendimento | `http://localhost:8083/swagger-ui.html` | `http://localhost:8083/v3/api-docs` |
+| DB_HOST | Host do banco MySQL usado pelo microsserviço | localhost |
+| DB_PORT | Porta do banco MySQL | administrativo: 3307, agendamento: 3308, atendimento: 3309 |
+| DB_USER | Usuário do banco MySQL | root |
+| DB_PASS | Senha do banco MySQL | vazio |
+| SPRING_JPA_SHOW_SQL | Habilita exibição de SQL no log | false |
+| ADMINISTRATIVO_URL | URL usada pelo agendamento para chamar o administrativo | http://localhost:8081 |
+| AGENDAMENTO_URL | URL usada pelo atendimento para chamar o agendamento | http://localhost:8082 |
+| MYSQL_DATABASE | Nome do banco criado pelo container MySQL | definido por serviço no Docker Compose |
+| MYSQL_ROOT_PASSWORD | Senha root do MySQL nos containers | valor de DB_PASS |
 
-## Endpoints - Administrativo
+No Docker Compose, os serviços usam `DB_PORT=3306` internamente, porque essa é a porta do MySQL dentro da rede Docker. As portas `3307`, `3308` e `3309` são apenas mapeamentos para acesso local pela máquina host.
 
-Base URL: `http://localhost:8081`
+## ☸️ Como rodar com Kubernetes
 
-| Recurso | Métodos e rotas |
-|---|---|
-| Convênios | `GET /v1/convenios`, `GET /v1/convenios/{id}`, `POST /v1/convenios`, `PUT /v1/convenios/{id}`, `DELETE /v1/convenios/{id}`, `PATCH /v1/convenios/{id}/status` |
-| Pacientes | `GET /v1/pacientes`, `GET /v1/pacientes/{id}`, `POST /v1/pacientes`, `PUT /v1/pacientes/{id}`, `DELETE /v1/pacientes/{id}` |
-| Médicos | `GET /v1/medicos`, `GET /v1/medicos/ativos`, `GET /v1/medicos/{id}`, `POST /v1/medicos`, `PUT /v1/medicos/{id}`, `PATCH /v1/medicos/{id}/inativar`, `DELETE /v1/medicos/{id}` |
-| Especialidades | `GET /v1/especialidades`, `GET /v1/especialidades/{id}`, `POST /v1/especialidades`, `PUT /v1/especialidades/{id}`, `DELETE /v1/especialidades/{id}` |
-| Atendentes | `GET /v1/atendentes`, `POST /v1/atendentes`, `PUT /v1/atendentes/{id}`, `DELETE /v1/atendentes/{id}` |
-
-### Relação Médico e Especialidade
-
-O administrativo também expõe operações para vincular e remover especialidades de um médico:
-
-| Operação | Rota |
-|---|---|
-| Associar especialidade | `POST /v1/medicos/{id}/especialidades/{especialidadeId}` |
-| Remover especialidade | `DELETE /v1/medicos/{id}/especialidades/{especialidadeId}` |
-
-### Relatórios Administrativos
-
-| Relatório | Rota | Observação |
-|---|---|---|
-| Pacientes por convênio | `GET /v1/relatorios/pacientes-por-convenio?convenioId={id}` | Retorna pacientes vinculados ao convênio informado |
-| Consultas diárias | `GET /v1/relatorios/consultas-diarias?data=yyyy-MM-dd` | Endpoint oculto no Swagger até a integração com agendamento ser finalizada |
-
-## Endpoints - Agendamento
-
-Base URL: `http://localhost:8082`
-
-| Operação | Rota |
-|---|---|
-| Agendar consulta | `POST /v1/consultas` |
-| Cancelar consulta | `DELETE /v1/consultas/{id}` |
-| Reagendar consulta | `PATCH /v1/consultas/{id}/reagendar` |
-| Confirmar consulta | `PATCH /v1/consultas/{id}/confirmar` |
-| Listar por médico, paciente ou data | `GET /v1/consultas?medicoId={id}` / `?pacienteId={id}` / `?data=yyyy-MM-dd` |
-| Agenda do médico | `GET /v1/consultas/minha-agenda?medicoId={id}` |
-
-### Regras do Agendamento
-
-Antes de registrar uma consulta, o serviço valida:
-
-- se o convênio informado existe e está ativo;
-- se o médico existe e está ativo;
-- se o paciente existe;
-- se não há conflito de horário para o médico;
-- se a data de reagendamento não está no passado.
-
-## Endpoints - Atendimento
-
-Base URL: `http://localhost:8083`
-
-| Operação | Rota |
-|---|---|
-| Registrar atendimento | `POST /v1/atendimentos` |
-| Buscar prontuário por consulta | `GET /v1/atendimentos/{consultaId}` |
-| Histórico por paciente | `GET /v1/atendimentos/historico?pacienteId={id}` |
-| Adicionar anotação | `POST /v1/atendimentos/{id}/anotacoes` |
-| Listar anotações | `GET /v1/atendimentos/{id}/anotacoes` |
-| Solicitar exame | `POST /v1/atendimentos/{id}/exames` |
-| Listar exames | `GET /v1/atendimentos/{id}/exames` |
-
-### Fluxo do Atendimento
-
-Ao registrar um atendimento, o serviço cria o atendimento, gera o prontuário com descrição, diagnóstico e observações, e tenta notificar o agendamento sobre a realização da consulta. Se a notificação falhar, o atendimento continua registrado e a falha é registrada em log para análise.
-
-## Principais Entidades
-
-| Entidade | Contexto |
-|---|---|
-| `ConvenioEntity` | Convênios aceitos pela clínica e status de disponibilidade |
-| `PacienteEntity` | Dados cadastrais do paciente e vínculo com convênio |
-| `MedicoEntity` | Dados profissionais, CRM, status ativo e especialidades |
-| `AtendenteEntity` | Usuários administrativos e recepção |
-| `ConsultaEntity` | Agendamento, médico, paciente, convênio, data e status |
-| `AtendimentoEntity` | Registro clínico associado a uma consulta |
-| `ProntuarioEntity` | Descrição, diagnóstico e observações do atendimento |
-| `AnotacaoEntity` | Anotações adicionais do prontuário |
-| `SolicitacaoExameEntity` | Exames solicitados durante o atendimento |
-
-## Status de Negócio
-
-O agendamento usa status próprios para controlar o ciclo de vida de uma consulta. O atendimento também possui status para representar o andamento do registro clínico. Esses enums ficam no módulo `commons`, junto das entidades compartilhadas.
-
-Na prática, a API evita transições inválidas, como confirmar uma consulta que não está pendente ou cancelar uma consulta que já chegou a um estado terminal.
-
-## Tratamento de Erros
-
-Os microsserviços possuem handlers globais para padronizar respostas de erro. As APIs retornam status HTTP coerentes com o cenário:
-
-| Status | Cenário comum |
-|---:|---|
-| `400` | Payload inválido, filtro obrigatório ausente ou regra de negócio violada |
-| `404` | Recurso inexistente |
-| `409` | Conflito de estado, CRM duplicado, usuário duplicado ou horário indisponível |
-| `500` | Erro inesperado |
-
-## Validações
-
-Os DTOs de entrada usam Bean Validation para impedir payloads incompletos ou inconsistentes antes de chegar à camada de serviço. Além das validações estruturais, os services concentram regras como unicidade de CRM, unicidade de usuário, status ativo de convênios e médicos, e conflitos de horário em consultas.
-
-Esse desenho mantém os controllers enxutos e deixa as decisões de negócio testáveis no módulo `commons`.
-
-## Collections Postman
-
-O diretório `docs/` contém collections prontas para exercitar os principais fluxos da API:
-
-- `docs/convenio-collection.json`
-- `docs/paciente-collection.json`
-- `docs/medico-collection.json`
-- `docs/especialidade-collection.json`
-- `docs/atendente-collection.json`
-- `docs/consulta-collection.json`
-- `docs/atendimento-collection.json`
-- `docs/relatorios-collection.json`
-
-Importe as collections no Postman e ajuste as variáveis de host conforme o serviço testado.
-
-## Testes
-
-Execute a suíte completa com:
+Antes de aplicar os manifests, crie o Secret real a partir do exemplo:
 
 ```bash
-mvn test
+cp k8s/secrets.example.yaml k8s/secrets.yaml
+# editar k8s/secrets.yaml com db-username e db-password em base64
 ```
 
-Para testar apenas o módulo compartilhado:
+Aplique os recursos no cluster:
 
 ```bash
-mvn -pl commons test
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/secrets.yaml
+kubectl apply -f k8s/administrativo/
+kubectl apply -f k8s/agendamento/
+kubectl apply -f k8s/atendimento/
+kubectl apply -f k8s/ingress.yaml
+kubectl get pods -n clinica
 ```
 
-Os testes atuais cobrem regras de services como convênios, pacientes, especialidades, médicos, atendentes, consultas e atendimentos.
-
-## Build
-
-Para compilar todos os módulos:
+Para acompanhar os Services:
 
 ```bash
-mvn clean package
+kubectl get svc -n clinica
 ```
 
-Para compilar sem rodar os testes:
+Para testar sem Ingress, use port-forward:
 
 ```bash
-mvn clean package -DskipTests
+kubectl port-forward -n clinica svc/administrativo 8081:8081
+kubectl port-forward -n clinica svc/agendamento 8082:8082
+kubectl port-forward -n clinica svc/atendimento 8083:8083
 ```
 
-Como o projeto é multi-módulo, o Maven usa o `pom.xml` da raiz como agregador e respeita a ordem necessária entre `commons` e os microsserviços.
+Para testar com Ingress local, instale um Ingress Controller NGINX e adicione os hosts locais apontando para o IP do cluster:
 
-## Fluxo Recomendado de Teste Manual
+```text
+127.0.0.1 administrativo.clinica.local
+127.0.0.1 agendamento.clinica.local
+127.0.0.1 atendimento.clinica.local
+```
 
-1. Subir a stack com `docker compose up --build`.
-2. Criar convênios, especialidades, médicos, pacientes e atendentes no administrativo.
-3. Associar especialidades aos médicos.
-4. Criar consultas pelo agendamento.
-5. Confirmar ou reagendar consultas conforme o cenário.
-6. Registrar o atendimento, adicionar anotações e solicitar exames.
-7. Consultar histórico, prontuário e relatórios.
+No Windows, o arquivo fica em:
 
-## Decisões de Design
+```text
+C:\Windows\System32\drivers\etc\hosts
+```
 
-- **Banco por serviço**: preserva a autonomia de cada contexto.
-- **Módulo `commons`**: evita duplicação de entidades, repositories e regras compartilhadas neste projeto acadêmico.
-- **DTOs por serviço**: impede exposição direta das entidades nas APIs.
-- **Handlers globais**: padronizam respostas de erro e reduzem repetição nos controllers.
-- **Swagger por serviço**: facilita validação independente de cada microsserviço.
-- **Collections Postman**: documentam fluxos completos e apoiam testes manuais.
+No Linux/macOS, o arquivo fica em:
 
-## Troubleshooting
+```text
+/etc/hosts
+```
 
-| Problema | Possível causa | Solução |
-|---|---|---|
-| Serviço não conecta ao banco | MySQL ainda não está pronto | Aguarde o healthcheck do Docker ou reinicie o serviço |
-| Porta ocupada | Outro processo usando `8081`, `8082`, `8083`, `3307`, `3308` ou `3309` | Pare o processo conflitante ou altere a porta local |
-| Erro de autenticação no MySQL | `.env` incompleto ou senha divergente | Revise `DB_USER` e `DB_PASS` |
-| Agendamento recusa consulta | Convênio, médico ou paciente inválido/inativo | Cadastre e valide os dados no administrativo |
-| Reagendamento falha | Data no passado ou conflito de horário | Use data futura e horário disponível |
+## 🔄 Fluxo de uso da aplicação
 
-## Documentação de Apoio
+1. O atendente cadastra um convênio no serviço administrativo.
+2. O atendente cadastra uma especialidade médica.
+3. O atendente cadastra um médico e vincula esse médico a uma especialidade.
+4. O atendente cadastra um paciente e informa o convênio associado.
+5. O atendente agenda uma consulta no serviço de agendamento, informando paciente, médico, convênio e data/hora.
+6. O serviço de agendamento valida via HTTP se paciente, médico e convênio existem e estão aptos no administrativo.
+7. O médico consulta sua agenda no serviço de agendamento.
+8. No momento da consulta, o médico registra o atendimento no serviço de atendimento.
+9. O atendimento gera prontuário, permite anotações clínicas e solicitações de exames.
+10. O serviço de atendimento notifica o agendamento para marcar a consulta como realizada.
 
-Além deste README, o repositório inclui materiais auxiliares:
+## 🧱 Decisões arquiteturais
 
-- `docs/CHANGELOG_AGENTES.md`: histórico técnico das alterações feitas por agentes.
-- `docs/CODE_REVIEW.md`: achados e observações de revisão.
-- `docs/*-collection.json`: collections Postman por domínio.
-- `CLAUDE.md`: notas operacionais do projeto para agentes de desenvolvimento.
+- Cloud agnóstico: os manifests Kubernetes usam recursos padrão, como Deployment, Service, ConfigMap, Secret e Ingress, evitando dependência direta de um provedor específico.
+- Banco por serviço: cada microsserviço possui seu próprio banco MySQL, preservando isolamento de dados e autonomia de contexto.
+- IDs em vez de FK entre serviços: referências entre contextos usam campos `Long id`, sem `@ManyToOne` entre entidades de bancos diferentes.
+- Comunicação HTTP: integrações entre microsserviços são feitas por REST com `RestTemplate`, mantendo os bancos isolados.
+- Maven multi-módulo: a raiz agrega `commons`, `administrativo`, `agendamento` e `atendimento`, garantindo build coordenado.
+- Dockerfiles multi-stage: cada serviço usa Maven com JDK 17 para build e Eclipse Temurin JRE 17 para runtime.
+- Secrets no Kubernetes: credenciais ficam separadas de ConfigMaps e o arquivo real `k8s/secrets.yaml` não deve ser versionado.
 
-## Convenções de Desenvolvimento
+## 👥 Equipe
 
-- Mantenha regras de negócio em services.
-- Use DTOs para entrada e saída de dados.
-- Evite relacionamento JPA direto entre contextos de bancos diferentes.
-- Prefira endpoints pequenos, explícitos e documentados no Swagger.
-- Atualize ou crie collections quando adicionar novas rotas.
-- Cubra regras críticas com testes no módulo adequado.
-
-## Próximos Passos Sugeridos
-
-- Integrar o relatório de consultas diárias com o serviço de agendamento.
-- Adicionar autenticação e autorização por perfil.
-- Criar testes de integração entre microsserviços.
-- Versionar contratos OpenAPI gerados.
-- Adicionar pipeline CI para build e testes.
+| Membro | Responsabilidade |
+|---|---|
+| Pessoa 1 | Módulos iniciais e estrutura base do projeto |
+| Pessoa 2 | Cadastros administrativos e regras compartilhadas |
+| Pessoa 3 | Fluxo de agendamento de consultas |
+| Pessoa 4 | Fluxo de atendimento clínico |
+| Pessoa 5 | Integração, testes e ajustes de revisão |
+| Pessoa 6 | Manifests Kubernetes, revisão Swagger e README final |
