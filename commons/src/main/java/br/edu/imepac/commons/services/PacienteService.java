@@ -48,13 +48,17 @@ public class PacienteService {
         return pacienteRepository.findById(id);
     }
 
+    @Transactional
     public PacienteEntity save(PacienteEntity paciente) {
+        validarCpfDisponivel(paciente.getCpf(), null);
         return pacienteRepository.save(paciente);
     }
 
     // atualiza todos os campos se o paciente existir, senao retorna vazio
+    @Transactional
     public Optional<PacienteEntity> update(Long id, PacienteEntity dadosAtualizados) {
         return pacienteRepository.findById(id).map(existing -> {
+            validarCpfDisponivel(dadosAtualizados.getCpf(), id);
             existing.setNome(dadosAtualizados.getNome());
             existing.setCpf(dadosAtualizados.getCpf());
             existing.setDataNascimento(dadosAtualizados.getDataNascimento());
@@ -64,6 +68,15 @@ public class PacienteService {
             existing.setConvenioId(dadosAtualizados.getConvenioId());
             return pacienteRepository.save(existing);
         });
+    }
+
+    // garante que nao cadastra dois pacientes com o mesmo CPF
+    private void validarCpfDisponivel(String cpf, Long idAtual) {
+        pacienteRepository.findByCpf(cpf)
+                .filter(paciente -> idAtual == null || !paciente.getId().equals(idAtual))
+                .ifPresent(paciente -> {
+                    throw new IllegalStateException("CPF ja cadastrado para outro paciente");
+                });
     }
 
     // prioridade: nome > cpf > convenioId > sem filtro
@@ -85,6 +98,7 @@ public class PacienteService {
         return pacienteRepository.findAll();
     }
 
+    @Transactional
     public boolean deleteById(Long id) {
         if (pacienteRepository.existsById(id)) {
             pacienteRepository.deleteById(id);

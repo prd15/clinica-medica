@@ -70,6 +70,7 @@ public class AtendimentoService {
                 .orElseThrow(() -> new NoSuchElementException("Atendimento nao encontrado para consultaId: " + consultaId));
     }
 
+    @Transactional
     public AnotacaoEntity adicionarAnotacao(Long atendimentoId, String texto) {
         ProntuarioEntity prontuario = prontuarioRepository
                 .findFirstByAtendimentoIdOrderByIdDesc(atendimentoId)
@@ -82,6 +83,7 @@ public class AtendimentoService {
         return anotacaoRepository.save(anotacao);
     }
 
+    @Transactional
     public SolicitacaoExameEntity solicitarExame(Long atendimentoId, String descricao, String tipo) {
         atendimentoRepository.findById(atendimentoId)
                 .orElseThrow(() -> new NoSuchElementException("Atendimento nao encontrado: " + atendimentoId));

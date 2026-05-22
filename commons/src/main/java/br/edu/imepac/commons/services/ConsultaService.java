@@ -27,6 +27,7 @@ public class ConsultaService {
         return consultaRepository.findById(id);
     }
 
+    @Transactional
     public ConsultaEntity agendar(ConsultaEntity consulta) {
         if (consulta.getDataHora() == null || consulta.getDataHora().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Data da consulta nao pode estar no passado");
@@ -38,6 +39,7 @@ public class ConsultaService {
         return consultaRepository.save(consulta);
     }
 
+    @Transactional
     public Optional<ConsultaEntity> cancelar(Long id) {
         return consultaRepository.findById(id).map(consulta -> {
             if (consulta.getStatus() == StatusConsulta.REALIZADA) {
@@ -48,6 +50,7 @@ public class ConsultaService {
         });
     }
 
+    @Transactional
     public Optional<ConsultaEntity> reagendar(Long id, LocalDateTime novaDataHora) {
         return consultaRepository.findById(id).map(consulta -> {
             if (consulta.getStatus() == StatusConsulta.CANCELADA
@@ -66,6 +69,7 @@ public class ConsultaService {
         });
     }
 
+    @Transactional
     public Optional<ConsultaEntity> confirmar(Long id) {
         return consultaRepository.findById(id).map(consulta -> {
             if (consulta.getStatus() != StatusConsulta.PENDENTE) {
@@ -79,6 +83,7 @@ public class ConsultaService {
 
     // marca a consulta como realizada — chamado pelo atendimento apos registrar o atendimento
     // so vale a partir de PENDENTE ou CONFIRMADA; cancelada ou ja realizada nao retrocede nem repete
+    @Transactional
     public Optional<ConsultaEntity> realizar(Long id) {
         return consultaRepository.findById(id).map(consulta -> {
             if (consulta.getStatus() == StatusConsulta.CANCELADA

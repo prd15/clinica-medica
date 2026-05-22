@@ -28,6 +28,7 @@ public class AtendenteService {
         return atendenteRepository.findById(id);
     }
 
+    @Transactional
     public AtendenteEntity save(AtendenteEntity atendente) {
         validarUsuarioDisponivel(atendente.getUsuario(), null);
         if (atendente.getAtivo() == null) {
@@ -36,6 +37,7 @@ public class AtendenteService {
         return atendenteRepository.save(atendente);
     }
 
+    @Transactional
     public Optional<AtendenteEntity> update(Long id, AtendenteEntity dadosAtualizados) {
         return atendenteRepository.findById(id).map(existing -> {
             validarUsuarioDisponivel(dadosAtualizados.getUsuario(), id);
@@ -48,6 +50,7 @@ public class AtendenteService {
         });
     }
 
+    @Transactional
     public boolean deleteById(Long id) {
         if (atendenteRepository.existsById(id)) {
             atendenteRepository.deleteById(id);

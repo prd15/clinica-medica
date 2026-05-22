@@ -34,11 +34,13 @@ public class ConvenioService {
         return convenioRepository.findByAtivo(ativo);
     }
 
+    @Transactional
     public ConvenioEntity save(ConvenioEntity convenio) {
         return convenioRepository.save(convenio);
     }
 
     // atualiza tudo exceto o id — ativo so muda se vier no request
+    @Transactional
     public Optional<ConvenioEntity> update(Long id, ConvenioEntity dadosAtualizados) {
         return convenioRepository.findById(id).map(existing -> {
             existing.setNome(dadosAtualizados.getNome());
@@ -53,6 +55,7 @@ public class ConvenioService {
         });
     }
 
+    @Transactional
     public boolean deleteById(Long id) {
         if (convenioRepository.existsById(id)) {
             convenioRepository.deleteById(id);
@@ -62,6 +65,7 @@ public class ConvenioService {
     }
 
     // PATCH especifico pra status — evita mandar o objeto inteiro so pra ativar/desativar
+    @Transactional
     public ConvenioEntity alterarStatus(Long id, Boolean ativo) {
         ConvenioEntity convenio = convenioRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Convenio nao encontrado com id: " + id));
