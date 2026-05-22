@@ -2,8 +2,8 @@ package br.edu.imepac.administrativo.controllers;
 
 import br.edu.imepac.administrativo.dtos.PacienteRequest;
 import br.edu.imepac.administrativo.dtos.PacienteResponse;
-import br.edu.imepac.commons.entities.PacienteEntity;
-import br.edu.imepac.commons.services.PacienteService;
+import br.edu.imepac.commons.entities.administrativo.PacienteEntity;
+import br.edu.imepac.commons.services.administrativo.PacienteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

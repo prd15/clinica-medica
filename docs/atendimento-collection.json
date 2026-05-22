@@ -5,18 +5,54 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "admin_url", "value": "http://localhost:8081" },
-    { "key": "agenda_url", "value": "http://localhost:8082" },
-    { "key": "atend_url", "value": "http://localhost:8083" },
-    { "key": "convenio_id", "value": "" },
-    { "key": "convenio_cnpj", "value": "" },
-    { "key": "medico_id", "value": "" },
-    { "key": "medico_crm", "value": "" },
-    { "key": "paciente_id", "value": "" },
-    { "key": "paciente_cpf", "value": "" },
-    { "key": "consulta_id", "value": "" },
-    { "key": "consulta_dataHora", "value": "" },
-    { "key": "atendimento_id", "value": "" }
+    {
+      "key": "admin_url",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "agenda_url",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "atend_url",
+      "value": "http://localhost:8083"
+    },
+    {
+      "key": "convenio_id",
+      "value": ""
+    },
+    {
+      "key": "convenio_cnpj",
+      "value": ""
+    },
+    {
+      "key": "medico_id",
+      "value": ""
+    },
+    {
+      "key": "medico_crm",
+      "value": ""
+    },
+    {
+      "key": "paciente_id",
+      "value": ""
+    },
+    {
+      "key": "paciente_cpf",
+      "value": ""
+    },
+    {
+      "key": "consulta_id",
+      "value": ""
+    },
+    {
+      "key": "consulta_dataHora",
+      "value": ""
+    },
+    {
+      "key": "atendimento_id",
+      "value": ""
+    }
   ],
   "item": [
     {
@@ -26,6 +62,7 @@
           "listen": "prerequest",
           "script": {
             "exec": [
+              "pm.collectionVariables.set('atend_conv_nome', 'ConvAtend-' + Date.now());",
               "const d = String(Date.now()).slice(-8).padStart(8, '0');",
               "pm.collectionVariables.set('convenio_cnpj', d.slice(0,2) + '.' + d.slice(2,5) + '.' + d.slice(5,8) + '/0001-' + d.slice(0,2));"
             ]
@@ -43,15 +80,25 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"nome\": \"Convenio Atendimento\",\n  \"descricao\": \"Setup\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 90000-0000\",\n  \"ativo\": true\n}"
+          "raw": "{\n  \"nome\": \"{{atend_conv_nome}}\",\n  \"descricao\": \"Setup\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 90000-0000\",\n  \"ativo\": true\n}"
         },
         "url": {
           "raw": "{{admin_url}}/v1/convenios",
-          "host": ["{{admin_url}}"],
-          "path": ["v1", "convenios"]
+          "host": [
+            "{{admin_url}}"
+          ],
+          "path": [
+            "v1",
+            "convenios"
+          ]
         }
       }
     },
@@ -78,15 +125,25 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"nome\": \"Dr. Atendimento\",\n  \"crm\": \"{{medico_crm}}\",\n  \"senha\": \"senha123\",\n  \"telefone\": \"3499999\"\n}"
         },
         "url": {
           "raw": "{{admin_url}}/v1/medicos",
-          "host": ["{{admin_url}}"],
-          "path": ["v1", "medicos"]
+          "host": [
+            "{{admin_url}}"
+          ],
+          "path": [
+            "v1",
+            "medicos"
+          ]
         }
       }
     },
@@ -115,15 +172,25 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"nome\": \"Paciente Atendimento\",\n  \"cpf\": \"{{paciente_cpf}}\",\n  \"dataNascimento\": \"1990-01-01\",\n  \"telefone\": \"3499998\",\n  \"email\": \"atend@email.com\",\n  \"endereco\": \"Rua X\",\n  \"convenioId\": {{convenio_id}}\n}"
         },
         "url": {
           "raw": "{{admin_url}}/v1/pacientes",
-          "host": ["{{admin_url}}"],
-          "path": ["v1", "pacientes"]
+          "host": [
+            "{{admin_url}}"
+          ],
+          "path": [
+            "v1",
+            "pacientes"
+          ]
         }
       }
     },
@@ -153,15 +220,25 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_id}},\n  \"dataHora\": \"{{consulta_dataHora}}\",\n  \"observacoes\": \"Setup atendimento\"\n}"
         },
         "url": {
           "raw": "{{agenda_url}}/v1/consultas",
-          "host": ["{{agenda_url}}"],
-          "path": ["v1", "consultas"]
+          "host": [
+            "{{agenda_url}}"
+          ],
+          "path": [
+            "v1",
+            "consultas"
+          ]
         }
       }
     },
@@ -195,15 +272,25 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"consultaId\": {{consulta_id}},\n  \"medicoId\": {{medico_id}},\n  \"pacienteId\": {{paciente_id}},\n  \"descricao\": \"Paciente relatou dor abdominal\",\n  \"diagnostico\": \"Gastrite aguda\",\n  \"observacoes\": \"Recomendado dieta leve\"\n}"
         },
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos"]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos"
+          ]
         }
       }
     },
@@ -221,15 +308,25 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"medicoId\": 1,\n  \"pacienteId\": 1\n}"
         },
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos"]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos"
+          ]
         }
       }
     },
@@ -258,8 +355,14 @@
         "method": "GET",
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos/{{consulta_id}}",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos", "{{consulta_id}}"]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos",
+            "{{consulta_id}}"
+          ]
         }
       }
     },
@@ -286,15 +389,27 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"texto\": \"Paciente voltou para revisao. Melhora.\"\n}"
         },
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/anotacoes",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos", "{{atendimento_id}}", "anotacoes"]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos",
+            "{{atendimento_id}}",
+            "anotacoes"
+          ]
         }
       }
     },
@@ -312,15 +427,27 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"texto\": \"\"\n}"
         },
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/anotacoes",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos", "{{atendimento_id}}", "anotacoes"]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos",
+            "{{atendimento_id}}",
+            "anotacoes"
+          ]
         }
       }
     },
@@ -339,15 +466,27 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"descricao\": \"Hemograma completo\",\n  \"tipo\": \"LABORATORIAL\"\n}"
         },
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/exames",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos", "{{atendimento_id}}", "exames"]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos",
+            "{{atendimento_id}}",
+            "exames"
+          ]
         }
       }
     },
@@ -365,15 +504,27 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"descricao\": \"\",\n  \"tipo\": \"LABORATORIAL\"\n}"
         },
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/exames",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos", "{{atendimento_id}}", "exames"]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos",
+            "{{atendimento_id}}",
+            "exames"
+          ]
         }
       }
     },
@@ -403,9 +554,20 @@
         "method": "GET",
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos/historico?pacienteId={{paciente_id}}",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos", "historico"],
-          "query": [{ "key": "pacienteId", "value": "{{paciente_id}}" }]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos",
+            "historico"
+          ],
+          "query": [
+            {
+              "key": "pacienteId",
+              "value": "{{paciente_id}}"
+            }
+          ]
         }
       }
     },
@@ -426,9 +588,20 @@
         "method": "GET",
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos/historico?pacienteId=999999",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos", "historico"],
-          "query": [{ "key": "pacienteId", "value": "999999" }]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos",
+            "historico"
+          ],
+          "query": [
+            {
+              "key": "pacienteId",
+              "value": "999999"
+            }
+          ]
         }
       }
     },
@@ -448,8 +621,14 @@
         "method": "GET",
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos/999999",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos", "999999"]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos",
+            "999999"
+          ]
         }
       }
     },
@@ -467,15 +646,27 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"texto\": \"qualquer coisa\"\n}"
         },
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos/999999/anotacoes",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos", "999999", "anotacoes"]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos",
+            "999999",
+            "anotacoes"
+          ]
         }
       }
     },
@@ -493,15 +684,27 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"descricao\": \"Hemograma\",\n  \"tipo\": \"LABORATORIAL\"\n}"
         },
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos/999999/exames",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos", "999999", "exames"]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos",
+            "999999",
+            "exames"
+          ]
         }
       }
     },
@@ -530,8 +733,15 @@
         "method": "GET",
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/anotacoes",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos", "{{atendimento_id}}", "anotacoes"]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos",
+            "{{atendimento_id}}",
+            "anotacoes"
+          ]
         }
       }
     },
@@ -560,8 +770,15 @@
         "method": "GET",
         "url": {
           "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/exames",
-          "host": ["{{atend_url}}"],
-          "path": ["v1", "atendimentos", "{{atendimento_id}}", "exames"]
+          "host": [
+            "{{atend_url}}"
+          ],
+          "path": [
+            "v1",
+            "atendimentos",
+            "{{atendimento_id}}",
+            "exames"
+          ]
         }
       }
     }

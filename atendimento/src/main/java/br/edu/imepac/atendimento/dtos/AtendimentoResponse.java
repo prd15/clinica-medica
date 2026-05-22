@@ -1,6 +1,6 @@
 package br.edu.imepac.atendimento.dtos;
 
-import br.edu.imepac.commons.entities.StatusAtendimento;
+import br.edu.imepac.commons.entities.atendimento.StatusAtendimento;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -35,4 +35,7 @@ public class AtendimentoResponse {
 
     @Schema(description = "ID do prontuário gerado", example = "1")
     private Long prontuarioId;
+
+    @Schema(description = "Indica se o agendamento foi atualizado para REALIZADA com sucesso", example = "true")
+    private boolean consultaAtualizada;
 }

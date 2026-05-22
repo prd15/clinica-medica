@@ -1,13 +1,20 @@
 package br.edu.imepac.atendimento.controllers;
 
+import br.edu.imepac.atendimento.clients.ServicoIndisponivelException;
 import br.edu.imepac.atendimento.dtos.ErrorResponse;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -57,6 +64,64 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleIncorrectResultSize(IncorrectResultSizeDataAccessException ex) {
         log.warn("Registro duplicado no banco: {}", ex.getMessage());
         return build(HttpStatus.CONFLICT, "Registro duplicado encontrado: " + ex.getMessage());
+    }
+
+    // violacao de constraint do banco (unique, FK, not null) — vira 409 ao inves de 500
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex) {
+        log.warn("Violacao de integridade no banco: {}", ex.getMostSpecificCause().getMessage());
+        return build(HttpStatus.CONFLICT, "Violacao de integridade: registro duplicado ou referencia invalida");
+    }
+
+    // JSON malformado no body — 400 ao inves de 500
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException ex) {
+        log.warn("JSON malformado: {}", ex.getMostSpecificCause().getMessage());
+        return build(HttpStatus.BAD_REQUEST, "JSON malformado ou tipo de campo invalido");
+    }
+
+    // path/query param com tipo errado (ex.: id=abc) — 400
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("Parametro {} com tipo invalido: {}", ex.getName(), ex.getValue());
+        return build(HttpStatus.BAD_REQUEST,
+                "Parametro '" + ex.getName() + "' com tipo invalido");
+    }
+
+    // query param obrigatorio ausente — 400
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex) {
+        log.warn("Parametro obrigatorio ausente: {}", ex.getParameterName());
+        return build(HttpStatus.BAD_REQUEST,
+                "Parametro obrigatorio ausente: " + ex.getParameterName());
+    }
+
+    // validacao em path/query params (@Validated no controller) — 400
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
+        log.warn("Validacao de parametro falhou: {}", ex.getMessage());
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    // metodo HTTP nao suportado pela rota — 405
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
+        log.warn("Metodo HTTP nao suportado: {}", ex.getMethod());
+        return build(HttpStatus.METHOD_NOT_ALLOWED, ex.getMessage());
+    }
+
+    // microsservico externo (agendamento) indisponivel — 503
+    @ExceptionHandler(ServicoIndisponivelException.class)
+    public ResponseEntity<ErrorResponse> handleServicoIndisponivel(ServicoIndisponivelException ex) {
+        log.error("Servico externo indisponivel: {}", ex.getMessage());
+        return build(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
+
+    // fallback — qualquer excecao nao mapeada vira 500 generico, sem vazar stack pro cliente
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
+        log.error("Erro inesperado", ex);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno do servidor");
     }
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status, Object message) {

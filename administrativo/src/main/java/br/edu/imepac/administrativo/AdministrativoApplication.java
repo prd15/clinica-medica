@@ -5,9 +5,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@SpringBootApplication(scanBasePackages = "br.edu.imepac")
-@EntityScan(basePackages = "br.edu.imepac.commons.entities")
-@EnableJpaRepositories(basePackages = "br.edu.imepac.commons.repositories")
+// escopo restrito ao dominio administrativo: evita carregar entidades/repos/services
+// de outros bancos (que criariam tabelas erradas neste DataSource)
+@SpringBootApplication(scanBasePackages = {
+        "br.edu.imepac.administrativo",
+        "br.edu.imepac.commons.config",
+        "br.edu.imepac.commons.services.administrativo"
+})
+@EntityScan(basePackages = "br.edu.imepac.commons.entities.administrativo")
+@EnableJpaRepositories(basePackages = "br.edu.imepac.commons.repositories.administrativo")
 public class AdministrativoApplication {
 
     public static void main(String[] args) {

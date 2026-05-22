@@ -1,10 +1,10 @@
 package br.edu.imepac.administrativo.controllers;
 
+import br.edu.imepac.administrativo.clients.AgendamentoClient;
 import br.edu.imepac.administrativo.dtos.ConsultaDiariaRelatorioResponse;
 import br.edu.imepac.administrativo.dtos.PacienteResponse;
 import br.edu.imepac.administrativo.dtos.PacientesPorConvenioRelatorioResponse;
-import br.edu.imepac.commons.services.PacienteService;
-import io.swagger.v3.oas.annotations.Hidden;
+import br.edu.imepac.commons.services.administrativo.PacienteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -26,25 +26,31 @@ import java.util.List;
 public class RelatorioController {
 
     private final PacienteService pacienteService;
+    private final AgendamentoClient agendamentoClient;
     private final ModelMapper modelMapper;
 
-    public RelatorioController(PacienteService pacienteService, ModelMapper modelMapper) {
+    public RelatorioController(PacienteService pacienteService,
+                               AgendamentoClient agendamentoClient,
+                               ModelMapper modelMapper) {
         this.pacienteService = pacienteService;
+        this.agendamentoClient = agendamentoClient;
         this.modelMapper = modelMapper;
     }
 
-    // pendente integracao com o microsservico de agendamento — retorna 0 enquanto nao implementado
-    @Hidden
-    @Operation(summary = "Relatorio de consultas diarias (pendente integracao com agendamento)")
+    // consulta o microsservico de agendamento (GET /v1/consultas?data=X) e conta o total.
+    // se o agendamento estiver fora, AgendamentoClient devolve lista vazia (fail-safe).
+    @Operation(summary = "Relatorio de consultas diarias",
+            description = "Conta consultas agendadas para a data informada via integracao com o agendamento")
     @ApiResponse(responseCode = "200", description = "Relatorio retornado com sucesso")
-    @ApiResponse(responseCode = "400", description = "Data ausente ou em formato invalido")
+    @ApiResponse(responseCode = "400", description = "Data invalida ou ausente")
     @GetMapping("/consultas-diarias")
     public ResponseEntity<ConsultaDiariaRelatorioResponse> consultasDiarias(
             @RequestParam
             @Parameter(description = "Data do relatorio no formato yyyy-MM-dd", example = "2026-05-12")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate data) {
-        return ResponseEntity.ok(new ConsultaDiariaRelatorioResponse(data, 0));
+        int total = agendamentoClient.listarConsultasPorData(data).size();
+        return ResponseEntity.ok(new ConsultaDiariaRelatorioResponse(data, total));
     }
 
     @Operation(summary = "Relatorio de pacientes por convenio")
