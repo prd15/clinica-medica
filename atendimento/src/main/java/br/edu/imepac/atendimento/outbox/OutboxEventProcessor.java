@@ -11,6 +11,10 @@ import org.springframework.stereotype.Component;
 // LOCK PESSIMISTIC_WRITE com SKIP_LOCKED ate o commit do batch — essencial pra
 // multi-instancia). Distingue erro PERMANENTE (DESCARTADO direto) de TRANSITORIO (retry).
 //
+// ESCOPO RESTRITO (package-private): deve ser injetado/usado APENAS pelo OutboxScheduler
+// neste mesmo pacote. Chamar de fora do contexto transacional do scheduler pode perder
+// o lock pessimista e abrir janela de dupla entrega em ambiente multi-instancia.
+//
 // Decisao deliberada: NAO usar @Transactional REQUIRES_NEW aqui porque conflita com
 // o lock pessimista da outer tx (inner tx bloquearia na mesma linha). Falha catastrofica
 // num evento (ex.: DataIntegrityViolationException no save) pode causar rollback do
@@ -18,7 +22,7 @@ import org.springframework.stereotype.Component;
 // abaixo lida com TODA excecao da entrega (RuntimeException), nao afeta o save.
 @Slf4j
 @Component
-public class OutboxEventProcessor {
+class OutboxEventProcessor {
 
     static final String EVENT_CONFIRMACAO_REALIZACAO = "CONFIRMACAO_REALIZACAO";
 
@@ -26,15 +30,15 @@ public class OutboxEventProcessor {
     private final AgendamentoClient agendamentoClient;
     private final int maxRetry;
 
-    public OutboxEventProcessor(OutboxEventRepository outboxEventRepository,
-                                AgendamentoClient agendamentoClient,
-                                @Value("${outbox.max-retry:3}") int maxRetry) {
+    OutboxEventProcessor(OutboxEventRepository outboxEventRepository,
+                         AgendamentoClient agendamentoClient,
+                         @Value("${outbox.max-retry:3}") int maxRetry) {
         this.outboxEventRepository = outboxEventRepository;
         this.agendamentoClient = agendamentoClient;
         this.maxRetry = maxRetry;
     }
 
-    public void processar(OutboxEvent evento) {
+    void processar(OutboxEvent evento) {
         try {
             entregar(evento);
             evento.marcarProcessado();
