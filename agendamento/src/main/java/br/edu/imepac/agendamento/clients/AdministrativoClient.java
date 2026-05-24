@@ -3,15 +3,15 @@ package br.edu.imepac.agendamento.clients;
 import br.edu.imepac.agendamento.clients.dto.ConvenioRefDTO;
 import br.edu.imepac.agendamento.clients.dto.MedicoRefDTO;
 import br.edu.imepac.agendamento.clients.dto.PacienteRefDTO;
+import br.edu.imepac.commons.exceptions.ServicoIndisponivelException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 @Component
 public class AdministrativoClient {
@@ -25,53 +25,47 @@ public class AdministrativoClient {
         this.adminUrl = adminUrl;
     }
 
-    public ResponseEntity<ConvenioRefDTO> buscarConvenio(Long id) {
-        try {
-            return restTemplate.getForEntity(adminUrl + "/v1/convenios/" + id, ConvenioRefDTO.class);
-        } catch (HttpClientErrorException.NotFound e) {
-            return ResponseEntity.notFound().build();
-        }
+    public Optional<ConvenioRefDTO> buscarConvenio(Long id) {
+        return buscar("/v1/convenios/" + id, ConvenioRefDTO.class);
     }
 
     public boolean isConvenioAtivo(Long convenioId) {
-        return consultarAtivo(() -> buscarConvenio(convenioId), ConvenioRefDTO::getAtivo);
+        return isAtivo(buscarConvenio(convenioId), ConvenioRefDTO::getAtivo);
     }
 
-    public ResponseEntity<MedicoRefDTO> buscarMedico(Long id) {
-        try {
-            return restTemplate.getForEntity(adminUrl + "/v1/medicos/" + id, MedicoRefDTO.class);
-        } catch (HttpClientErrorException.NotFound e) {
-            return ResponseEntity.notFound().build();
-        }
+    public Optional<MedicoRefDTO> buscarMedico(Long id) {
+        return buscar("/v1/medicos/" + id, MedicoRefDTO.class);
     }
 
     public boolean isMedicoAtivo(Long medicoId) {
-        return consultarAtivo(() -> buscarMedico(medicoId), MedicoRefDTO::getAtivo);
+        return isAtivo(buscarMedico(medicoId), MedicoRefDTO::getAtivo);
     }
 
-    public ResponseEntity<PacienteRefDTO> buscarPaciente(Long id) {
-        try {
-            return restTemplate.getForEntity(adminUrl + "/v1/pacientes/" + id, PacienteRefDTO.class);
-        } catch (HttpClientErrorException.NotFound e) {
-            return ResponseEntity.notFound().build();
-        }
+    public Optional<PacienteRefDTO> buscarPaciente(Long id) {
+        return buscar("/v1/pacientes/" + id, PacienteRefDTO.class);
     }
 
-    // paciente nao tem campo ativo — basta existir (corpo presente)
+    // paciente nao tem campo ativo — basta existir
     public boolean isPacienteExistente(Long pacienteId) {
-        return consultarAtivo(() -> buscarPaciente(pacienteId), p -> true);
+        return buscarPaciente(pacienteId).isPresent();
     }
 
-    // fail-safe: qualquer falha de comunicacao (404, 5xx, timeout, conexao recusada) retorna false.
-    // melhor um falso negativo do que agendar contra um recurso invalido ou indisponivel.
-    private <T> boolean consultarAtivo(Supplier<ResponseEntity<T>> chamada, Predicate<T> ativo) {
+    // helper unico para os 3 buscarX:
+    //   404 -> Optional.empty() (recurso nao existe, regra de negocio)
+    //   timeout/5xx/conexao recusada -> ServicoIndisponivelException -> handler vira 503
+    private <T> Optional<T> buscar(String path, Class<T> tipo) {
         try {
-            T body = chamada.get().getBody();
-            return body != null && ativo.test(body);
+            return Optional.ofNullable(restTemplate.getForObject(adminUrl + path, tipo));
         } catch (HttpClientErrorException.NotFound e) {
-            return false;
+            return Optional.empty();
         } catch (RestClientException e) {
-            return false;
+            throw new ServicoIndisponivelException(
+                    "Administrativo indisponivel ao chamar " + path, e);
         }
+    }
+
+    // recurso existe E atende ao predicado de ativo
+    private <T> boolean isAtivo(Optional<T> recurso, Predicate<T> ativo) {
+        return recurso.map(ativo::test).orElse(false);
     }
 }
