@@ -1,6 +1,8 @@
 package br.edu.imepac.atendimento.clients;
 
 import br.edu.imepac.atendimento.clients.dto.ConsultaRefDTO;
+import br.edu.imepac.atendimento.outbox.EventoPermanenteException;
+import br.edu.imepac.commons.exceptions.ServicoIndisponivelException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -37,9 +39,22 @@ public class AgendamentoClient {
         }
     }
 
-    // notifica o agendamento que a consulta foi realizada
+    // notifica o agendamento que a consulta foi realizada. Chamado pelo OutboxScheduler.
+    //
+    // Tratamento de erros (importante pra evitar retry infinito):
+    //   404 NotFound -> consulta sumiu do agendamento, retry nao vai ressuscitar -> PERMANENTE
+    //   409 Conflict -> consulta ja esta em status terminal (REALIZADA/CANCELADA), idempotente -> PERMANENTE
+    //   demais (timeout, 5xx, connection refused) -> propaga -> outbox conta como falha transitoria
     public void confirmarRealizacao(Long consultaId) {
         String url = agendamentoUrl + "/v1/consultas/" + consultaId + "/realizar";
-        restTemplate.patchForObject(url, null, Void.class);
+        try {
+            restTemplate.patchForObject(url, null, Void.class);
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new EventoPermanenteException(
+                    "Consulta " + consultaId + " nao existe mais no agendamento (404)", e);
+        } catch (HttpClientErrorException.Conflict e) {
+            throw new EventoPermanenteException(
+                    "Consulta " + consultaId + " ja esta em status terminal (409)", e);
+        }
     }
 }

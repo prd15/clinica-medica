@@ -1,7 +1,8 @@
-package br.edu.imepac.atendimento.clients;
+package br.edu.imepac.commons.exceptions;
 
-// lancada quando um servico externo (ex: agendamento) esta fora do ar ou retornou erro
-// que nao seja 404 — distinguimos do "recurso nao encontrado" para diagnostico correto
+// Lancada quando um microsservico externo esta fora do ar ou retornou erro
+// que NAO seja 404 (timeout, 5xx, conexao recusada). Distingue do "recurso
+// nao encontrado" para diagnostico correto — handler global mapeia para 503.
 public class ServicoIndisponivelException extends RuntimeException {
 
     public ServicoIndisponivelException(String message) {

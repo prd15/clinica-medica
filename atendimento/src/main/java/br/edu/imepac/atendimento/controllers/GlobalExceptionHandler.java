@@ -1,7 +1,7 @@
 package br.edu.imepac.atendimento.controllers;
 
-import br.edu.imepac.atendimento.clients.ServicoIndisponivelException;
 import br.edu.imepac.atendimento.dtos.ErrorResponse;
+import br.edu.imepac.commons.exceptions.ServicoIndisponivelException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
