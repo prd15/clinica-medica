@@ -382,6 +382,17 @@
           "name": "CORRIGIDO — consulta virou REALIZADA apos o atendimento",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// outbox e assincrono (poll-interval 10s). busy-wait 12s antes de checar status",
+                  "const start = Date.now();",
+                  "while (Date.now() - start < 12000) {}"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
