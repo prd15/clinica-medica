@@ -1,6 +1,7 @@
 package br.edu.imepac.administrativo.clients;
 
 import br.edu.imepac.administrativo.clients.dto.ContagemConsultasDTO;
+import br.edu.imepac.commons.exceptions.ServicoIndisponivelException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -21,9 +22,9 @@ public class AgendamentoClient {
         this.agendamentoUrl = agendamentoUrl;
     }
 
-    // chama o endpoint dedicado /v1/consultas/contagem — payload e so {total}, nao baixa lista
-    // fail-safe: se o agendamento estiver indisponivel ou retornar erro, devolve 0 e o relatorio
-    // mostra zero em vez de quebrar a chamada inteira do administrativo
+    // chama o endpoint dedicado /v1/consultas/contagem — payload e so {total}, nao baixa lista.
+    // Falha de comunicacao (timeout, 5xx, conexao recusada) propaga como ServicoIndisponivelException
+    // -> handler global vira 503. NAO mascarar como 0 — diagnostico errado e silencioso.
     public long contarConsultasPorData(LocalDate data) {
         try {
             ContagemConsultasDTO resp = restTemplate.getForObject(
@@ -31,7 +32,8 @@ public class AgendamentoClient {
                     ContagemConsultasDTO.class);
             return resp != null ? resp.getTotal() : 0L;
         } catch (RestClientException e) {
-            return 0L;
+            throw new ServicoIndisponivelException(
+                    "Agendamento indisponivel ao contar consultas da data " + data, e);
         }
     }
 }
