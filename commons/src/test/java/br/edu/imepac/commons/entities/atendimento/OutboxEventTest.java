@@ -16,7 +16,7 @@ class OutboxEventTest {
 
         assertEquals(OutboxStatus.PENDENTE, evento.getStatus());
         assertEquals(0, evento.getTentativas());
-        assertNotNull(evento.getCriadoEm());
+        // createdAt e preenchido pelo @PrePersist do AuditingEntityListener no flush — fora deste unit test
         assertNull(evento.getProcessadoEm(), "processadoEm so e preenchido em estado terminal");
         assertEquals("CONSULTA", evento.getAggregateType());
         assertEquals("1", evento.getAggregateId());

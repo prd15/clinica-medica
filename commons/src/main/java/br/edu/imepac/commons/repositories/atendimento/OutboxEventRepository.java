@@ -23,7 +23,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2"))
     @Query("SELECT e FROM OutboxEvent e " +
             "WHERE e.status IN :status AND e.tentativas < :maxTentativas " +
-            "ORDER BY e.criadoEm")
+            "ORDER BY e.createdAt")
     List<OutboxEvent> buscarParaProcessar(@Param("status") Collection<OutboxStatus> status,
                                           @Param("maxTentativas") int maxTentativas);
 }

@@ -1,5 +1,6 @@
 package br.edu.imepac.commons.entities.atendimento;
 
+import br.edu.imepac.commons.entities.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -19,6 +20,9 @@ import java.time.LocalDateTime;
 // Padrao Outbox: o evento de integracao e gravado na MESMA transacao do negocio
 // (registrar atendimento). Assim a notificacao ao agendamento nunca se perde —
 // mesmo que o processo caia entre o commit e o envio, o evento fica aqui para retry.
+//
+// Estende BaseEntity — usa createdAt (auditoria automatica) como timestamp de criacao
+// do evento. processadoEm e marcado no estado terminal (PROCESSADO/DESCARTADO).
 @Entity
 @Table(name = "outbox_event", indexes = {
         // o scheduler busca por status+tentativas; indice composto evita full scan
@@ -26,10 +30,10 @@ import java.time.LocalDateTime;
         @Index(name = "idx_outbox_status_tentativas", columnList = "status, tentativas")
 })
 @Data
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(of = "id", callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
-public class OutboxEvent {
+public class OutboxEvent extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -57,9 +61,6 @@ public class OutboxEvent {
     @Column(nullable = false)
     private int tentativas;
 
-    @Column(nullable = false)
-    private LocalDateTime criadoEm;
-
     // so preenchido quando o evento atinge estado terminal (PROCESSADO ou DESCARTADO)
     private LocalDateTime processadoEm;
 
@@ -73,7 +74,6 @@ public class OutboxEvent {
         evento.payload = payload;
         evento.status = OutboxStatus.PENDENTE;
         evento.tentativas = 0;
-        evento.criadoEm = LocalDateTime.now();
         evento.processadoEm = null;
         return evento;
     }
