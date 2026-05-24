@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// projecao minima da consulta retornada pelo agendamento — id apenas pra contar
+// projecao do endpoint /v1/consultas/contagem do agendamento — so o total
 @Data
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ConsultaDoDiaDTO {
+public class ContagemConsultasDTO {
 
-    private Long id;
+    private long total;
 }
