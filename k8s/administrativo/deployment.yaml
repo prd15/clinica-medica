@@ -43,6 +43,11 @@ spec:
                 secretKeyRef:
                   name: clinica-secrets
                   key: db-password
+            - name: AGENDAMENTO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: administrativo-config
+                  key: AGENDAMENTO_URL
           livenessProbe:
             httpGet:
               path: /actuator/health
