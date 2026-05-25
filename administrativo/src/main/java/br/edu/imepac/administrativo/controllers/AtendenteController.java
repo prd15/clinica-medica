@@ -75,6 +75,7 @@ public class AtendenteController {
     @Operation(summary = "Remove atendente por ID")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Atendente removido com sucesso"),
+        @ApiResponse(responseCode = "400", description = "ID informado em formato invalido"),
         @ApiResponse(responseCode = "404", description = "Atendente nao encontrado")
     })
     @DeleteMapping("/{id}")

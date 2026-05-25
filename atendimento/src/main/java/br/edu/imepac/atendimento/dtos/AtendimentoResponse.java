@@ -33,7 +33,7 @@ public class AtendimentoResponse {
             allowableValues = {"EM_ANDAMENTO", "REALIZADO"})
     private StatusAtendimento status;
 
-    @Schema(description = "ID do prontuario gerado")
+    @Schema(description = "ID do prontuário gerado", example = "1")
     private Long prontuarioId;
 
     @Schema(description = "Indica que a notificacao de realizacao foi enfileirada (outbox) e sera "

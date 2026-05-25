@@ -42,6 +42,7 @@ public class ConvenioController {
 
     @Operation(summary = "Busca convenio por ID")
     @ApiResponse(responseCode = "200", description = "Convenio encontrado")
+    @ApiResponse(responseCode = "400", description = "ID informado em formato invalido")
     @ApiResponse(responseCode = "404", description = "Convenio nao encontrado")
     @GetMapping("/{id}")
     public ResponseEntity<ConvenioResponse> findById(@PathVariable("id") Long id) {
@@ -76,6 +77,7 @@ public class ConvenioController {
 
     @Operation(summary = "Remove convenio por ID")
     @ApiResponse(responseCode = "204", description = "Convenio removido")
+    @ApiResponse(responseCode = "400", description = "ID informado em formato invalido")
     @ApiResponse(responseCode = "404", description = "Convenio nao encontrado")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable("id") Long id) {

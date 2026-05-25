@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: administrativo
+  namespace: clinica
+  labels:
+    app: administrativo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: administrativo
+  template:
+    metadata:
+      labels:
+        app: administrativo
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: administrativo
+          image: clinica/administrativo:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: administrativo-config
+                  key: DB_HOST
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: administrativo-config
+                  key: DB_USER
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: administrativo-config
+                  key: DB_PORT
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-secrets
+                  key: db-password
+            - name: AGENDAMENTO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: administrativo-config
+                  key: AGENDAMENTO_URL
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

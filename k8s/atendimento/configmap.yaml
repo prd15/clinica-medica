@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: atendimento-config
+  namespace: clinica
+data:
+  DB_HOST: db-atendimento
+  DB_PORT: "3306"
+  DB_USER: root
+  AGENDAMENTO_URL: http://agendamento:8082

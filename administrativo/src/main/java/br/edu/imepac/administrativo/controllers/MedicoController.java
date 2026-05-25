@@ -57,6 +57,7 @@ public class MedicoController {
     @Operation(summary = "Busca médico por ID")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Médico encontrado"),
+        @ApiResponse(responseCode = "400", description = "ID informado em formato invalido"),
         @ApiResponse(responseCode = "404", description = "Médico não encontrado")
     })
     @GetMapping("/{id}")
@@ -84,6 +85,7 @@ public class MedicoController {
     @Operation(summary = "Atualiza médico existente")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Médico atualizado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados invalidos"),
         @ApiResponse(responseCode = "404", description = "Médico não encontrado"),
         @ApiResponse(responseCode = "409", description = "CRM já cadastrado para outro médico")
     })
@@ -99,6 +101,7 @@ public class MedicoController {
     @Operation(summary = "Associa especialidade ao médico")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Associado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "IDs informados em formato invalido"),
         @ApiResponse(responseCode = "404", description = "Médico ou especialidade não encontrado"),
         @ApiResponse(responseCode = "409", description = "Especialidade já associada ao médico")
     })
@@ -113,6 +116,7 @@ public class MedicoController {
     @Operation(summary = "Remove especialidade do médico")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Removida com sucesso"),
+        @ApiResponse(responseCode = "400", description = "IDs informados em formato invalido"),
         @ApiResponse(responseCode = "404", description = "Médico ou especialidade não encontrado")
     })
     @DeleteMapping("/{id}/especialidades/{especialidadeId}")
@@ -127,6 +131,7 @@ public class MedicoController {
     @Operation(summary = "Inativa médico")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Médico inativado"),
+        @ApiResponse(responseCode = "400", description = "ID informado em formato invalido"),
         @ApiResponse(responseCode = "404", description = "Médico não encontrado")
     })
     @PatchMapping("/{id}/inativar")
@@ -139,6 +144,7 @@ public class MedicoController {
     @Operation(summary = "Remove médico por ID")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Médico removido com sucesso"),
+        @ApiResponse(responseCode = "400", description = "ID informado em formato invalido"),
         @ApiResponse(responseCode = "404", description = "Médico não encontrado")
     })
     @DeleteMapping("/{id}")

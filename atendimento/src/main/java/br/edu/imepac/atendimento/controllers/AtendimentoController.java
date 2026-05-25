@@ -90,6 +90,7 @@ public class AtendimentoController {
     @GetMapping("/historico")
     @Operation(summary = "Retorna histórico de atendimentos de um paciente")
     @ApiResponse(responseCode = "200", description = "Histórico retornado")
+    @ApiResponse(responseCode = "400", description = "ID do paciente ausente ou em formato invalido")
     public ResponseEntity<List<HistoricoResponse>> historico(@RequestParam Long pacienteId) {
         List<HistoricoResponse> response = atendimentoService.buscarHistoricoPorPaciente(pacienteId)
                 .stream()
@@ -101,6 +102,7 @@ public class AtendimentoController {
     @GetMapping("/{consultaId}")
     @Operation(summary = "Retorna o prontuário de uma consulta específica")
     @ApiResponse(responseCode = "200", description = "Prontuário encontrado")
+    @ApiResponse(responseCode = "400", description = "ID da consulta em formato invalido")
     @ApiResponse(responseCode = "404", description = "Consulta não encontrada")
     public ResponseEntity<ProntuarioResponse> prontuarioPorConsulta(@PathVariable Long consultaId) {
         AtendimentoEntity atendimento = atendimentoService.buscarPorConsulta(consultaId);
@@ -111,6 +113,7 @@ public class AtendimentoController {
     @PostMapping("/{id}/anotacoes")
     @Operation(summary = "Adiciona anotação ao prontuário do atendimento")
     @ApiResponse(responseCode = "201", description = "Anotação registrada")
+    @ApiResponse(responseCode = "400", description = "ID invalido ou dados invalidos")
     @ApiResponse(responseCode = "404", description = "Atendimento não encontrado")
     public ResponseEntity<AnotacaoResponse> adicionarAnotacao(@PathVariable Long id,
                                                               @RequestBody @Valid AnotacaoRequest request) {
@@ -122,6 +125,7 @@ public class AtendimentoController {
     @PostMapping("/{id}/exames")
     @Operation(summary = "Solicita exame vinculado ao atendimento")
     @ApiResponse(responseCode = "201", description = "Exame solicitado")
+    @ApiResponse(responseCode = "400", description = "ID invalido ou dados invalidos")
     @ApiResponse(responseCode = "404", description = "Atendimento não encontrado")
     public ResponseEntity<ExameResponse> solicitarExame(@PathVariable Long id,
                                                         @RequestBody @Valid ExameRequest request) {
@@ -133,6 +137,7 @@ public class AtendimentoController {
     @GetMapping("/{id}/anotacoes")
     @Operation(summary = "Lista anotacoes do prontuario do atendimento")
     @ApiResponse(responseCode = "200", description = "Anotacoes retornadas")
+    @ApiResponse(responseCode = "400", description = "ID informado em formato invalido")
     @ApiResponse(responseCode = "404", description = "Atendimento ou prontuario nao encontrado")
     public ResponseEntity<List<AnotacaoResponse>> listarAnotacoes(@PathVariable Long id) {
         List<AnotacaoResponse> response = atendimentoService.listarAnotacoes(id)
@@ -145,6 +150,7 @@ public class AtendimentoController {
     @GetMapping("/{id}/exames")
     @Operation(summary = "Lista exames solicitados no atendimento")
     @ApiResponse(responseCode = "200", description = "Exames retornados")
+    @ApiResponse(responseCode = "400", description = "ID informado em formato invalido")
     @ApiResponse(responseCode = "404", description = "Atendimento nao encontrado")
     public ResponseEntity<List<ExameResponse>> listarExames(@PathVariable Long id) {
         List<ExameResponse> response = atendimentoService.listarExames(id)
