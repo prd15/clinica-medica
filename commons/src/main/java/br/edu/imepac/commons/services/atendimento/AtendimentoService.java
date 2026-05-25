@@ -2,11 +2,13 @@ package br.edu.imepac.commons.services.atendimento;
 
 import br.edu.imepac.commons.entities.atendimento.AtendimentoEntity;
 import br.edu.imepac.commons.entities.atendimento.AnotacaoEntity;
+import br.edu.imepac.commons.entities.atendimento.OutboxEvent;
 import br.edu.imepac.commons.entities.atendimento.ProntuarioEntity;
 import br.edu.imepac.commons.entities.atendimento.SolicitacaoExameEntity;
 import br.edu.imepac.commons.entities.atendimento.StatusAtendimento;
 import br.edu.imepac.commons.repositories.atendimento.AtendimentoRepository;
 import br.edu.imepac.commons.repositories.atendimento.AnotacaoRepository;
+import br.edu.imepac.commons.repositories.atendimento.OutboxEventRepository;
 import br.edu.imepac.commons.repositories.atendimento.ProntuarioRepository;
 import br.edu.imepac.commons.repositories.atendimento.SolicitacaoExameRepository;
 import org.springframework.stereotype.Service;
@@ -19,19 +21,26 @@ import java.util.NoSuchElementException;
 @Service
 public class AtendimentoService {
 
+    // evento de integracao gravado no outbox quando um atendimento e registrado
+    private static final String AGGREGATE_CONSULTA = "CONSULTA";
+    private static final String EVENT_CONFIRMACAO_REALIZACAO = "CONFIRMACAO_REALIZACAO";
+
     private final AtendimentoRepository atendimentoRepository;
     private final ProntuarioRepository prontuarioRepository;
     private final AnotacaoRepository anotacaoRepository;
     private final SolicitacaoExameRepository exameRepository;
+    private final OutboxEventRepository outboxEventRepository;
 
     public AtendimentoService(AtendimentoRepository atendimentoRepository,
                               ProntuarioRepository prontuarioRepository,
                               AnotacaoRepository anotacaoRepository,
-                              SolicitacaoExameRepository exameRepository) {
+                              SolicitacaoExameRepository exameRepository,
+                              OutboxEventRepository outboxEventRepository) {
         this.atendimentoRepository = atendimentoRepository;
         this.prontuarioRepository = prontuarioRepository;
         this.anotacaoRepository = anotacaoRepository;
         this.exameRepository = exameRepository;
+        this.outboxEventRepository = outboxEventRepository;
     }
 
     @Transactional
@@ -55,6 +64,16 @@ public class AtendimentoService {
         prontuario.setObservacoes(observacoes);
         prontuario.setDataCriacao(LocalDateTime.now());
         prontuarioRepository.save(prontuario);
+
+        // Outbox: enfileira a notificacao de "consulta realizada" na MESMA transacao.
+        // Se o commit acontece, o evento existe e sera entregue pelo OutboxScheduler;
+        // se a transacao reverte, o evento some junto — nada de notificacao orfa.
+        Long consultaId = salvo.getConsultaId();
+        outboxEventRepository.save(OutboxEvent.pendente(
+                AGGREGATE_CONSULTA,
+                String.valueOf(consultaId),
+                EVENT_CONFIRMACAO_REALIZACAO,
+                "{\"consultaId\":" + consultaId + "}"));
 
         return salvo;
     }

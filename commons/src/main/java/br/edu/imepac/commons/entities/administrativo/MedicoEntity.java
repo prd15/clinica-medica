@@ -1,10 +1,12 @@
 package br.edu.imepac.commons.entities.administrativo;
 
+import br.edu.imepac.commons.entities.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
@@ -12,13 +14,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
 // exclui senha do toString — nao deixa a senha aparecer em logs
 @ToString(exclude = "senha")
 @Entity
 @Table(name = "medicos")
-public class MedicoEntity {
+public class MedicoEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

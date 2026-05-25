@@ -41,6 +41,9 @@ build/
 ### Agent/local notes ###
 .claude/worktrees/
 
+### Documentacao local ###
+README.md
+
 ### Docker — configuracoes locais de maquina ###
 # override de portas pro OrbStack (cada dev tem o seu)
 docker-compose.override.yml
