@@ -1,4 +1,4 @@
-package br.edu.imepac.administrativo.clients.dto;
+package br.edu.imepac.administrativo.integration.agendamento.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;

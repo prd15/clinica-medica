@@ -1,6 +1,5 @@
-package br.edu.imepac.atendimento.clients.dto;
+package br.edu.imepac.atendimento.integration.agendamento.dto;
 
-import br.edu.imepac.atendimento.clients.dto.StatusConsulta;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.NoArgsConstructor;

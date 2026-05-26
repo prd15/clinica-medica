@@ -1,6 +1,6 @@
-package br.edu.imepac.atendimento.clients;
+package br.edu.imepac.atendimento.integration.agendamento;
 
-import br.edu.imepac.atendimento.clients.dto.ConsultaRefDTO;
+import br.edu.imepac.atendimento.integration.agendamento.dto.ConsultaRefDTO;
 import br.edu.imepac.atendimento.outbox.EventoPermanenteException;
 import br.edu.imepac.commons.exceptions.ServicoIndisponivelException;
 import org.springframework.beans.factory.annotation.Value;

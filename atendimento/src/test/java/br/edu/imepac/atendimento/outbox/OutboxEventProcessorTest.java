@@ -1,6 +1,6 @@
 package br.edu.imepac.atendimento.outbox;
 
-import br.edu.imepac.atendimento.clients.AgendamentoClient;
+import br.edu.imepac.atendimento.integration.agendamento.AgendamentoClient;
 import br.edu.imepac.atendimento.outbox.OutboxEvent;
 import br.edu.imepac.atendimento.outbox.OutboxStatus;
 import br.edu.imepac.atendimento.outbox.OutboxEventRepository;

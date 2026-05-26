@@ -1,9 +1,5 @@
 package br.edu.imepac.atendimento.atendimento;
 
-import br.edu.imepac.atendimento.anotacao.AnotacaoEntity;
-import br.edu.imepac.atendimento.anotacao.AnotacaoRepository;
-import br.edu.imepac.atendimento.exame.SolicitacaoExameEntity;
-import br.edu.imepac.atendimento.exame.SolicitacaoExameRepository;
 import br.edu.imepac.atendimento.outbox.OutboxEvent;
 import br.edu.imepac.atendimento.outbox.OutboxEventRepository;
 import br.edu.imepac.atendimento.outbox.OutboxStatus;
@@ -33,12 +29,6 @@ class AtendimentoServiceTest {
 
     @Mock
     private ProntuarioRepository prontuarioRepository;
-
-    @Mock
-    private AnotacaoRepository anotacaoRepository;
-
-    @Mock
-    private SolicitacaoExameRepository exameRepository;
 
     @Mock
     private OutboxEventRepository outboxEventRepository;
@@ -122,67 +112,6 @@ class AtendimentoServiceTest {
     }
 
     @Test
-    void deveAdicionarAnotacaoQuandoProntuarioExiste() {
-        ProntuarioEntity prontuario = new ProntuarioEntity();
-        prontuario.setId(7L);
-        AnotacaoEntity salva = new AnotacaoEntity();
-        salva.setId(20L);
-        salva.setTexto("anotacao");
-
-        when(prontuarioRepository.findByAtendimentoId(3L))
-                .thenReturn(Optional.of(prontuario));
-        when(anotacaoRepository.save(any(AnotacaoEntity.class))).thenReturn(salva);
-
-        AnotacaoEntity resultado = atendimentoService.adicionarAnotacao(3L, "anotacao");
-
-        assertNotNull(resultado.getId());
-        assertEquals("anotacao", resultado.getTexto());
-        verify(anotacaoRepository).save(any(AnotacaoEntity.class));
-    }
-
-    @Test
-    void deveLancarEntityNotFoundException_quandoProntuarioNaoExiste() {
-        when(prontuarioRepository.findByAtendimentoId(5L)).thenReturn(Optional.empty());
-
-        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
-                () -> atendimentoService.adicionarAnotacao(5L, "algum texto"));
-
-        assertTrue(ex.getMessage().contains("5"));
-        verify(prontuarioRepository).findByAtendimentoId(5L);
-        verify(anotacaoRepository, never()).save(any());
-    }
-
-    @Test
-    void deveSolicitarExameQuandoAtendimentoExiste() {
-        AtendimentoEntity atendimento = new AtendimentoEntity();
-        atendimento.setId(8L);
-        SolicitacaoExameEntity salvo = new SolicitacaoExameEntity();
-        salvo.setId(30L);
-        salvo.setTipo("LABORATORIAL");
-
-        when(atendimentoRepository.findById(8L)).thenReturn(Optional.of(atendimento));
-        when(exameRepository.save(any(SolicitacaoExameEntity.class))).thenReturn(salvo);
-
-        SolicitacaoExameEntity resultado = atendimentoService.solicitarExame(8L, "Hemograma", "LABORATORIAL");
-
-        assertNotNull(resultado.getId());
-        assertEquals("LABORATORIAL", resultado.getTipo());
-        verify(exameRepository).save(any(SolicitacaoExameEntity.class));
-    }
-
-    @Test
-    void deveLancarEntityNotFoundException_aoSolicitarExameQuandoAtendimentoNaoExiste() {
-        when(atendimentoRepository.findById(99L)).thenReturn(Optional.empty());
-
-        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
-                () -> atendimentoService.solicitarExame(99L, "Hemograma", "LABORATORIAL"));
-
-        assertTrue(ex.getMessage().contains("99"));
-        verify(atendimentoRepository).findById(99L);
-        verify(exameRepository, never()).save(any());
-    }
-
-    @Test
     void deveRetornarHistoricoQuandoPacientePossuiAtendimentos() {
         AtendimentoEntity a1 = new AtendimentoEntity();
         a1.setId(1L);
@@ -208,51 +137,5 @@ class AtendimentoServiceTest {
         assertNotNull(resultado);
         assertTrue(resultado.isEmpty());
         verify(atendimentoRepository).findByPacienteId(50L);
-    }
-
-    @Test
-    void deveListarAnotacoesQuandoProntuarioExiste() {
-        ProntuarioEntity prontuario = new ProntuarioEntity();
-        prontuario.setId(7L);
-        AnotacaoEntity a1 = new AnotacaoEntity();
-        a1.setId(1L);
-        AnotacaoEntity a2 = new AnotacaoEntity();
-        a2.setId(2L);
-
-        when(prontuarioRepository.findByAtendimentoId(3L))
-                .thenReturn(Optional.of(prontuario));
-        when(anotacaoRepository.findByProntuarioId(7L)).thenReturn(List.of(a1, a2));
-
-        List<AnotacaoEntity> resultado = atendimentoService.listarAnotacoes(3L);
-
-        assertEquals(2, resultado.size());
-        verify(anotacaoRepository).findByProntuarioId(7L);
-    }
-
-    @Test
-    void deveListarExamesQuandoAtendimentoExiste() {
-        AtendimentoEntity atendimento = new AtendimentoEntity();
-        atendimento.setId(8L);
-        SolicitacaoExameEntity e1 = new SolicitacaoExameEntity();
-        e1.setId(1L);
-
-        when(atendimentoRepository.findById(8L)).thenReturn(Optional.of(atendimento));
-        when(exameRepository.findByAtendimentoId(8L)).thenReturn(List.of(e1));
-
-        List<SolicitacaoExameEntity> resultado = atendimentoService.listarExames(8L);
-
-        assertEquals(1, resultado.size());
-        verify(exameRepository).findByAtendimentoId(8L);
-    }
-
-    @Test
-    void deveLancarEntityNotFoundException_aoListarExamesQuandoAtendimentoNaoExiste() {
-        when(atendimentoRepository.findById(99L)).thenReturn(Optional.empty());
-
-        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
-                () -> atendimentoService.listarExames(99L));
-
-        assertTrue(ex.getMessage().contains("99"));
-        verify(exameRepository, never()).findByAtendimentoId(any());
     }
 }

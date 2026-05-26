@@ -1,6 +1,6 @@
-package br.edu.imepac.administrativo.clients;
+package br.edu.imepac.administrativo.integration.agendamento;
 
-import br.edu.imepac.administrativo.clients.dto.ContagemConsultasDTO;
+import br.edu.imepac.administrativo.integration.agendamento.dto.ContagemConsultasDTO;
 import br.edu.imepac.commons.exceptions.ServicoIndisponivelException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

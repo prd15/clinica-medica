@@ -1,8 +1,8 @@
-package br.edu.imepac.agendamento.clients;
+package br.edu.imepac.agendamento.integration.administrativo;
 
-import br.edu.imepac.agendamento.clients.dto.ConvenioRefDTO;
-import br.edu.imepac.agendamento.clients.dto.MedicoRefDTO;
-import br.edu.imepac.agendamento.clients.dto.PacienteRefDTO;
+import br.edu.imepac.agendamento.integration.administrativo.dto.ConvenioRefDTO;
+import br.edu.imepac.agendamento.integration.administrativo.dto.MedicoRefDTO;
+import br.edu.imepac.agendamento.integration.administrativo.dto.PacienteRefDTO;
 import br.edu.imepac.commons.exceptions.ServicoIndisponivelException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

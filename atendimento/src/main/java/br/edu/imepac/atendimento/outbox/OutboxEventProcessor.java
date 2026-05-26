@@ -1,6 +1,6 @@
 package br.edu.imepac.atendimento.outbox;
 
-import br.edu.imepac.atendimento.clients.AgendamentoClient;
+import br.edu.imepac.atendimento.integration.agendamento.AgendamentoClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

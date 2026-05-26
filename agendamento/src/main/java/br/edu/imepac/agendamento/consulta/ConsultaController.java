@@ -1,6 +1,6 @@
 package br.edu.imepac.agendamento.consulta;
 
-import br.edu.imepac.agendamento.clients.AdministrativoClient;
+import br.edu.imepac.agendamento.integration.administrativo.AdministrativoClient;
 import br.edu.imepac.agendamento.consulta.dto.ConsultaRequest;
 import br.edu.imepac.agendamento.consulta.dto.ConsultaResponse;
 import br.edu.imepac.agendamento.consulta.dto.ContagemConsultasResponse;
