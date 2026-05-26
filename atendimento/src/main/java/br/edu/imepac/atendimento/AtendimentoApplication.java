@@ -8,10 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 // @EnableScheduling liga o OutboxScheduler que entrega os eventos de notificacao com retry
 @EnableScheduling
 @EnableJpaAuditing
-@SpringBootApplication(scanBasePackages = {
-        "br.edu.imepac.atendimento",
-        "br.edu.imepac.commons.config"
-})
+@SpringBootApplication
 public class AtendimentoApplication {
 
     public static void main(String[] args) {

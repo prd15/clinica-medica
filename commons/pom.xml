@@ -16,6 +16,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+        <!-- Web – necessario para @RestControllerAdvice no GlobalExceptionHandler -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
         <!-- Lombok – versão gerenciada pelo parent BOM -->
         <dependency>
             <groupId>org.projectlombok</groupId>
