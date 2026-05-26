@@ -4,7 +4,7 @@ import br.edu.imepac.administrativo.clients.AgendamentoClient;
 import br.edu.imepac.administrativo.dtos.ConsultaDiariaRelatorioResponse;
 import br.edu.imepac.administrativo.dtos.PacienteResponse;
 import br.edu.imepac.administrativo.dtos.PacientesPorConvenioRelatorioResponse;
-import br.edu.imepac.commons.services.administrativo.PacienteService;
+import br.edu.imepac.administrativo.paciente.PacienteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

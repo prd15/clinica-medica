@@ -1,8 +1,6 @@
 package br.edu.imepac.atendimento.outbox;
 
 import br.edu.imepac.atendimento.clients.AgendamentoClient;
-import br.edu.imepac.commons.entities.atendimento.OutboxEvent;
-import br.edu.imepac.commons.repositories.atendimento.OutboxEventRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -50,7 +48,7 @@ class OutboxEventProcessor {
         } catch (Exception e) {
             // erro transitorio — registrarFalha incrementa tentativas e promove a DESCARTADO se esgotou
             evento.registrarFalha(maxRetry);
-            if (evento.getStatus() == br.edu.imepac.commons.entities.atendimento.OutboxStatus.DESCARTADO) {
+            if (evento.getStatus() == OutboxStatus.DESCARTADO) {
                 log.error("Evento outbox DESCARTADO (esgotou {} tentativas) id={} eventType={} aggregateId={} ultimo erro: {}",
                         maxRetry, evento.getId(), evento.getEventType(), evento.getAggregateId(), e.getMessage());
             } else {

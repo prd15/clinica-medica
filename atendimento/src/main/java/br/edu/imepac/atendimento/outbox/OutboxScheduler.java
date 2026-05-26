@@ -1,8 +1,5 @@
 package br.edu.imepac.atendimento.outbox;
 
-import br.edu.imepac.commons.entities.atendimento.OutboxEvent;
-import br.edu.imepac.commons.entities.atendimento.OutboxStatus;
-import br.edu.imepac.commons.repositories.atendimento.OutboxEventRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;

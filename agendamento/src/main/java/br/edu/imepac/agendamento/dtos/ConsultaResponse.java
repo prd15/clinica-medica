@@ -1,6 +1,6 @@
 package br.edu.imepac.agendamento.dtos;
 
-import br.edu.imepac.commons.entities.agendamento.StatusConsulta;
+import br.edu.imepac.agendamento.consulta.StatusConsulta;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;

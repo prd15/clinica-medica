@@ -2,8 +2,8 @@ package br.edu.imepac.administrativo.controllers;
 
 import br.edu.imepac.administrativo.dtos.MedicoRequest;
 import br.edu.imepac.administrativo.dtos.MedicoResponse;
-import br.edu.imepac.commons.entities.administrativo.MedicoEntity;
-import br.edu.imepac.commons.services.administrativo.MedicoService;
+import br.edu.imepac.administrativo.medico.MedicoEntity;
+import br.edu.imepac.administrativo.medico.MedicoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

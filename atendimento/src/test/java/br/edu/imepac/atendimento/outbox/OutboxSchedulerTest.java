@@ -1,8 +1,8 @@
 package br.edu.imepac.atendimento.outbox;
 
-import br.edu.imepac.commons.entities.atendimento.OutboxEvent;
-import br.edu.imepac.commons.entities.atendimento.OutboxStatus;
-import br.edu.imepac.commons.repositories.atendimento.OutboxEventRepository;
+import br.edu.imepac.atendimento.outbox.OutboxEvent;
+import br.edu.imepac.atendimento.outbox.OutboxStatus;
+import br.edu.imepac.atendimento.outbox.OutboxEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

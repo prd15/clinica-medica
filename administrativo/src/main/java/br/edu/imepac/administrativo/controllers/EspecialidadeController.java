@@ -2,8 +2,8 @@ package br.edu.imepac.administrativo.controllers;
 
 import br.edu.imepac.administrativo.dtos.EspecialidadeRequest;
 import br.edu.imepac.administrativo.dtos.EspecialidadeResponse;
-import br.edu.imepac.commons.entities.administrativo.EspecialidadeEntity;
-import br.edu.imepac.commons.services.administrativo.EspecialidadeService;
+import br.edu.imepac.administrativo.especialidade.EspecialidadeEntity;
+import br.edu.imepac.administrativo.especialidade.EspecialidadeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

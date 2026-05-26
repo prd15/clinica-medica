@@ -2,8 +2,8 @@ package br.edu.imepac.administrativo.controllers;
 
 import br.edu.imepac.administrativo.dtos.AtendenteRequest;
 import br.edu.imepac.administrativo.dtos.AtendenteResponse;
-import br.edu.imepac.commons.entities.administrativo.AtendenteEntity;
-import br.edu.imepac.commons.services.administrativo.AtendenteService;
+import br.edu.imepac.administrativo.atendente.AtendenteEntity;
+import br.edu.imepac.administrativo.atendente.AtendenteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

@@ -1,6 +1,9 @@
 package br.edu.imepac.atendimento.controllers;
 
 import br.edu.imepac.atendimento.dtos.ErrorResponse;
+import br.edu.imepac.commons.exceptions.BusinessException;
+import br.edu.imepac.commons.exceptions.EntityNotFoundException;
+import br.edu.imepac.commons.exceptions.IntegrationException;
 import br.edu.imepac.commons.exceptions.ServicoIndisponivelException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +36,24 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 campos.put(error.getField(), error.getDefaultMessage()));
         return build(HttpStatus.BAD_REQUEST, campos);
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFound(EntityNotFoundException ex) {
+        log.warn("Recurso nao encontrado: {}", ex.getMessage());
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex) {
+        log.warn("Regra de negocio violada: {}", ex.getMessage());
+        return build(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(IntegrationException.class)
+    public ResponseEntity<ErrorResponse> handleIntegration(IntegrationException ex) {
+        log.error("Falha de integracao: {}", ex.getMessage());
+        return build(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
     }
 
     @ExceptionHandler(IllegalStateException.class)
