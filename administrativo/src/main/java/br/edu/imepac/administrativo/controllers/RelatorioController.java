@@ -49,8 +49,8 @@ public class RelatorioController {
             @Parameter(description = "Data do relatorio no formato yyyy-MM-dd", example = "2026-05-12")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate data) {
-        int total = agendamentoClient.listarConsultasPorData(data).size();
-        return ResponseEntity.ok(new ConsultaDiariaRelatorioResponse(data, total));
+        long total = agendamentoClient.contarConsultasPorData(data);
+        return ResponseEntity.ok(new ConsultaDiariaRelatorioResponse(data, (int) total));
     }
 
     @Operation(summary = "Relatorio de pacientes por convenio")

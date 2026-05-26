@@ -3,6 +3,7 @@ package br.edu.imepac.agendamento.controllers;
 import br.edu.imepac.agendamento.clients.AdministrativoClient;
 import br.edu.imepac.agendamento.dtos.ConsultaRequest;
 import br.edu.imepac.agendamento.dtos.ConsultaResponse;
+import br.edu.imepac.agendamento.dtos.ContagemConsultasResponse;
 import br.edu.imepac.agendamento.dtos.ReagendarRequest;
 import br.edu.imepac.commons.entities.agendamento.ConsultaEntity;
 import br.edu.imepac.commons.services.agendamento.ConsultaService;
@@ -155,6 +156,17 @@ public class ConsultaController {
                 .map(c -> modelMapper.map(c, ConsultaResponse.class))
                 .toList();
         return ResponseEntity.ok(response);
+    }
+
+    // endpoint leve para relatorios que so precisam do total — evita baixar lista inteira
+    @Operation(summary = "Conta consultas em uma data")
+    @ApiResponse(responseCode = "200", description = "Contagem retornada")
+    @ApiResponse(responseCode = "400", description = "Data ausente ou em formato invalido")
+    @GetMapping("/contagem")
+    public ResponseEntity<ContagemConsultasResponse> contagemPorData(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
+        long total = consultaService.contarPorData(data);
+        return ResponseEntity.ok(new ContagemConsultasResponse(data, total));
     }
 
     @Operation(summary = "Retorna agenda do medico com consultas pendentes")

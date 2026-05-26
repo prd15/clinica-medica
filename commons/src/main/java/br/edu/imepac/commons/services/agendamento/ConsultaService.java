@@ -113,6 +113,14 @@ public class ConsultaService {
         return consultaRepository.findByDataHoraBetween(inicio, fim);
     }
 
+    // so a contagem — usado pelo relatorio do administrativo para evitar baixar a lista inteira
+    @Transactional(readOnly = true)
+    public long contarPorData(LocalDate data) {
+        LocalDateTime inicio = data.atStartOfDay();
+        LocalDateTime fim = data.atTime(23, 59, 59, 999_999_999);
+        return consultaRepository.countByDataHoraBetween(inicio, fim);
+    }
+
     // agenda de um medico num dia especifico — combina os dois filtros
     @Transactional(readOnly = true)
     public List<ConsultaEntity> findByMedicoIdAndData(Long medicoId, LocalDate data) {

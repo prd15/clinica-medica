@@ -1,6 +1,7 @@
 package br.edu.imepac.agendamento.controllers;
 
 import br.edu.imepac.agendamento.dtos.ErrorResponse;
+import br.edu.imepac.commons.exceptions.ServicoIndisponivelException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -99,6 +100,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
         log.warn("Metodo HTTP nao suportado: {}", ex.getMethod());
         return build(HttpStatus.METHOD_NOT_ALLOWED, ex.getMessage());
+    }
+
+    // microsservico externo (administrativo) indisponivel — 503
+    @ExceptionHandler(ServicoIndisponivelException.class)
+    public ResponseEntity<ErrorResponse> handleServicoIndisponivel(ServicoIndisponivelException ex) {
+        log.error("Servico externo indisponivel: {}", ex.getMessage());
+        return build(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
     }
 
     // fallback — qualquer excecao nao mapeada vira 500 generico, sem vazar stack pro cliente
