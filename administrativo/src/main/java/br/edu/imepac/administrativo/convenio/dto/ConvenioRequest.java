@@ -2,6 +2,7 @@ package br.edu.imepac.administrativo.convenio.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,7 @@ public class ConvenioRequest {
 
     @Schema(description = "CNPJ do convênio", example = "12.345.678/0001-99")
     @NotBlank(message = "CNPJ é obrigatório")
+    @Size(max = 18, message = "CNPJ deve ter no maximo 18 caracteres")
     private String cnpj;
 
     @Schema(description = "Telefone de contato do convênio", example = "(34) 99999-9999")

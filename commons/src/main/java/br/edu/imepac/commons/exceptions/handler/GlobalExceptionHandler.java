@@ -18,6 +18,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -116,6 +117,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
         log.warn("Validacao de parametro falhou: {}", ex.getMessage());
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex) {
+        log.warn("Rota nao encontrada: {}", ex.getResourcePath());
+        return build(HttpStatus.NOT_FOUND, "Rota nao encontrada: " + ex.getResourcePath());
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
