@@ -8,10 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-// Drena o outbox em batches. Cada evento e processado em transacao propria pelo
-// OutboxEventProcessor (REQUIRES_NEW), entao a falha de um nao afeta os outros.
-// A query do batch usa lock pessimista com SKIP LOCKED — quando rodam multiplas
-// replicas do atendimento (k8s), cada scheduler trabalha em eventos diferentes.
+// Drena o outbox em batches. A query usa lock pessimista com SKIP LOCKED — replicas
+// concorrentes do scheduler trabalham em eventos disjuntos (sem dupla entrega).
+// Cada evento e processado pelo OutboxEventProcessor na mesma transacao do scheduler
+// (NAO usa REQUIRES_NEW — ver justificativa no OutboxEventProcessor).
 @Slf4j
 @Component
 public class OutboxScheduler {
@@ -28,9 +28,9 @@ public class OutboxScheduler {
         this.maxRetry = maxRetry;
     }
 
-    // @Transactional aqui sustenta o LOCK PESSIMISTIC_WRITE da query buscarParaProcessar
-    // ate o final do batch — outras replicas do scheduler pulam estes eventos via SKIP LOCKED.
-    // Os updates de status acontecem em transacoes REQUIRES_NEW dentro do processor.
+    // @Transactional sustenta o LOCK PESSIMISTIC_WRITE da query buscarParaProcessar
+    // ate o final do batch — outras replicas pulam esses eventos via SKIP LOCKED.
+    // Os updates de status do processor ocorrem nesta mesma transacao (sem REQUIRES_NEW).
     @Scheduled(fixedDelayString = "${outbox.poll-interval-ms:10000}")
     @Transactional
     public void processarPendentes() {
