@@ -7,6 +7,8 @@ import br.edu.imepac.agendamento.dtos.ContagemConsultasResponse;
 import br.edu.imepac.agendamento.dtos.ReagendarRequest;
 import br.edu.imepac.agendamento.consulta.ConsultaEntity;
 import br.edu.imepac.agendamento.consulta.ConsultaService;
+import br.edu.imepac.commons.exceptions.BusinessException;
+import br.edu.imepac.commons.exceptions.EntityNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,13 +48,13 @@ public class ConsultaController {
     @PostMapping
     public ResponseEntity<ConsultaResponse> agendar(@Valid @RequestBody ConsultaRequest request) {
         if (!administrativoClient.isConvenioAtivo(request.getConvenioId())) {
-            throw new IllegalArgumentException("Convenio inativo ou nao encontrado");
+            throw new BusinessException("Convenio inativo ou nao encontrado");
         }
         if (!administrativoClient.isMedicoAtivo(request.getMedicoId())) {
-            throw new IllegalArgumentException("Medico inativo ou nao encontrado");
+            throw new BusinessException("Medico inativo ou nao encontrado");
         }
         if (!administrativoClient.isPacienteExistente(request.getPacienteId())) {
-            throw new IllegalArgumentException("Paciente nao encontrado");
+            throw new EntityNotFoundException("Paciente", request.getPacienteId());
         }
         ConsultaEntity entity = new ConsultaEntity();
         entity.setPacienteId(request.getPacienteId());

@@ -25,8 +25,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import br.edu.imepac.commons.exceptions.BusinessException;
+import br.edu.imepac.commons.exceptions.EntityNotFoundException;
+
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/v1/atendimentos")
@@ -56,11 +58,11 @@ public class AtendimentoController {
         // se o agendamento esta offline, AgendamentoClient lanca ServicoIndisponivelException (503),
         // distinto do 404 retornado quando a consulta realmente nao existe
         ConsultaRefDTO consulta = agendamentoClient.buscarConsulta(request.getConsultaId())
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Consulta " + request.getConsultaId() + " nao encontrada no agendamento"));
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Consulta", request.getConsultaId()));
         if (consulta.getStatus() == StatusConsulta.CANCELADA
                 || consulta.getStatus() == StatusConsulta.REALIZADA) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Consulta no status " + consulta.getStatus() + " nao pode gerar atendimento");
         }
 

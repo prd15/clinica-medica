@@ -750,13 +750,13 @@
           }
         },
         {
-          "name": "POST convenio inexistente - 400",
+          "name": "POST convenio inexistente - 409",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));",
                   "pm.test('Mensagem fala sobre convenio', () => {",
                   "  pm.expect(pm.response.text().toLowerCase()).to.include('conv');",
                   "});"
@@ -789,13 +789,13 @@
           }
         },
         {
-          "name": "POST convenio inativo - 400",
+          "name": "POST convenio inativo - 409",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));",
                   "pm.test('Mensagem fala sobre convenio', () => {",
                   "  pm.expect(pm.response.text().toLowerCase()).to.include('conv');",
                   "});"
