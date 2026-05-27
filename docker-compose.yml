@@ -133,6 +133,28 @@ services:
     networks:
       - clinica-network
 
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: gateway
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINISTRATIVO_URL: http://administrativo:8081
+      AGENDAMENTO_URL: http://agendamento:8082
+      ATENDIMENTO_URL: http://atendimento:8083
+    depends_on:
+      administrativo:
+        condition: service_started
+      agendamento:
+        condition: service_started
+      atendimento:
+        condition: service_started
+    networks:
+      - clinica-network
+
 volumes:
   vol-administrativo:
   vol-agendamento:
