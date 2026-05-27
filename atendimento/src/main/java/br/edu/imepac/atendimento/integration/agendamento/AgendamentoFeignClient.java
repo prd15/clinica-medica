@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface AgendamentoFeignClient {
 
     @GetMapping("/v1/consultas/{id}")
-    ConsultaRefDTO buscarConsulta(@PathVariable Long id);
+    ConsultaRefDTO buscarConsulta(@PathVariable("id") Long id);
 
     @PatchMapping("/v1/consultas/{id}/realizar")
-    void confirmarRealizacao(@PathVariable Long id);
+    void confirmarRealizacao(@PathVariable("id") Long id);
 }

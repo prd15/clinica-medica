@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface AdministrativoFeignClient {
 
     @GetMapping("/v1/convenios/{id}")
-    ConvenioRefDTO buscarConvenio(@PathVariable Long id);
+    ConvenioRefDTO buscarConvenio(@PathVariable("id") Long id);
 
     @GetMapping("/v1/medicos/{id}")
-    MedicoRefDTO buscarMedico(@PathVariable Long id);
+    MedicoRefDTO buscarMedico(@PathVariable("id") Long id);
 
     @GetMapping("/v1/pacientes/{id}")
-    PacienteRefDTO buscarPaciente(@PathVariable Long id);
+    PacienteRefDTO buscarPaciente(@PathVariable("id") Long id);
 }
