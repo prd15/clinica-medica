@@ -3,24 +3,19 @@ package br.edu.imepac.atendimento.integration.agendamento;
 import br.edu.imepac.atendimento.integration.agendamento.dto.ConsultaRefDTO;
 import br.edu.imepac.atendimento.outbox.EventoPermanenteException;
 import br.edu.imepac.commons.exceptions.ServicoIndisponivelException;
-import org.springframework.beans.factory.annotation.Value;
+import feign.FeignException;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
+// adapter: dominio depende deste componente, nao do FeignClient diretamente
 @Component
 public class AgendamentoClient {
 
-    private final RestTemplate restTemplate;
-    private final String agendamentoUrl;
+    private final AgendamentoFeignClient feignClient;
 
-    public AgendamentoClient(RestTemplate restTemplate,
-                             @Value("${agendamento.url}") String agendamentoUrl) {
-        this.restTemplate = restTemplate;
-        this.agendamentoUrl = agendamentoUrl;
+    public AgendamentoClient(AgendamentoFeignClient feignClient) {
+        this.feignClient = feignClient;
     }
 
     // busca a consulta no agendamento antes de registrar o atendimento
@@ -28,12 +23,10 @@ public class AgendamentoClient {
     // (timeout, 5xx, conexao recusada) -> ServicoIndisponivelException -> handler vira 503
     public Optional<ConsultaRefDTO> buscarConsulta(Long consultaId) {
         try {
-            ConsultaRefDTO consulta = restTemplate.getForObject(
-                    agendamentoUrl + "/v1/consultas/" + consultaId, ConsultaRefDTO.class);
-            return Optional.ofNullable(consulta);
-        } catch (HttpClientErrorException.NotFound e) {
+            return Optional.ofNullable(feignClient.buscarConsulta(consultaId));
+        } catch (FeignException.NotFound e) {
             return Optional.empty();
-        } catch (RestClientException e) {
+        } catch (FeignException e) {
             throw new ServicoIndisponivelException(
                     "Agendamento indisponivel ao buscar consulta " + consultaId, e);
         }
@@ -44,15 +37,14 @@ public class AgendamentoClient {
     // Tratamento de erros (importante pra evitar retry infinito):
     //   404 NotFound -> consulta sumiu do agendamento, retry nao vai ressuscitar -> PERMANENTE
     //   409 Conflict -> consulta ja esta em status terminal (REALIZADA/CANCELADA), idempotente -> PERMANENTE
-    //   demais (timeout, 5xx, connection refused) -> propaga -> outbox conta como falha transitoria
+    //   demais (timeout, 5xx, connection refused) -> propaga como FeignException -> outbox conta como falha transitoria
     public void confirmarRealizacao(Long consultaId) {
-        String url = agendamentoUrl + "/v1/consultas/" + consultaId + "/realizar";
         try {
-            restTemplate.patchForObject(url, null, Void.class);
-        } catch (HttpClientErrorException.NotFound e) {
+            feignClient.confirmarRealizacao(consultaId);
+        } catch (FeignException.NotFound e) {
             throw new EventoPermanenteException(
                     "Consulta " + consultaId + " nao existe mais no agendamento (404)", e);
-        } catch (HttpClientErrorException.Conflict e) {
+        } catch (FeignException.Conflict e) {
             throw new EventoPermanenteException(
                     "Consulta " + consultaId + " ja esta em status terminal (409)", e);
         }

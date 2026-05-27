@@ -1,37 +1,29 @@
 package br.edu.imepac.administrativo.integration.agendamento;
 
-import br.edu.imepac.administrativo.integration.agendamento.dto.ContagemConsultasDTO;
 import br.edu.imepac.commons.exceptions.ServicoIndisponivelException;
-import org.springframework.beans.factory.annotation.Value;
+import feign.FeignException;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 
-// cliente que o relatorio do administrativo usa pra contar consultas do dia no agendamento
+// adapter: dominio depende deste componente, nao do FeignClient diretamente
 @Component
 public class AgendamentoClient {
 
-    private final RestTemplate restTemplate;
-    private final String agendamentoUrl;
+    private final AgendamentoFeignClient feignClient;
 
-    public AgendamentoClient(RestTemplate restTemplate,
-                             @Value("${agendamento.url}") String agendamentoUrl) {
-        this.restTemplate = restTemplate;
-        this.agendamentoUrl = agendamentoUrl;
+    public AgendamentoClient(AgendamentoFeignClient feignClient) {
+        this.feignClient = feignClient;
     }
 
-    // chama o endpoint dedicado /v1/consultas/contagem — payload e so {total}, nao baixa lista.
+    // chama /v1/consultas/contagem — payload e so {total}, nao baixa lista.
     // Falha de comunicacao (timeout, 5xx, conexao recusada) propaga como ServicoIndisponivelException
     // -> handler global vira 503. NAO mascarar como 0 — diagnostico errado e silencioso.
     public long contarConsultasPorData(LocalDate data) {
         try {
-            ContagemConsultasDTO resp = restTemplate.getForObject(
-                    agendamentoUrl + "/v1/consultas/contagem?data=" + data,
-                    ContagemConsultasDTO.class);
+            var resp = feignClient.contarConsultasPorData(data.toString());
             return resp != null ? resp.getTotal() : 0L;
-        } catch (RestClientException e) {
+        } catch (FeignException e) {
             throw new ServicoIndisponivelException(
                     "Agendamento indisponivel ao contar consultas da data " + data, e);
         }
