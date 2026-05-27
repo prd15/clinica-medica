@@ -10,6 +10,7 @@ COPY commons/pom.xml commons/
 COPY administrativo/pom.xml administrativo/
 COPY agendamento/pom.xml agendamento/
 COPY atendimento/pom.xml atendimento/
+COPY gateway/pom.xml gateway/
 
 RUN mvn dependency:go-offline -B --no-transfer-progress -pl administrativo -am
 
