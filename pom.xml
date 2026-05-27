@@ -89,9 +89,10 @@
     </pluginManagement>
   </build>
   <modules>
-    <module>administrativo</module>
-    <module>atendimento</module>
-    <module>agendamento</module>
     <module>commons</module>
+    <module>administrativo</module>
+    <module>agendamento</module>
+    <module>atendimento</module>
+    <module>gateway</module>
   </modules>
 </project>
