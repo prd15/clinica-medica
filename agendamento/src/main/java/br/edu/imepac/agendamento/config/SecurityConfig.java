@@ -27,8 +27,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/v1/consultas/contagem").hasAnyRole("ADMIN", "SERVICE")
                         .requestMatchers(HttpMethod.GET, "/v1/consultas/minha-agenda").hasAnyRole("MEDICO", "ADMIN")
 
-                        // realizar: somente SERVICE (chamada interna do atendimento via Feign/Outbox)
-                        .requestMatchers(HttpMethod.PATCH, "/v1/consultas/*/realizar").hasAnyRole("ADMIN", "SERVICE")
+                        // realizar: somente SERVICE — endpoint interno do Outbox, ADMIN nao deve chamar diretamente
+                        .requestMatchers(HttpMethod.PATCH, "/v1/consultas/*/realizar").hasRole("SERVICE")
                         .requestMatchers(HttpMethod.PATCH, "/v1/consultas/*/reagendar").hasAnyRole("ADMIN", "ATENDENTE")
                         .requestMatchers(HttpMethod.PATCH, "/v1/consultas/*/confirmar").hasAnyRole("ADMIN", "ATENDENTE")
 

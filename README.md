@@ -160,6 +160,99 @@ mvn -pl agendamento spring-boot:run
 mvn -pl atendimento spring-boot:run
 ```
 
+## 🔑 Autenticação com Keycloak
+
+A partir da Fase 3, todas as rotas (exceto `/actuator/health`) exigem um JWT válido emitido pelo Keycloak.
+
+### Subindo com Docker Compose
+
+```bash
+cp .env.example .env
+# editar .env com DB_USER, DB_PASS e KEYCLOAK_SERVICE_SECRET
+docker-compose up -d
+```
+
+O Keycloak sobe na porta **8180** e importa automaticamente o realm `clinica` de `keycloak/realm-clinica.json`.
+
+**Console Admin:** http://localhost:8180 (usuário: `admin`, senha: `admin`)
+
+### Realm `clinica`
+
+| Role | Quem representa | Pode fazer |
+|---|---|---|
+| `ADMIN` | Administrador | Tudo |
+| `ATENDENTE` | Recepção | Pacientes, agenda, cadastros de leitura |
+| `MEDICO` | Médico | Agenda, atendimento clínico, prontuário |
+| `SERVICE` | Feign interno | Chamadas entre microsserviços (Outbox) |
+
+### Usuários de demo
+
+| Usuário | Senha | Role |
+|---|---|---|
+| `admin` | `Admin123!` | ADMIN |
+| `atendente` | `Atend123!` | ATENDENTE |
+| `medico` | `Medico123!` | MEDICO |
+
+### Clientes Keycloak
+
+| Client | Tipo | Uso |
+|---|---|---|
+| `clinica-frontend` | Público | Postman / testes manuais (password grant) |
+| `clinica-service` | Confidencial | Feign interno (client_credentials) |
+
+### Obter token via curl
+
+```bash
+# Como ADMIN
+curl -s -X POST http://localhost:8180/realms/clinica/protocol/openid-connect/token \
+  -d "grant_type=password&client_id=clinica-frontend&username=admin&password=Admin123!" \
+  | jq -r .access_token
+
+# Como ATENDENTE
+curl -s -X POST http://localhost:8180/realms/clinica/protocol/openid-connect/token \
+  -d "grant_type=password&client_id=clinica-frontend&username=atendente&password=Atend123!" \
+  | jq -r .access_token
+
+# Como MEDICO
+curl -s -X POST http://localhost:8180/realms/clinica/protocol/openid-connect/token \
+  -d "grant_type=password&client_id=clinica-frontend&username=medico&password=Medico123!" \
+  | jq -r .access_token
+```
+
+### Chamar uma rota via Gateway
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8180/realms/clinica/protocol/openid-connect/token \
+  -d "grant_type=password&client_id=clinica-frontend&username=admin&password=Admin123!" \
+  | jq -r .access_token)
+
+# Listar pacientes (ADMIN, ATENDENTE, MEDICO ou SERVICE)
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/admin/v1/pacientes
+
+# Agendar consulta (ADMIN ou ATENDENTE)
+curl -s -X POST http://localhost:8080/api/agendamentos/v1/consultas \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"pacienteId":1,"medicoId":1,"convenioId":1,"dataHora":"2026-06-01T10:00:00"}'
+
+# Sem token — retorna 401
+curl -i http://localhost:8080/api/admin/v1/pacientes
+```
+
+### Postman
+
+Importe o environment `docs/keycloak.postman_environment.json` no Postman. Ele já tem as variáveis `keycloak_url`, `gateway_url`, `realm`, `client_id` e os usuários de demo. O token (`access_token`) deve ser preenchido após a primeira requisição de obtenção de token.
+
+### Portas após Fase 3
+
+| Serviço | Porta |
+|---|---|
+| API Gateway | 8080 |
+| Keycloak | 8180 |
+| administrativo | 8081 |
+| agendamento | 8082 |
+| atendimento | 8083 |
+
 ## 📚 Swagger UI
 
 | Serviço | URL |
