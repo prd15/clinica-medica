@@ -81,8 +81,12 @@ services:
       DB_PASS: ${DB_PASS}
       # Hostname interno do Docker — administrativo chama agendamento para o relatorio de consultas-diarias
       AGENDAMENTO_URL: http://agendamento:8082
+      KEYCLOAK_JWK_URI: http://keycloak:8180/realms/clinica/protocol/openid-connect/certs
+      KEYCLOAK_TOKEN_URL: http://keycloak:8180/realms/clinica/protocol/openid-connect/token
     depends_on:
       db-administrativo:
+        condition: service_healthy
+      keycloak:
         condition: service_healthy
     networks:
       - clinica-network
@@ -102,11 +106,15 @@ services:
       DB_PASS: ${DB_PASS}
       # Hostname interno do Docker — agendamento chama administrativo pelo nome do container
       ADMINISTRATIVO_URL: http://administrativo:8081
+      KEYCLOAK_JWK_URI: http://keycloak:8180/realms/clinica/protocol/openid-connect/certs
+      KEYCLOAK_TOKEN_URL: http://keycloak:8180/realms/clinica/protocol/openid-connect/token
     depends_on:
       db-agendamento:
         condition: service_healthy
       administrativo:
         condition: service_started
+      keycloak:
+        condition: service_healthy
     networks:
       - clinica-network
 
@@ -125,13 +133,45 @@ services:
       DB_PASS: ${DB_PASS}
       # Atendimento depende do agendamento pra consultar dados de agenda
       AGENDAMENTO_URL: http://agendamento:8082
+      KEYCLOAK_JWK_URI: http://keycloak:8180/realms/clinica/protocol/openid-connect/certs
+      KEYCLOAK_TOKEN_URL: http://keycloak:8180/realms/clinica/protocol/openid-connect/token
     depends_on:
       db-atendimento:
         condition: service_healthy
       agendamento:
         condition: service_started
+      keycloak:
+        condition: service_healthy
     networks:
       - clinica-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: keycloak
+    restart: unless-stopped
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8180
+      KC_HTTP_PORT: 8180
+      KC_HTTP_ENABLED: "true"
+    ports:
+      - "8180:8180"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    networks:
+      - clinica-network
+    # A imagem keycloak:24 (UBI9) nao tem curl nem wget.
+    # bash /dev/tcp verifica se a porta esta aceitando conexoes — funciona no UBI9.
+    # start_period generoso porque o Keycloak 24 em start-dev demora ~30s para subir.
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8180 2>/dev/null'"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 45s
 
   gateway:
     build:
@@ -145,6 +185,7 @@ services:
       ADMINISTRATIVO_URL: http://administrativo:8081
       AGENDAMENTO_URL: http://agendamento:8082
       ATENDIMENTO_URL: http://atendimento:8083
+      KEYCLOAK_JWK_URI: http://keycloak:8180/realms/clinica/protocol/openid-connect/certs
     depends_on:
       administrativo:
         condition: service_started
@@ -152,6 +193,8 @@ services:
         condition: service_started
       atendimento:
         condition: service_started
+      keycloak:
+        condition: service_healthy
     networks:
       - clinica-network
 
