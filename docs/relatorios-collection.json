@@ -32,14 +32,20 @@
       "name": "Setup — POST convenio (para relatorio de pacientes)",
       "event": [
         { "listen": "prerequest", "script": { "exec": [
-          "const d = String(Date.now()).slice(-8).padStart(8,'0');",
-          "pm.collectionVariables.set('rel_cnpj', d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5,8)+'/0001-'+d.slice(0,2));",
-          "const hoje = new Date().toISOString().slice(0,10);",
-          "pm.collectionVariables.set('data_relatorio', hoje);"
+          "// nome e cnpj unicos por execucao — convenio.nome e convenio.cnpj sao ambos unique no banco",
+          "const ts = Date.now().toString();",
+          "const r = Math.floor(Math.random()*10).toString();",
+          "const raw = (ts + r).slice(-14).padStart(14,'0');",
+          "const cnpj = raw.slice(0,2)+'.'+raw.slice(2,5)+'.'+raw.slice(5,8)+'/'+raw.slice(8,12)+'-'+raw.slice(12,14);",
+          "pm.collectionVariables.set('rel_cnpj', cnpj);",
+          "pm.collectionVariables.set('rel_nome', 'ConvRelatorio-'+ts);",
+          "pm.collectionVariables.set('data_relatorio', new Date().toISOString().slice(0,10));"
         ]}},
         { "listen": "test", "script": { "exec": [
-          "pm.test('Convenio criado 201', () => pm.response.to.have.status(201));",
-          "pm.collectionVariables.set('convenio_id', pm.response.json().id);"
+          "pm.test('Convenio criado 201', () => {",
+          "  pm.expect(pm.response.code).to.eql(201);",
+          "  pm.collectionVariables.set('convenio_id', pm.response.json().id);",
+          "});"
         ]}}
       ],
       "request": {
@@ -48,7 +54,7 @@
           { "key": "Content-Type",  "value": "application/json" },
           { "key": "Authorization", "value": "Bearer {{token_admin}}" }
         ],
-        "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Convenio Relatorio\",\n  \"descricao\": \"Setup para relatorio\",\n  \"cnpj\": \"{{rel_cnpj}}\",\n  \"telefone\": \"(34) 90000-9999\",\n  \"ativo\": true\n}" },
+        "body": { "mode": "raw", "raw": "{\n  \"nome\": \"{{rel_nome}}\",\n  \"descricao\": \"Setup para relatorio\",\n  \"cnpj\": \"{{rel_cnpj}}\",\n  \"telefone\": \"(34) 90000-9999\",\n  \"ativo\": true\n}" },
         "url": { "raw": "{{admin_base_url}}/v1/convenios", "host": ["{{admin_base_url}}"], "path": ["v1","convenios"] }
       }
     },
