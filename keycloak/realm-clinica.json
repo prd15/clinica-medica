@@ -47,10 +47,12 @@
   "users": [
     {
       "username": "admin",
+      "email": "admin@clinica.local",
       "enabled": true,
       "emailVerified": true,
       "firstName": "Admin",
       "lastName": "Clinica",
+      "requiredActions": [],
       "credentials": [
         { "type": "password", "value": "Admin123!", "temporary": false }
       ],
@@ -58,10 +60,12 @@
     },
     {
       "username": "atendente",
+      "email": "atendente@clinica.local",
       "enabled": true,
       "emailVerified": true,
       "firstName": "Ana",
       "lastName": "Atendente",
+      "requiredActions": [],
       "credentials": [
         { "type": "password", "value": "Atend123!", "temporary": false }
       ],
@@ -69,10 +73,12 @@
     },
     {
       "username": "medico",
+      "email": "medico@clinica.local",
       "enabled": true,
       "emailVerified": true,
       "firstName": "Dr",
       "lastName": "Medico",
+      "requiredActions": [],
       "credentials": [
         { "type": "password", "value": "Medico123!", "temporary": false }
       ],

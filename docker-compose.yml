@@ -163,12 +163,15 @@ services:
       - ./keycloak:/opt/keycloak/data/import
     networks:
       - clinica-network
+    # A imagem keycloak:24 (UBI9) nao tem curl nem wget.
+    # bash /dev/tcp verifica se a porta esta aceitando conexoes — funciona no UBI9.
+    # start_period generoso porque o Keycloak 24 em start-dev demora ~30s para subir.
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8180/realms/clinica || exit 1"]
-      interval: 15s
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8180 2>/dev/null'"]
+      interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 18
+      start_period: 45s
 
   gateway:
     build:
