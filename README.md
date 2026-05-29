@@ -1,351 +1,334 @@
-# 🏥 Clínica Médica — Sistema de Gestão em Microsserviços
+# Clínica Médica — Plataforma de Gestão Clínica
 
-## 📌 Sobre o projeto
+Plataforma de gestão para clínicas médicas construída em arquitetura de microsserviços. O sistema cobre o ciclo completo de operação clínica — cadastros administrativos, agendamento de consultas e atendimento médico — com cada domínio isolado em seu próprio serviço, banco de dados e ciclo de vida de implantação.
 
-O projeto Clínica Médica é um sistema acadêmico de gestão clínica desenvolvido em arquitetura de microsserviços. A aplicação separa as responsabilidades de cadastro administrativo, agendamento de consultas e atendimento clínico em serviços independentes, cada um com sua própria porta, seu próprio banco MySQL e seu próprio contexto de negócio.
+A borda da plataforma é protegida por um API Gateway com autenticação OAuth2/JWT delegada ao Keycloak, e a comunicação entre serviços é resiliente, com chamadas assíncronas via Outbox Pattern onde a consistência eventual é aceitável.
 
-Os principais atores do sistema são o atendente e o médico. O atendente utiliza os recursos administrativos para cadastrar convênios, pacientes, médicos, especialidades e atendentes, além de operar o fluxo de agendamento. O médico consulta sua agenda e registra o atendimento clínico, incluindo prontuário, anotações e solicitações de exames.
+---
 
-A solução é composta pelos módulos `administrativo`, `agendamento`, `atendimento` e `commons`. Os três primeiros são microsserviços Spring Boot executáveis; o `commons` é uma biblioteca compartilhada com entidades, repositories, services e regras comuns usadas pelos serviços.
+## Índice
 
-## 🧭 Arquitetura
+- [Visão geral](#visão-geral)
+- [Arquitetura](#arquitetura)
+- [Stack tecnológica](#stack-tecnológica)
+- [Domínios e serviços](#domínios-e-serviços)
+- [Segurança e autenticação](#segurança-e-autenticação)
+- [Pré-requisitos](#pré-requisitos)
+- [Execução com Docker Compose](#execução-com-docker-compose)
+- [Execução local (sem Docker)](#execução-local-sem-docker)
+- [Documentação da API (Swagger)](#documentação-da-api-swagger)
+- [Testes e qualidade](#testes-e-qualidade)
+- [Implantação em Kubernetes](#implantação-em-kubernetes)
+- [Variáveis de ambiente](#variáveis-de-ambiente)
+- [Estrutura do repositório](#estrutura-do-repositório)
+- [Decisões arquiteturais](#decisões-arquiteturais)
+- [Fluxo de negócio](#fluxo-de-negócio)
+- [Convenções de contribuição](#convenções-de-contribuição)
+
+---
+
+## Visão geral
+
+A plataforma é composta por quatro serviços executáveis, uma biblioteca compartilhada e um provedor de identidade:
+
+| Componente | Tipo | Responsabilidade |
+|---|---|---|
+| **gateway** | API Gateway | Roteamento, validação de JWT na borda |
+| **administrativo** | Microsserviço | Convênios, pacientes, médicos, especialidades, atendentes, relatórios |
+| **agendamento** | Microsserviço | Consultas e agenda médica |
+| **atendimento** | Microsserviço | Atendimento clínico, prontuário, anotações, exames |
+| **commons** | Biblioteca | Tipos base, exceções e handlers compartilhados |
+| **keycloak** | Identity Provider | Emissão e validação de tokens OAuth2/JWT |
+
+Cada microsserviço é autocontido: entidades, repositories e services residem dentro do próprio serviço. A biblioteca `commons` carrega apenas o que é genuinamente transversal (entidade base de auditoria, exceções de negócio, handler global de erros, configuração do ModelMapper).
+
+---
+
+## Arquitetura
 
 ```text
-                           HTTP REST
-                 +---------------------------+
-                 |                           v
-+------------------------+        +------------------------+        +------------------------+
-| administrativo :8081   |<-------| agendamento :8082     |<-------| atendimento :8083      |
-| Cadastros e relatórios |        | Consultas e agenda    |        | Prontuário e exames   |
-+-----------+------------+        +-----------+------------+        +-----------+------------+
-            |                                 |                                 |
-            | JDBC                            | JDBC                            | JDBC
-            v                                 v                                 v
-+------------------------+        +------------------------+        +------------------------+
-| clinica_administrativo |        | clinica_agendamento    |        | clinica_atendimento    |
-| MySQL :3306            |        | MySQL :3306            |        | MySQL :3306            |
-+------------------------+        +------------------------+        +------------------------+
+                          ┌──────────────────┐
+                          │     Keycloak     │  realm: clinica
+                          │       :8180      │  (OAuth2 / JWT)
+                          └────────▲─────────┘
+                                   │ valida assinatura (JWKS)
+                                   │
+   Cliente HTTP ──── Bearer JWT ──►┌──────────────────┐
+                                   │   API Gateway    │  :8080
+                                   │  (Spring Cloud   │
+                                   │   Gateway WebFlux)│
+                                   └───┬──────┬──────┬─┘
+              /api/admin/**           │      │      │   /api/atendimentos/**
+              /api/agendamentos/**    │      │      │
+                  ┌───────────────────┘      │      └────────────────────┐
+                  ▼                           ▼                           ▼
+        ┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐
+        │  administrativo  │◄─────│   agendamento    │◄─────│   atendimento    │
+        │      :8081       │ Feign│      :8082       │Outbox│      :8083       │
+        └────────┬─────────┘      └────────┬─────────┘      └────────┬─────────┘
+                 │ JPA                      │ JPA                     │ JPA
+                 ▼                          ▼                         ▼
+       ┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐
+       │clinica_           │      │clinica_          │      │clinica_          │
+       │administrativo     │      │agendamento       │      │atendimento       │
+       │ MySQL :3307       │      │ MySQL :3308      │      │ MySQL :3309      │
+       └──────────────────┘      └──────────────────┘      └──────────────────┘
 
-Fluxos HTTP:
-- agendamento -> administrativo: valida paciente, médico e convênio.
-- atendimento -> agendamento: consulta e atualiza status da consulta atendida.
+Integrações entre serviços:
+- agendamento → administrativo : valida paciente, médico e convênio (OpenFeign).
+- administrativo → agendamento : contagem de consultas para relatórios (OpenFeign).
+- atendimento → agendamento   : marca consulta como realizada (Outbox Pattern).
 ```
 
-## 🛠️ Stack
+Princípios:
+
+- **Defesa em profundidade** — o gateway valida o JWT na borda e cada microsserviço revalida o token (OAuth2 Resource Server), aplicando autorização por papel no nível do endpoint.
+- **Database per service** — sem acoplamento de schema entre domínios; referências cruzadas usam identificadores (`Long id`), nunca chaves estrangeiras entre bancos.
+- **Desacoplamento transacional** — a notificação de conclusão de atendimento usa Outbox Pattern, garantindo entrega mesmo com o serviço de destino indisponível.
+
+---
+
+## Stack tecnológica
 
 | Tecnologia | Versão | Papel |
 |---|---:|---|
-| Java | 17 | Linguagem principal dos microsserviços |
-| Spring Boot | 3.3.5 | Framework web e base das APIs REST |
-| Spring Web | Gerenciada pelo Spring Boot | Criação dos controllers REST |
-| Spring Data JPA | Gerenciada pelo Spring Boot | Persistência com repositories |
-| Hibernate | Gerenciada pelo Spring Boot | Implementação JPA |
-| MySQL | 8 | Banco de dados de cada microsserviço |
-| Maven | 3.9+ | Build multi-módulo e gerenciamento de dependências |
-| Lombok | 1.18.36 | Redução de boilerplate em entidades e DTOs |
-| ModelMapper | 3.2.1 | Conversão entre entidades e DTOs |
-| SpringDoc OpenAPI | 2.6.0 | Swagger UI e documentação OpenAPI |
-| Docker | Atual | Build das imagens dos microsserviços |
-| Docker Compose | Atual | Orquestração local dos serviços e bancos |
-| Kubernetes | networking.k8s.io/v1 | Deploy e exposição dos microsserviços em cluster |
+| Java | 17 | Linguagem dos serviços |
+| Spring Boot | 3.3.5 | Base das APIs REST |
+| Spring Cloud Gateway | 2023.0.3 | API Gateway reativo (WebFlux) |
+| Spring Security / OAuth2 Resource Server | Gerenciada pelo Boot | Validação de JWT no gateway e nos serviços |
+| Spring Data JPA / Hibernate | Gerenciada pelo Boot | Persistência |
+| Spring Cloud OpenFeign | 2023.0.3 | Comunicação HTTP entre serviços |
+| OkHttp | Gerenciada pelo Boot | Cliente HTTP do Feign (timeouts 3s/5s) |
+| Keycloak | 24 | Identity Provider (OAuth2/OIDC) |
+| MySQL | 8 | Banco por serviço |
+| ModelMapper | 3.2.1 | Conversão entidade ↔ DTO |
+| Lombok | 1.18.36 | Redução de boilerplate |
+| SpringDoc OpenAPI | 2.6.0 | Swagger UI / OpenAPI |
+| Maven | 3.9+ | Build multi-módulo |
+| Docker / Docker Compose | Atual | Empacotamento e orquestração local |
+| Kubernetes | networking.k8s.io/v1 | Implantação em cluster |
+| JUnit 5 + Mockito | Gerenciada pelo Boot | Testes unitários |
+| Newman | 6.x | Execução automatizada das collections Postman |
 
-## ✅ Pré-requisitos
+---
 
-- Java 17 instalado e configurado.
-- Maven 3.9 ou superior.
-- Docker instalado.
-- Docker Compose instalado.
-- Opcional para Kubernetes: `kubectl` e um cluster local, como Minikube, Kind ou Docker Desktop Kubernetes.
-- Uma IDE Java, como IntelliJ IDEA, para execução individual dos módulos.
+## Domínios e serviços
 
-## 🐳 Como rodar com Docker Compose
+### administrativo — `:8081`
 
-Clone o repositório, crie o arquivo de ambiente e suba a stack:
+Cadastros base e relatórios gerenciais.
 
-```bash
-git clone https://github.com/prd15/clinica-medica.git
-cd clinica-medica
-cp .env.example .env
-# editar .env com a senha do banco
-docker-compose up
-```
+- `/v1/convenios` — CRUD + `PATCH /{id}/status`
+- `/v1/pacientes` — CRUD
+- `/v1/especialidades` — CRUD
+- `/v1/atendentes` — CRUD
+- `/v1/medicos` — CRUD, `/ativos`, associação de especialidades, `PATCH /{id}/inativar`
+- `/v1/relatorios/consultas-diarias`, `/v1/relatorios/pacientes-por-convenio`
 
-Exemplo mínimo de `.env`:
+### agendamento — `:8082`
 
-```env
-DB_USER=root
-DB_PASS=suasenha
-```
+Ciclo de vida da consulta (`AGENDADA → CONFIRMADA → REALIZADA / CANCELADA`).
 
-O Docker Compose sobe três bancos MySQL e três microsserviços:
+- `POST /v1/consultas`, `GET/DELETE /v1/consultas/{id}`
+- `PATCH /v1/consultas/{id}/reagendar | /confirmar | /realizar`
+- `GET /v1/consultas` (filtros), `GET /v1/consultas/contagem`, `GET /v1/consultas/minha-agenda`
 
-| Serviço | Porta local | Banco |
-|---|---:|---|
-| administrativo | 8081 | clinica_administrativo |
-| agendamento | 8082 | clinica_agendamento |
-| atendimento | 8083 | clinica_atendimento |
-| db-administrativo | 3307 -> 3306 | clinica_administrativo |
-| db-agendamento | 3308 -> 3306 | clinica_agendamento |
-| db-atendimento | 3309 -> 3306 | clinica_atendimento |
+### atendimento — `:8083`
 
-Para parar os containers:
+Atendimento clínico e registros associados (`INICIADO → FINALIZADO / CANCELADO`).
 
-```bash
-docker-compose down
-```
+- `POST /v1/atendimentos`, `GET /v1/atendimentos/historico`, `GET /v1/atendimentos/{consultaId}`
+- `POST/GET /v1/atendimentos/{id}/anotacoes`
+- `POST/GET /v1/atendimentos/{id}/exames`
+- Outbox Pattern: persistência atômica do evento + reprocessamento agendado com retry.
 
-Para parar e remover volumes dos bancos:
+Todas as rotas são acessíveis através do gateway com os prefixos `/api/admin/**`, `/api/agendamentos/**` e `/api/atendimentos/**`.
 
-```bash
-docker-compose down -v
-```
+---
 
-## 💻 Como rodar individualmente (sem Docker)
+## Segurança e autenticação
 
-No IntelliJ IDEA, abra a pasta raiz `clinica-medica` como projeto Maven. Garanta que o SDK do projeto esteja configurado para Java 17.
-
-Crie três bancos MySQL locais:
-
-```sql
-CREATE DATABASE clinica_administrativo;
-CREATE DATABASE clinica_agendamento;
-CREATE DATABASE clinica_atendimento;
-```
-
-Configure as variáveis de ambiente de cada Run Configuration:
-
-Administrativo:
-
-```env
-DB_HOST=localhost
-DB_PORT=3307
-DB_USER=root
-DB_PASS=suasenha
-```
-
-Agendamento:
-
-```env
-DB_HOST=localhost
-DB_PORT=3308
-DB_USER=root
-DB_PASS=suasenha
-ADMINISTRATIVO_URL=http://localhost:8081
-```
-
-Atendimento:
-
-```env
-DB_HOST=localhost
-DB_PORT=3309
-DB_USER=root
-DB_PASS=suasenha
-AGENDAMENTO_URL=http://localhost:8082
-```
-
-Execute as classes principais nesta ordem:
-
-```text
-administrativo/src/main/java/br/edu/imepac/administrativo/AdministrativoApplication.java
-agendamento/src/main/java/br/edu/imepac/agendamento/AgendamentoApplication.java
-atendimento/src/main/java/br/edu/imepac/atendimento/AtendimentoApplication.java
-```
-
-Também é possível executar pelo terminal, caso o Maven esteja instalado:
-
-```bash
-mvn clean install
-mvn -pl administrativo spring-boot:run
-mvn -pl agendamento spring-boot:run
-mvn -pl atendimento spring-boot:run
-```
-
-## 🔑 Autenticação com Keycloak
-
-A partir da Fase 3, todas as rotas (exceto `/actuator/health`) exigem um JWT válido emitido pelo Keycloak.
-
-### Subindo com Docker Compose
-
-```bash
-cp .env.example .env
-# editar .env com DB_USER, DB_PASS e KEYCLOAK_SERVICE_SECRET
-docker-compose up -d
-```
+A partir da Fase 3, todas as rotas de negócio exigem um JWT válido emitido pelo Keycloak. Apenas `/actuator/health` é público.
 
 O Keycloak sobe na porta **8180** e importa automaticamente o realm `clinica` de `keycloak/realm-clinica.json`.
+Console administrativo: <http://localhost:8180> (`admin` / `admin`).
 
-**Console Admin:** http://localhost:8180 (usuário: `admin`, senha: `admin`)
+### Papéis (realm `clinica`)
 
-### Realm `clinica`
-
-| Role | Quem representa | Pode fazer |
+| Papel | Representa | Permissões |
 |---|---|---|
-| `ADMIN` | Administrador | Tudo |
-| `ATENDENTE` | Recepção | Pacientes, agenda, cadastros de leitura |
+| `ADMIN` | Administrador | Acesso total |
+| `ATENDENTE` | Recepção | Cadastros, agenda, leitura |
 | `MEDICO` | Médico | Agenda, atendimento clínico, prontuário |
-| `SERVICE` | Feign interno | Chamadas entre microsserviços (Outbox) |
+| `SERVICE` | Comunicação interna | Chamadas Feign entre serviços (Outbox) |
 
-### Usuários de demo
+### Usuários de demonstração
 
-| Usuário | Senha | Role |
+| Usuário | Senha | Papel |
 |---|---|---|
 | `admin` | `Admin123!` | ADMIN |
 | `atendente` | `Atend123!` | ATENDENTE |
 | `medico` | `Medico123!` | MEDICO |
 
-### Clientes Keycloak
+### Clientes OAuth2
 
 | Client | Tipo | Uso |
 |---|---|---|
-| `clinica-frontend` | Público | Postman / testes manuais (password grant) |
-| `clinica-service` | Confidencial | Feign interno (client_credentials) |
+| `clinica-frontend` | Público | Testes manuais / Postman (`password` grant) |
+| `clinica-service` | Confidencial | Comunicação interna (`client_credentials` grant) |
 
-### Obter token via curl
-
-```bash
-# Como ADMIN
-curl -s -X POST http://localhost:8180/realms/clinica/protocol/openid-connect/token \
-  -d "grant_type=password&client_id=clinica-frontend&username=admin&password=Admin123!" \
-  | jq -r .access_token
-
-# Como ATENDENTE
-curl -s -X POST http://localhost:8180/realms/clinica/protocol/openid-connect/token \
-  -d "grant_type=password&client_id=clinica-frontend&username=atendente&password=Atend123!" \
-  | jq -r .access_token
-
-# Como MEDICO
-curl -s -X POST http://localhost:8180/realms/clinica/protocol/openid-connect/token \
-  -d "grant_type=password&client_id=clinica-frontend&username=medico&password=Medico123!" \
-  | jq -r .access_token
-```
-
-### Chamar uma rota via Gateway
+### Obtenção de token e chamada via gateway
 
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8180/realms/clinica/protocol/openid-connect/token \
   -d "grant_type=password&client_id=clinica-frontend&username=admin&password=Admin123!" \
   | jq -r .access_token)
 
-# Listar pacientes (ADMIN, ATENDENTE, MEDICO ou SERVICE)
+# Com token → 200
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/admin/v1/pacientes
 
-# Agendar consulta (ADMIN ou ATENDENTE)
-curl -s -X POST http://localhost:8080/api/agendamentos/v1/consultas \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"pacienteId":1,"medicoId":1,"convenioId":1,"dataHora":"2026-06-01T10:00:00"}'
-
-# Sem token — retorna 401
+# Sem token → 401
 curl -i http://localhost:8080/api/admin/v1/pacientes
+
+# Papel insuficiente → 403 (ex.: MEDICO tentando criar convênio)
 ```
 
-### Postman
+---
 
-Importe o environment `docs/keycloak.postman_environment.json` no Postman. Ele já tem as variáveis `keycloak_url`, `gateway_url`, `realm`, `client_id` e os usuários de demo. O token (`access_token`) deve ser preenchido após a primeira requisição de obtenção de token.
+## Pré-requisitos
 
-### Portas após Fase 3
+- Java 17 (JDK 17 — versões mais novas são incompatíveis com a versão do Lombok usada).
+- Maven 3.9+.
+- Docker e Docker Compose.
+- `jq` (opcional, para extrair o token nos exemplos).
+- Para Kubernetes: `kubectl` e um cluster local (Kind, Minikube ou Docker Desktop).
 
-| Serviço | Porta |
-|---|---|
-| API Gateway | 8080 |
-| Keycloak | 8180 |
-| administrativo | 8081 |
-| agendamento | 8082 |
-| atendimento | 8083 |
+---
 
-## 📚 Swagger UI
+## Execução com Docker Compose
 
-| Serviço | URL |
-|---------|-----|
-| Administrativo | http://localhost:8081/swagger-ui.html |
-| Agendamento | http://localhost:8082/swagger-ui.html |
-| Atendimento | http://localhost:8083/swagger-ui.html |
-
-Também podem ser usados os caminhos canônicos:
-
-| Serviço | URL |
-|---|---|
-| Administrativo | http://localhost:8081/swagger-ui/index.html |
-| Agendamento | http://localhost:8082/swagger-ui/index.html |
-| Atendimento | http://localhost:8083/swagger-ui/index.html |
-
-## 🗂️ Estrutura do repositório
-
-```text
-clinica-medica/
-├── administrativo/
-│   ├── Dockerfile
-│   └── src/main/java/br/edu/imepac/administrativo/
-│       ├── controllers/    # Endpoints de cadastros e relatórios
-│       ├── dtos/           # DTOs de entrada e saída do administrativo
-│       └── config/         # Configurações do módulo, incluindo Swagger
-├── agendamento/
-│   ├── Dockerfile
-│   └── src/main/java/br/edu/imepac/agendamento/
-│       ├── clients/        # Cliente HTTP para o administrativo
-│       ├── controllers/    # Endpoints de consultas
-│       ├── dtos/           # DTOs de agendamento
-│       └── config/         # Swagger e RestTemplate
-├── atendimento/
-│   ├── Dockerfile
-│   └── src/main/java/br/edu/imepac/atendimento/
-│       ├── clients/        # Cliente HTTP para o agendamento
-│       ├── controllers/    # Endpoints de atendimento clínico
-│       ├── dtos/           # DTOs de prontuário, anotações e exames
-│       └── config/         # Swagger e configurações do módulo
-├── commons/
-│   └── src/main/java/br/edu/imepac/commons/
-│       ├── entities/       # Entidades compartilhadas
-│       ├── repositories/   # Repositories JPA
-│       └── services/       # Regras de negócio compartilhadas
-├── docs/                   # Collections, revisões e documentação auxiliar
-├── k8s/                    # Manifests Kubernetes
-├── docker-compose.yml      # Stack local com serviços e bancos
-├── .env.example            # Exemplo de variáveis de ambiente
-├── CLAUDE.md               # Guia operacional do projeto
-└── pom.xml                 # Maven multi-módulo
+```bash
+git clone https://github.com/prd15/clinica-medica.git
+cd clinica-medica
+cp .env.example .env
+# editar .env com DB_USER, DB_PASS e KEYCLOAK_SERVICE_SECRET
+docker compose up -d --build
 ```
 
-## 🔐 Variáveis de ambiente
+A stack sobe **8 containers**: 3 bancos MySQL, Keycloak, o gateway e os 3 microsserviços.
 
-| Variável | Descrição | Valor padrão |
-|---|---|---|
-| DB_HOST | Host do banco MySQL usado pelo microsserviço | localhost |
-| DB_PORT | Porta do banco MySQL | administrativo: 3307, agendamento: 3308, atendimento: 3309 |
-| DB_USER | Usuário do banco MySQL | root |
-| DB_PASS | Senha do banco MySQL | vazio |
-| SPRING_JPA_SHOW_SQL | Habilita exibição de SQL no log | false |
-| ADMINISTRATIVO_URL | URL usada pelo agendamento para chamar o administrativo | http://localhost:8081 |
-| AGENDAMENTO_URL | URL usada pelo atendimento para chamar o agendamento | http://localhost:8082 |
-| MYSQL_DATABASE | Nome do banco criado pelo container MySQL | definido por serviço no Docker Compose |
-| MYSQL_ROOT_PASSWORD | Senha root do MySQL nos containers | valor de DB_PASS |
+| Serviço | Porta local | Observação |
+|---|---:|---|
+| gateway | 8080 | Ponto de entrada único |
+| administrativo | 8081 | |
+| agendamento | 8082 | |
+| atendimento | 8083 | |
+| keycloak | 8180 | Realm `clinica` autoimportado |
+| db-administrativo | 3307 → 3306 | clinica_administrativo |
+| db-agendamento | 3308 → 3306 | clinica_agendamento |
+| db-atendimento | 3309 → 3306 | clinica_atendimento |
 
-No Docker Compose, os serviços usam `DB_PORT=3306` internamente, porque essa é a porta do MySQL dentro da rede Docker. As portas `3307`, `3308` e `3309` são apenas mapeamentos para acesso local pela máquina host.
+Verificação rápida de saúde:
 
-## ☸️ Como rodar com Kubernetes
+```bash
+docker compose ps
+for p in 8080 8081 8082 8083; do curl -s http://localhost:$p/actuator/health; echo; done
+```
 
-Antes de aplicar os manifests, crie o Secret real a partir do exemplo:
+Encerrar a stack (com remoção de volumes):
+
+```bash
+docker compose down        # mantém dados
+docker compose down -v     # remove volumes dos bancos
+```
+
+---
+
+## Execução local (sem Docker)
+
+Suba o Keycloak e os bancos via Compose e execute os serviços Java pela IDE ou linha de comando. Configure o SDK do projeto para Java 17.
+
+```bash
+# infraestrutura
+docker compose up -d db-administrativo db-agendamento db-atendimento keycloak
+
+# build e execução
+mvn clean install
+mvn -pl administrativo spring-boot:run
+mvn -pl agendamento  spring-boot:run
+mvn -pl atendimento  spring-boot:run
+mvn -pl gateway      spring-boot:run
+```
+
+Variáveis mínimas por serviço (host local): `DB_HOST=localhost`, `DB_USER`, `DB_PASS` e a `DB_PORT` correspondente (3307 / 3308 / 3309). O `agendamento` usa `ADMINISTRATIVO_URL`; o `atendimento` usa `AGENDAMENTO_URL`.
+
+---
+
+## Documentação da API (Swagger)
+
+Swagger UI ativo nos três microsserviços:
+
+| Serviço | URL |
+|---|---|
+| administrativo | <http://localhost:8081/swagger-ui/index.html> |
+| agendamento | <http://localhost:8082/swagger-ui/index.html> |
+| atendimento | <http://localhost:8083/swagger-ui/index.html> |
+
+OpenAPI bruto disponível em `/v3/api-docs` de cada serviço.
+
+---
+
+## Testes e qualidade
+
+### Testes unitários (JUnit 5 + Mockito)
+
+```bash
+mvn clean test
+```
+
+Cobre os services de todos os módulos. Os relatórios Surefire ficam em `*/target/surefire-reports/`.
+
+### Testes de API (Postman + Newman)
+
+As collections em `docs/` são executadas contra o gateway com autenticação real, usando o environment `docs/keycloak.postman_environment.json` (já busca o token JWT no pre-request). Comece pela collection de autenticação/RBAC:
+
+```bash
+ENV=docs/keycloak.postman_environment.json
+npx newman run docs/gateway-auth-collection.json -e $ENV
+npx newman run docs/convenio-collection.json     -e $ENV
+npx newman run docs/especialidade-collection.json -e $ENV
+npx newman run docs/medico-collection.json       -e $ENV
+npx newman run docs/paciente-collection.json     -e $ENV
+npx newman run docs/atendente-collection.json    -e $ENV
+npx newman run docs/consulta-collection.json     -e $ENV
+npx newman run docs/atendimento-collection.json  -e $ENV
+npx newman run docs/atendimento-notificacao-collection.json -e $ENV
+npx newman run docs/relatorios-collection.json   -e $ENV
+```
+
+> O environment `docs/local.postman_environment.json` aponta para as portas diretas sem token e resultará em `401` — use-o apenas em cenários sem segurança.
+
+---
+
+## Implantação em Kubernetes
+
+Manifests em `k8s/` (namespace `clinica`). Crie o Secret real a partir do exemplo antes de aplicar:
 
 ```bash
 cp k8s/secrets.example.yaml k8s/secrets.yaml
 # editar k8s/secrets.yaml com db-username e db-password em base64
 ```
 
-Como as imagens `clinica/administrativo:latest`, `clinica/agendamento:latest` e `clinica/atendimento:latest` são locais de desenvolvimento, faça o build antes de aplicar os manifests:
+Build das imagens locais e, em Kind, carga no cluster:
 
 ```bash
 docker compose build
-```
-
-Em clusters locais com Kind, carregue as imagens no cluster depois do build:
-
-```bash
 kind load docker-image clinica/administrativo:latest
 kind load docker-image clinica/agendamento:latest
 kind load docker-image clinica/atendimento:latest
 ```
 
-Aplique os recursos no cluster:
+Aplicação dos recursos:
 
 ```bash
 kubectl apply -f k8s/namespace.yaml
@@ -358,70 +341,102 @@ kubectl apply -f k8s/ingress.yaml
 kubectl get pods -n clinica
 ```
 
-Para acompanhar os Services:
-
-```bash
-kubectl get svc -n clinica
-```
-
-Para testar sem Ingress, use port-forward:
+Acesso via port-forward (sem Ingress):
 
 ```bash
 kubectl port-forward -n clinica svc/administrativo 8081:8081
-kubectl port-forward -n clinica svc/agendamento 8082:8082
-kubectl port-forward -n clinica svc/atendimento 8083:8083
+kubectl port-forward -n clinica svc/agendamento  8082:8082
+kubectl port-forward -n clinica svc/atendimento  8083:8083
 ```
 
-Para testar com Ingress local, instale um Ingress Controller NGINX e adicione os hosts locais apontando para o IP do cluster:
+Para Ingress local, instale o NGINX Ingress Controller e aponte os hosts no arquivo `hosts`
+(`C:\Windows\System32\drivers\etc\hosts` no Windows, `/etc/hosts` em Linux/macOS).
+
+---
+
+## Variáveis de ambiente
+
+| Variável | Descrição | Padrão |
+|---|---|---|
+| `DB_HOST` | Host do MySQL | localhost |
+| `DB_PORT` | Porta do MySQL | 3307 / 3308 / 3309 (por serviço) |
+| `DB_USER` | Usuário do MySQL | root |
+| `DB_PASS` | Senha do MySQL | (vazio) |
+| `SPRING_JPA_SHOW_SQL` | Exibe SQL no log | false |
+| `ADMINISTRATIVO_URL` | URL do administrativo (usada pelo agendamento) | http://localhost:8081 |
+| `AGENDAMENTO_URL` | URL do agendamento (usada pelo atendimento) | http://localhost:8082 |
+| `KEYCLOAK_SERVICE_SECRET` | Secret do client `clinica-service` | (definir no `.env`) |
+| `OUTBOX_POLL_INTERVAL_MS` | Intervalo do scheduler de Outbox | 10000 |
+| `OUTBOX_MAX_RETRY` | Tentativas máximas de reprocessamento | 3 |
+| `MYSQL_DATABASE` | Banco criado pelo container MySQL | por serviço (Compose) |
+| `MYSQL_ROOT_PASSWORD` | Senha root do MySQL nos containers | valor de `DB_PASS` |
+
+No Docker Compose, os serviços usam a porta interna `3306`; `3307/3308/3309` são mapeamentos para acesso a partir da máquina host.
+
+---
+
+## Estrutura do repositório
 
 ```text
-127.0.0.1 administrativo.clinica.local
-127.0.0.1 agendamento.clinica.local
-127.0.0.1 atendimento.clinica.local
+clinica-medica/
+├── gateway/                # API Gateway (Spring Cloud Gateway WebFlux + OAuth2)
+│   └── src/main/java/br/edu/imepac/gateway/
+│       ├── security/       # Validação de JWT e conversão de papéis
+│       └── filter/         # Filtros customizados (ex.: InvalidPathFilter)
+├── administrativo/         # Microsserviço :8081
+│   └── src/main/java/br/edu/imepac/administrativo/
+│       ├── entities/  repositories/  services/  controllers/  dtos/
+│       ├── config/         # Security, Swagger, Feign
+│       └── integration/    # Clients Feign + token de serviço
+├── agendamento/            # Microsserviço :8082 (estrutura análoga)
+├── atendimento/            # Microsserviço :8083 (+ Outbox Pattern)
+├── commons/                # Biblioteca compartilhada
+│   └── src/main/java/br/edu/imepac/commons/
+│       ├── entities/       # BaseEntity (auditoria JPA)
+│       ├── exceptions/     # BusinessException, EntityNotFound, ... + handler global
+│       ├── dtos/           # ErrorResponse
+│       └── config/         # ModelMapperConfig, CommonsAutoConfiguration
+├── keycloak/realm-clinica.json   # Realm autoimportado
+├── docs/                   # Collections Postman, environments e revisões
+├── k8s/                    # Manifests Kubernetes
+├── docker-compose.yml      # Stack local completa (8 containers)
+├── .env.example            # Modelo de variáveis de ambiente
+└── pom.xml                 # Maven multi-módulo
 ```
 
-No Windows, o arquivo fica em:
+> A biblioteca `commons` **não** contém entidades de domínio, repositories ou services de negócio — esses são autocontidos em cada microsserviço.
 
-```text
-C:\Windows\System32\drivers\etc\hosts
-```
+---
 
-No Linux/macOS, o arquivo fica em:
+## Decisões arquiteturais
 
-```text
-/etc/hosts
-```
+- **API Gateway como ponto único de entrada** — roteamento e validação de JWT centralizados; serviços não são expostos diretamente em produção.
+- **Autenticação delegada (Keycloak)** — OAuth2/OIDC padrão de mercado, com autorização por papel e tokens de serviço (`client_credentials`) para comunicação interna.
+- **Database per service** — isolamento total de schema; referências entre contextos por `Long id`, sem `@ManyToOne` entre bancos.
+- **Comunicação síncrona com OpenFeign + OkHttp** — clients tipados com timeouts explícitos (3s conexão / 5s leitura).
+- **Outbox Pattern** — desacopla a transação de negócio da notificação remota, garantindo entrega resiliente mesmo com o destino indisponível.
+- **Tratamento de erros padronizado** — `GlobalExceptionHandler` e `ErrorResponse` compartilhados via `commons`, com respostas consistentes e sem vazamento de stack trace.
+- **Build multi-módulo e imagens multi-stage** — build coordenado pelo POM raiz; runtime enxuto sobre Eclipse Temurin JRE 17.
+- **Cloud-agnóstico** — manifests Kubernetes usam apenas recursos padrão (Deployment, Service, ConfigMap, Secret, Ingress).
 
-## 🔄 Fluxo de uso da aplicação
+---
 
-1. O atendente cadastra um convênio no serviço administrativo.
-2. O atendente cadastra uma especialidade médica.
-3. O atendente cadastra um médico e vincula esse médico a uma especialidade.
-4. O atendente cadastra um paciente e informa o convênio associado.
-5. O atendente agenda uma consulta no serviço de agendamento, informando paciente, médico, convênio e data/hora.
-6. O serviço de agendamento valida via HTTP se paciente, médico e convênio existem e estão aptos no administrativo.
-7. O médico consulta sua agenda no serviço de agendamento.
-8. No momento da consulta, o médico registra o atendimento no serviço de atendimento.
-9. O atendimento gera prontuário, permite anotações clínicas e solicitações de exames.
-10. O serviço de atendimento notifica o agendamento para marcar a consulta como realizada.
+## Fluxo de negócio
 
-## 🧱 Decisões arquiteturais
+1. Cadastro de convênio, especialidade, médico (com especialidade) e paciente no **administrativo**.
+2. Agendamento de consulta no **agendamento**, informando paciente, médico, convênio e data/hora.
+3. O **agendamento** valida via Feign, no **administrativo**, se paciente, médico e convênio existem e estão aptos.
+4. O médico consulta sua agenda.
+5. No horário, o médico inicia o **atendimento**, gerando prontuário, anotações e solicitações de exame.
+6. O **atendimento** notifica o **agendamento**, via Outbox, para marcar a consulta como realizada.
+7. Relatórios consolidam os dados (pacientes por convênio, consultas diárias).
 
-- Cloud agnóstico: os manifests Kubernetes usam recursos padrão, como Deployment, Service, ConfigMap, Secret e Ingress, evitando dependência direta de um provedor específico.
-- Banco por serviço: cada microsserviço possui seu próprio banco MySQL, preservando isolamento de dados e autonomia de contexto.
-- IDs em vez de FK entre serviços: referências entre contextos usam campos `Long id`, sem `@ManyToOne` entre entidades de bancos diferentes.
-- Comunicação HTTP: integrações entre microsserviços são feitas por REST com `RestTemplate`, mantendo os bancos isolados.
-- Maven multi-módulo: a raiz agrega `commons`, `administrativo`, `agendamento` e `atendimento`, garantindo build coordenado.
-- Dockerfiles multi-stage: cada serviço usa Maven com JDK 17 para build e Eclipse Temurin JRE 17 para runtime.
-- Secrets no Kubernetes: credenciais ficam separadas de ConfigMaps e o arquivo real `k8s/secrets.yaml` não deve ser versionado.
+---
 
-## 👥 Equipe
+## Convenções de contribuição
 
-| Membro | Responsabilidade |
-|---|---|
-| Pessoa 1 | Módulos iniciais e estrutura base do projeto |
-| Pessoa 2 | Cadastros administrativos e regras compartilhadas |
-| Pessoa 3 | Fluxo de agendamento de consultas |
-| Pessoa 4 | Fluxo de atendimento clínico |
-| Pessoa 5 | Integração, testes e ajustes de revisão |
-| Pessoa 6 | Manifests Kubernetes, revisão Swagger e README final |
+- Trabalhe a partir da branch `development`; `main` é a branch estável.
+- Padrão de commits: `tipo(escopo): descrição` (ex.: `feat(medico): adiciona inativação`).
+- Todo novo `Service` deve vir acompanhado de testes com Mockito.
+- Rotas sempre versionadas com prefixo `/v1/`; `@Valid` obrigatório nos `@RequestBody`.
+- Nunca versione segredos: use `${VAR:}` no `application.properties` e mantenha `k8s/secrets.yaml` fora do controle de versão.

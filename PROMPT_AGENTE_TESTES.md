@@ -26,7 +26,7 @@ Voce nao deve:
 
 ## Contexto do Projeto
 
-Este repositorio e uma aplicacao Java 17 com Spring Boot 3.3.5, Maven multi-modulo, MySQL, Docker Compose e colecoes Postman.
+Este repositorio e uma aplicacao Java 17 com Spring Boot 3.3.5, Maven multi-modulo, MySQL, Docker Compose, API Gateway, Keycloak (OAuth2/JWT) e colecoes Postman.
 
 Modulos Maven:
 
@@ -34,12 +34,33 @@ Modulos Maven:
 - `administrativo`: cadastro e relatorios administrativos.
 - `agendamento`: agenda de consultas.
 - `atendimento`: realizacao de atendimentos, prontuario, anotacoes, exames e outbox.
+- `gateway`: API Gateway (Spring Cloud Gateway WebFlux), valida JWT na borda.
 
 Servicos e portas locais:
 
+- `gateway`: `http://localhost:8080`
 - `administrativo`: `http://localhost:8081`
 - `agendamento`: `http://localhost:8082`
 - `atendimento`: `http://localhost:8083`
+- `keycloak`: `http://localhost:8180` (realm `clinica`)
+
+## Seguranca (Keycloak) — LEIA ANTES DE TESTAR
+
+Toda rota de negocio exige Bearer JWT. Sem token o retorno e `401`. `/actuator/health` e publico.
+
+- Obter token: `POST http://localhost:8180/realms/clinica/protocol/openid-connect/token`, `grant_type=password`, `client_id=clinica-frontend`.
+- Usuarios demo e roles: `admin/Admin123!` (ADMIN), `atendente/Atend123!` (ATENDENTE), `medico/Medico123!` (MEDICO).
+- Client de servico (Feign interno): `clinica-service/clinica-service-secret` (role SERVICE, grant_type=client_credentials).
+- RBAC por endpoint: role insuficiente retorna `403`. Validar matriz de roles (ex.: ATENDENTE/MEDICO nao criam recursos de ADMIN).
+- Preferir testar atraves do gateway (`http://localhost:8080`) com prefixos `/api/admin/**`, `/api/agendamentos/**`, `/api/atendimentos/**`. As colecoes ja apontam para o gateway e buscam token no pre-request.
+
+Exemplo de token via curl:
+
+```bash
+curl -s -X POST "http://localhost:8180/realms/clinica/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password&client_id=clinica-frontend&username=admin&password=Admin123!"
+```
 
 Bancos MySQL locais via Docker Compose:
 
@@ -56,7 +77,11 @@ Arquivos relevantes:
 - `agendamento/pom.xml`
 - `atendimento/pom.xml`
 - `commons/pom.xml`
+- `gateway/pom.xml`
+- `keycloak/realm-clinica.json`
 - `docs/*-collection.json`
+- `docs/keycloak.postman_environment.json` (environment Newman com Keycloak/gateway)
+- `docs/gateway-auth-collection.json` (testes de auth + RBAC)
 - `docs/SWAGGER_REVIEW.md`
 - `docs/INGRESS_LOCAL.md`
 - `k8s/**/*.yaml`
@@ -150,6 +175,8 @@ Valide containers:
 
 ```bash
 docker compose ps
+docker compose logs --tail=200 keycloak
+docker compose logs --tail=200 gateway
 docker compose logs --tail=200 administrativo
 docker compose logs --tail=200 agendamento
 docker compose logs --tail=200 atendimento
@@ -158,16 +185,19 @@ docker compose logs --tail=200 atendimento
 Valide health checks:
 
 ```bash
+curl -i http://localhost:8080/actuator/health
 curl -i http://localhost:8081/actuator/health
 curl -i http://localhost:8082/actuator/health
 curl -i http://localhost:8083/actuator/health
 ```
 
+Valide tambem que o Keycloak esta saudavel (`docker compose ps` deve mostrar `keycloak` healthy) e que o token e emitido (ver secao Seguranca).
+
 Criterio minimo:
 
-- Containers dos bancos saudaveis.
-- Servicos Java iniciados sem erro fatal.
-- `/actuator/health` retornando `200` e status `UP` ou equivalente.
+- Containers dos bancos e do Keycloak saudaveis.
+- Servicos Java (gateway + 3 microsservicos) iniciados sem erro fatal.
+- `/actuator/health` retornando `200` e status `UP` ou equivalente nos 4 servicos.
 
 ### 4. Validacao Swagger/OpenAPI
 
@@ -192,7 +222,15 @@ Verifique:
 
 ### 5. Inventario de rotas que devem ser testadas
 
-Teste todos os endpoints abaixo com casos positivos, negativos, validacao de payload, IDs inexistentes e fluxo de negocio.
+Teste todos os endpoints abaixo com casos positivos, negativos, validacao de payload, IDs inexistentes e fluxo de negocio. Todos exigem Bearer JWT.
+
+Acesso preferencial via gateway (`http://localhost:8080`), que mapeia:
+
+- `/api/admin/**` → administrativo:8081
+- `/api/agendamentos/**` → agendamento:8082
+- `/api/atendimentos/**` → atendimento:8083
+
+Ex.: `GET http://localhost:8080/api/admin/v1/convenios` equivale a `GET http://localhost:8081/v1/convenios` (com token). As rotas abaixo estao listadas pela porta direta do microsservico; ao testar via gateway, prefixe conforme a tabela.
 
 #### Administrativo - `http://localhost:8081`
 
@@ -352,48 +390,47 @@ Valide estes fluxos de ponta a ponta:
 
 Colecoes existentes em `docs` que devem ser executadas:
 
-- `docs/atendente-collection.json`
+- `docs/gateway-auth-collection.json` (auth + RBAC, rodar primeiro)
 - `docs/convenio-collection.json`
 - `docs/especialidade-collection.json`
 - `docs/medico-collection.json`
 - `docs/paciente-collection.json`
+- `docs/atendente-collection.json`
 - `docs/consulta-collection.json`
 - `docs/atendimento-collection.json`
 - `docs/atendimento-notificacao-collection.json`
 - `docs/relatorios-collection.json`
 
-Se nao existir environment Postman, crie um artefato de teste, por exemplo `docs/local.postman_environment.json`, contendo variaveis como:
-
-- `baseUrlAdministrativo`: `http://localhost:8081`
-- `baseUrlAgendamento`: `http://localhost:8082`
-- `baseUrlAtendimento`: `http://localhost:8083`
-- IDs dinamicos criados nos pre-request scripts ou nos testes.
+Environment Newman: use `docs/keycloak.postman_environment.json` (ja existente). Ele aponta para o gateway (`http://localhost:8080`) e para o Keycloak (`http://localhost:8180`), e as colecoes buscam o token JWT no pre-request. NAO use `docs/local.postman_environment.json` (portas diretas, sem token → 401).
 
 Execute cada colecao com Newman e gere relatorios:
 
 ```bash
-npx newman run docs/atendente-collection.json -e docs/local.postman_environment.json --reporters cli,json --reporter-json-export target/newman/atendente.json
-npx newman run docs/convenio-collection.json -e docs/local.postman_environment.json --reporters cli,json --reporter-json-export target/newman/convenio.json
-npx newman run docs/especialidade-collection.json -e docs/local.postman_environment.json --reporters cli,json --reporter-json-export target/newman/especialidade.json
-npx newman run docs/medico-collection.json -e docs/local.postman_environment.json --reporters cli,json --reporter-json-export target/newman/medico.json
-npx newman run docs/paciente-collection.json -e docs/local.postman_environment.json --reporters cli,json --reporter-json-export target/newman/paciente.json
-npx newman run docs/consulta-collection.json -e docs/local.postman_environment.json --reporters cli,json --reporter-json-export target/newman/consulta.json
-npx newman run docs/atendimento-collection.json -e docs/local.postman_environment.json --reporters cli,json --reporter-json-export target/newman/atendimento.json
-npx newman run docs/atendimento-notificacao-collection.json -e docs/local.postman_environment.json --reporters cli,json --reporter-json-export target/newman/atendimento-notificacao.json
-npx newman run docs/relatorios-collection.json -e docs/local.postman_environment.json --reporters cli,json --reporter-json-export target/newman/relatorios.json
+ENV=docs/keycloak.postman_environment.json
+npx newman run docs/gateway-auth-collection.json -e $ENV --reporters cli,json --reporter-json-export target/newman/gateway-auth.json
+npx newman run docs/convenio-collection.json -e $ENV --reporters cli,json --reporter-json-export target/newman/convenio.json
+npx newman run docs/especialidade-collection.json -e $ENV --reporters cli,json --reporter-json-export target/newman/especialidade.json
+npx newman run docs/medico-collection.json -e $ENV --reporters cli,json --reporter-json-export target/newman/medico.json
+npx newman run docs/paciente-collection.json -e $ENV --reporters cli,json --reporter-json-export target/newman/paciente.json
+npx newman run docs/atendente-collection.json -e $ENV --reporters cli,json --reporter-json-export target/newman/atendente.json
+npx newman run docs/consulta-collection.json -e $ENV --reporters cli,json --reporter-json-export target/newman/consulta.json
+npx newman run docs/atendimento-collection.json -e $ENV --reporters cli,json --reporter-json-export target/newman/atendimento.json
+npx newman run docs/atendimento-notificacao-collection.json -e $ENV --reporters cli,json --reporter-json-export target/newman/atendimento-notificacao.json
+npx newman run docs/relatorios-collection.json -e $ENV --reporters cli,json --reporter-json-export target/newman/relatorios.json
 ```
 
 Se as colecoes dependerem de ordem, execute na ordem do fluxo de negocio:
 
-1. Convenio
-2. Especialidade
-3. Medico
-4. Paciente
-5. Atendente
-6. Consulta
-7. Atendimento
-8. Atendimento notificacao
-9. Relatorios
+1. Gateway-auth (valida login + RBAC)
+2. Convenio
+3. Especialidade
+4. Medico
+5. Paciente
+6. Atendente
+7. Consulta
+8. Atendimento
+9. Atendimento notificacao
+10. Relatorios
 
 Criterios Newman:
 
@@ -515,8 +552,9 @@ A validacao so pode ser considerada concluida quando:
 
 - `mvn clean test` foi executado e documentado.
 - A aplicacao subiu localmente ou a causa do bloqueio foi documentada.
-- Health checks dos tres servicos foram validados ou o bloqueio foi documentado.
-- Swagger/OpenAPI dos tres servicos foi validado.
+- Health checks do gateway + tres microsservicos foram validados ou o bloqueio foi documentado.
+- Keycloak emitiu token e o fluxo JWT (401 sem token, 200 com token, 403 por RBAC) foi validado.
+- Swagger/OpenAPI dos tres microsservicos foi validado.
 - Todas as colecoes Postman existentes foram executadas com Newman ou a impossibilidade foi justificada.
 - Todas as rotas listadas foram testadas manualmente, via Postman/Newman ou por teste automatizado.
 - Pelo menos um fluxo end-to-end completo foi testado.
