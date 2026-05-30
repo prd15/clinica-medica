@@ -9,6 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.PageRequest;
+
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -22,6 +24,8 @@ import static org.mockito.Mockito.when;
 class OutboxSchedulerTest {
 
     private static final int MAX_RETRY = 3;
+    private static final int BATCH_SIZE = 50;
+    private static final int RETENTION_DAYS = 7;
 
     @Mock
     private OutboxEventRepository outboxEventRepository;
@@ -33,7 +37,7 @@ class OutboxSchedulerTest {
 
     @BeforeEach
     void setUp() {
-        scheduler = new OutboxScheduler(outboxEventRepository, processor, MAX_RETRY);
+        scheduler = new OutboxScheduler(outboxEventRepository, processor, MAX_RETRY, BATCH_SIZE, RETENTION_DAYS);
     }
 
     private OutboxEvent evento(String aggregateId, String eventType) {
@@ -48,7 +52,7 @@ class OutboxSchedulerTest {
         ev1.setId(101L);
         OutboxEvent ev2 = evento("7", "CONFIRMACAO_REALIZACAO");
         ev2.setId(102L);
-        when(outboxEventRepository.buscarParaProcessar(any(), eq(MAX_RETRY)))
+        when(outboxEventRepository.buscarParaProcessar(any(), eq(MAX_RETRY), any()))
                 .thenReturn(List.of(ev1, ev2));
 
         scheduler.processarPendentes();
@@ -59,7 +63,7 @@ class OutboxSchedulerTest {
 
     @Test
     void listaVazia_naoChamaProcessor() {
-        when(outboxEventRepository.buscarParaProcessar(any(), eq(MAX_RETRY)))
+        when(outboxEventRepository.buscarParaProcessar(any(), eq(MAX_RETRY), any()))
                 .thenReturn(List.of());
 
         scheduler.processarPendentes();
@@ -68,14 +72,25 @@ class OutboxSchedulerTest {
     }
 
     @Test
+    void purgarTerminais_removeProcessadosEDescartados() {
+        when(outboxEventRepository.purgarTerminaisAntesDe(any(), any())).thenReturn(4);
+
+        scheduler.purgarTerminais();
+
+        verify(outboxEventRepository, times(1)).purgarTerminaisAntesDe(
+                eq(List.of(OutboxStatus.PROCESSADO, OutboxStatus.DESCARTADO)), any());
+    }
+
+    @Test
     void buscaApenasPendentesEFalhasDentroDoLimiteDeRetry() {
-        when(outboxEventRepository.buscarParaProcessar(any(), eq(MAX_RETRY)))
+        when(outboxEventRepository.buscarParaProcessar(any(), eq(MAX_RETRY), any()))
                 .thenReturn(List.of());
 
         scheduler.processarPendentes();
 
-        // PROCESSADO/DESCARTADO nunca entram na busca; respeita o limite de retry
+        // PROCESSADO/DESCARTADO nunca entram na busca; respeita o limite de retry e o batch limitado
         verify(outboxEventRepository, times(1)).buscarParaProcessar(
-                eq(List.of(OutboxStatus.PENDENTE, OutboxStatus.FALHA)), eq(MAX_RETRY));
+                eq(List.of(OutboxStatus.PENDENTE, OutboxStatus.FALHA)), eq(MAX_RETRY),
+                eq(PageRequest.of(0, BATCH_SIZE)));
     }
 }

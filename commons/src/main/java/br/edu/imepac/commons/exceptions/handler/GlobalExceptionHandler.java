@@ -83,8 +83,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IncorrectResultSizeDataAccessException.class)
     public ResponseEntity<ErrorResponse> handleIncorrectResultSize(IncorrectResultSizeDataAccessException ex) {
+        // detalhe (pode conter nomes de tabela/coluna) so no log; corpo generico ao cliente
         log.warn("Registro duplicado no banco: {}", ex.getMessage());
-        return build(HttpStatus.CONFLICT, "Registro duplicado encontrado: " + ex.getMessage());
+        return build(HttpStatus.CONFLICT, "Registro duplicado encontrado");
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

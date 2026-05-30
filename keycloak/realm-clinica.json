@@ -25,23 +25,63 @@
       "implicitFlowEnabled": false,
       "serviceAccountsEnabled": false,
       "frontchannelLogout": false,
-      "redirectUris": ["*"],
-      "webOrigins": ["*"],
-      "attributes": {}
+      "redirectUris": [],
+      "webOrigins": [],
+      "attributes": {},
+      "protocolMappers": [
+        {
+          "name": "audience-clinica-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "clinica-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "medicoId",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "medicoId",
+            "claim.name": "medicoId",
+            "jsonType.label": "long",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
     },
     {
       "clientId": "clinica-service",
       "name": "Clinica Service (Feign interno)",
       "enabled": true,
       "publicClient": false,
-      "secret": "clinica-service-secret",
+      "secret": "${KEYCLOAK_SERVICE_SECRET}",
       "directAccessGrantsEnabled": false,
       "standardFlowEnabled": false,
       "implicitFlowEnabled": false,
       "serviceAccountsEnabled": true,
       "frontchannelLogout": false,
       "redirectUris": [],
-      "attributes": {}
+      "webOrigins": [],
+      "attributes": {},
+      "protocolMappers": [
+        {
+          "name": "audience-clinica-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "clinica-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [
@@ -79,6 +119,7 @@
       "firstName": "Dr",
       "lastName": "Medico",
       "requiredActions": [],
+      "attributes": { "medicoId": ["1"] },
       "credentials": [
         { "type": "password", "value": "Medico123!", "temporary": false }
       ],

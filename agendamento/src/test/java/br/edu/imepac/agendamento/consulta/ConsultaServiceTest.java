@@ -27,7 +27,15 @@ class ConsultaServiceTest {
 
     private ConsultaEntity novaConsulta(Long id, StatusConsulta status) {
         LocalDateTime dataHora = LocalDateTime.now().plusDays(30).withSecond(0).withNano(0);
-        return new ConsultaEntity(id, 1L, 1L, 1L, dataHora, status, "consulta de rotina");
+        ConsultaEntity c = new ConsultaEntity();
+        c.setId(id);
+        c.setPacienteId(1L);
+        c.setMedicoId(1L);
+        c.setConvenioId(1L);
+        c.setDataHora(dataHora);
+        c.setStatus(status);
+        c.setObservacoes("consulta de rotina");
+        return c;
     }
 
     @Test
