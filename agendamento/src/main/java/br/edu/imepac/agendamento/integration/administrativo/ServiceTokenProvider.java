@@ -31,8 +31,17 @@ class ServiceTokenProvider {
     private volatile String cachedToken;
     private volatile Instant expiresAt = Instant.MIN;
 
-    synchronized String getToken() {
-        if (cachedToken == null || Instant.now().isAfter(expiresAt.minusSeconds(30))) {
+    String getToken() {
+        String token = cachedToken;
+        if (token != null && Instant.now().isBefore(expiresAt.minusSeconds(30))) {
+            return token;
+        }
+        return refreshAndGet();
+    }
+
+    private synchronized String refreshAndGet() {
+        // re-check sob lock: outra thread pode ter renovado enquanto esperavamos
+        if (cachedToken == null || !Instant.now().isBefore(expiresAt.minusSeconds(30))) {
             refresh();
         }
         return cachedToken;
@@ -56,7 +65,8 @@ class ServiceTokenProvider {
         }
 
         cachedToken = (String) response.get("access_token");
-        int expiresIn = (Integer) response.getOrDefault("expires_in", 300);
+        // expires_in pode vir como Integer ou Long dependendo do serializer — Number cobre ambos
+        long expiresIn = ((Number) response.getOrDefault("expires_in", 300)).longValue();
         expiresAt = Instant.now().plusSeconds(expiresIn);
         log.debug("Token SERVICE renovado, expira em {}s", expiresIn);
     }
