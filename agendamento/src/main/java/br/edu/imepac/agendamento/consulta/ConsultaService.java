@@ -34,6 +34,8 @@ public class ConsultaService {
             throw new BusinessException("Medico ja possui consulta neste horario");
         }
         consulta.setStatus(StatusConsulta.PENDENTE);
+        // slotAtivo alimenta o unique (medico_id, slot_ativo): barra double-booking concorrente
+        consulta.setSlotAtivo(consulta.getDataHora());
         return consultaRepository.save(consulta);
     }
 
@@ -44,6 +46,7 @@ public class ConsultaService {
                 throw new BusinessException("Consulta ja realizada nao pode ser cancelada");
             }
             consulta.setStatus(StatusConsulta.CANCELADA);
+            consulta.setSlotAtivo(null); // libera o slot para nova marcacao no mesmo horario
             return consultaRepository.save(consulta);
         });
     }
@@ -63,6 +66,7 @@ public class ConsultaService {
                 throw new BusinessException("Medico ja possui consulta neste horario");
             }
             consulta.setDataHora(novaDataHora);
+            consulta.setSlotAtivo(novaDataHora); // mantem o slot do unique alinhado ao novo horario
             return consultaRepository.save(consulta);
         });
     }
