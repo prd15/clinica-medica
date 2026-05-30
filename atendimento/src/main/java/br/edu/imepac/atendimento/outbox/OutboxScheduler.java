@@ -2,6 +2,7 @@ package br.edu.imepac.atendimento.outbox;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,13 +20,16 @@ public class OutboxScheduler {
     private final OutboxEventRepository outboxEventRepository;
     private final OutboxEventProcessor processor;
     private final int maxRetry;
+    private final int batchSize;
 
     public OutboxScheduler(OutboxEventRepository outboxEventRepository,
                            OutboxEventProcessor processor,
-                           @Value("${outbox.max-retry:3}") int maxRetry) {
+                           @Value("${outbox.max-retry:3}") int maxRetry,
+                           @Value("${outbox.batch-size:50}") int batchSize) {
         this.outboxEventRepository = outboxEventRepository;
         this.processor = processor;
         this.maxRetry = maxRetry;
+        this.batchSize = batchSize;
     }
 
     // @Transactional sustenta o LOCK PESSIMISTIC_WRITE da query buscarParaProcessar
@@ -35,7 +39,8 @@ public class OutboxScheduler {
     @Transactional
     public void processarPendentes() {
         List<OutboxEvent> eventos = outboxEventRepository.buscarParaProcessar(
-                List.of(OutboxStatus.PENDENTE, OutboxStatus.FALHA), maxRetry);
+                List.of(OutboxStatus.PENDENTE, OutboxStatus.FALHA), maxRetry,
+                PageRequest.of(0, batchSize));
         if (eventos.isEmpty()) {
             return;
         }
