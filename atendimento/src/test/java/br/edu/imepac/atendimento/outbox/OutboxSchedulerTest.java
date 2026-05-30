@@ -25,6 +25,7 @@ class OutboxSchedulerTest {
 
     private static final int MAX_RETRY = 3;
     private static final int BATCH_SIZE = 50;
+    private static final int RETENTION_DAYS = 7;
 
     @Mock
     private OutboxEventRepository outboxEventRepository;
@@ -36,7 +37,7 @@ class OutboxSchedulerTest {
 
     @BeforeEach
     void setUp() {
-        scheduler = new OutboxScheduler(outboxEventRepository, processor, MAX_RETRY, BATCH_SIZE);
+        scheduler = new OutboxScheduler(outboxEventRepository, processor, MAX_RETRY, BATCH_SIZE, RETENTION_DAYS);
     }
 
     private OutboxEvent evento(String aggregateId, String eventType) {
@@ -68,6 +69,16 @@ class OutboxSchedulerTest {
         scheduler.processarPendentes();
 
         verify(processor, never()).processar(any());
+    }
+
+    @Test
+    void purgarTerminais_removeProcessadosEDescartados() {
+        when(outboxEventRepository.purgarTerminaisAntesDe(any(), any())).thenReturn(4);
+
+        scheduler.purgarTerminais();
+
+        verify(outboxEventRepository, times(1)).purgarTerminaisAntesDe(
+                eq(List.of(OutboxStatus.PROCESSADO, OutboxStatus.DESCARTADO)), any());
     }
 
     @Test

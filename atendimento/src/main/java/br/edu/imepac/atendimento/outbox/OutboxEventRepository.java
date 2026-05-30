@@ -5,10 +5,12 @@ import jakarta.persistence.QueryHint;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -29,4 +31,11 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     List<OutboxEvent> buscarParaProcessar(@Param("status") Collection<OutboxStatus> status,
                                           @Param("maxTentativas") int maxTentativas,
                                           Pageable pageable);
+
+    // housekeeping: remove eventos terminais (PROCESSADO/DESCARTADO) antigos para a tabela
+    // nao crescer indefinidamente e o indice (status, tentativas) nao degradar. Bulk delete.
+    @Modifying
+    @Query("DELETE FROM OutboxEvent e WHERE e.status IN :status AND e.createdAt < :limite")
+    int purgarTerminaisAntesDe(@Param("status") Collection<OutboxStatus> status,
+                               @Param("limite") LocalDateTime limite);
 }
