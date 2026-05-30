@@ -15,10 +15,12 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -78,6 +80,46 @@ class ConsultaSecurityTest {
         mockMvc.perform(patch("/v1/consultas/1/realizar")
                         .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ATENDENTE"))))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void medico_minhaAgenda_semClaimMedicoId_retorna403() throws Exception {
+        mockMvc.perform(get("/v1/consultas/minha-agenda")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_MEDICO"))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void medico_minhaAgenda_usaMedicoIdDoToken_retorna200() throws Exception {
+        when(consultaService.findMinhaAgenda(1L)).thenReturn(List.of());
+
+        mockMvc.perform(get("/v1/consultas/minha-agenda")
+                        .with(jwt().jwt(j -> j.claim("medicoId", "1"))
+                                .authorities(new SimpleGrantedAuthority("ROLE_MEDICO"))))
+                .andExpect(status().isOk());
+
+        verify(consultaService).findMinhaAgenda(1L);
+    }
+
+    @Test
+    void medico_tentandoAgendaDeOutroMedico_retorna403() throws Exception {
+        mockMvc.perform(get("/v1/consultas/minha-agenda").param("medicoId", "2")
+                        .with(jwt().jwt(j -> j.claim("medicoId", "1"))
+                                .authorities(new SimpleGrantedAuthority("ROLE_MEDICO"))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void medico_listar_escopaAoProprioMedicoIdDoToken() throws Exception {
+        when(consultaService.findByMedicoId(1L)).thenReturn(List.of());
+
+        // sem informar medicoId — deve forcar o do token (1), nunca listar tudo
+        mockMvc.perform(get("/v1/consultas")
+                        .with(jwt().jwt(j -> j.claim("medicoId", "1"))
+                                .authorities(new SimpleGrantedAuthority("ROLE_MEDICO"))))
+                .andExpect(status().isOk());
+
+        verify(consultaService).findByMedicoId(1L);
     }
 
     @Test

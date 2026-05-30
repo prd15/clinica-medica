@@ -39,6 +39,19 @@
             "id.token.claim": "false",
             "access.token.claim": "true"
           }
+        },
+        {
+          "name": "medicoId",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "medicoId",
+            "claim.name": "medicoId",
+            "jsonType.label": "long",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
         }
       ]
     },
@@ -106,6 +119,7 @@
       "firstName": "Dr",
       "lastName": "Medico",
       "requiredActions": [],
+      "attributes": { "medicoId": ["1"] },
       "credentials": [
         { "type": "password", "value": "Medico123!", "temporary": false }
       ],

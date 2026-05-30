@@ -15,6 +15,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -136,7 +139,19 @@ public class ConsultaController {
             @RequestParam(required = false) Long medicoId,
             @RequestParam(required = false) Long pacienteId,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
+            Authentication auth,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        // MEDICO so enxerga as proprias consultas: forca o filtro pelo medicoId do token
+        if (isMedicoPuro(auth)) {
+            Long doToken = medicoIdDoToken(jwt);
+            if (doToken == null || (medicoId != null && !medicoId.equals(doToken))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            medicoId = doToken;
+            pacienteId = null; // medico nao filtra por paciente arbitrario
+        }
 
         List<ConsultaEntity> consultas;
         if (medicoId != null && data != null) {
@@ -173,10 +188,55 @@ public class ConsultaController {
     @ApiResponse(responseCode = "200", description = "Agenda retornada")
     @ApiResponse(responseCode = "400", description = "ID do medico ausente ou em formato invalido")
     @GetMapping("/minha-agenda")
-    public ResponseEntity<List<ConsultaResponse>> minhaAgenda(@RequestParam Long medicoId) {
-        List<ConsultaResponse> response = consultaService.findMinhaAgenda(medicoId).stream()
+    public ResponseEntity<List<ConsultaResponse>> minhaAgenda(
+            @RequestParam(required = false) Long medicoId,
+            Authentication auth,
+            @AuthenticationPrincipal Jwt jwt) {
+        Long efetivo;
+        if (isMedicoPuro(auth)) {
+            Long doToken = medicoIdDoToken(jwt);
+            if (doToken == null || (medicoId != null && !medicoId.equals(doToken))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            efetivo = doToken;
+        } else {
+            if (medicoId == null) {
+                throw new IllegalArgumentException("medicoId obrigatorio");
+            }
+            efetivo = medicoId;
+        }
+        List<ConsultaResponse> response = consultaService.findMinhaAgenda(efetivo).stream()
                 .map(c -> modelMapper.map(c, ConsultaResponse.class))
                 .toList();
         return ResponseEntity.ok(response);
+    }
+
+    // MEDICO sem privilegio de ADMIN/ATENDENTE/SERVICE — escopo restrito a si mesmo
+    private boolean isMedicoPuro(Authentication auth) {
+        if (auth == null) {
+            return false;
+        }
+        boolean medico = temRole(auth, "ROLE_MEDICO");
+        boolean privilegiado = temRole(auth, "ROLE_ADMIN")
+                || temRole(auth, "ROLE_ATENDENTE")
+                || temRole(auth, "ROLE_SERVICE");
+        return medico && !privilegiado;
+    }
+
+    private boolean temRole(Authentication auth, String role) {
+        return auth.getAuthorities().stream().anyMatch(a -> role.equals(a.getAuthority()));
+    }
+
+    // claim medicoId injetada pelo Keycloak (atributo do usuario medico)
+    private Long medicoIdDoToken(Jwt jwt) {
+        Object valor = jwt == null ? null : jwt.getClaim("medicoId");
+        if (valor == null) {
+            return null;
+        }
+        try {
+            return Long.valueOf(String.valueOf(valor));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }
