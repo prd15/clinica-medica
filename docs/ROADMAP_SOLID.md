@@ -180,8 +180,14 @@ scheduler ou no processor.
 
 **Plano.**
 
+Visibilidade: a interface fica **package-private** (sem `public`) pra alinhar
+com o `OutboxEventProcessor`, que ja' e' package-private por decisao
+arquitetural documentada (deve ser usado apenas pelo `OutboxScheduler` do
+mesmo pacote). Handler em outro pacote nao precisa existir nesse modelo —
+todos vivem em `br.edu.imepac.atendimento.outbox`.
+
 ```java
-public interface OutboxEventHandler {
+interface OutboxEventHandler {
     String eventType();
     void handle(OutboxEvent evento);
 }
