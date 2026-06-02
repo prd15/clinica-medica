@@ -199,45 +199,61 @@ class ConfirmacaoRealizacaoHandler implements OutboxEventHandler {
 }
 ```
 
-O processor fica fino, só roteando:
+O processor fica fino e preserva a semântica atual de erro permanente vs
+transitório. Hoje o `OutboxEventProcessor` já distingue erros via
+`EventoPermanenteException` (DESCARTADO direto, sem retry) de erros genéricos
+(tentativas++ via `registrarFalha(maxRetry)`). O refactor mantém esse fluxo,
+só troca a entrega hardcoded por um lookup de handler:
 
 ```java
 @Component
-public class OutboxEventProcessor {
+class OutboxEventProcessor {
 
     private final Map<String, OutboxEventHandler> handlersPorTipo;
     private final OutboxEventRepository repository;
+    private final int maxRetry;
 
-    public OutboxEventProcessor(List<OutboxEventHandler> handlers,
-                                OutboxEventRepository repository) {
+    OutboxEventProcessor(List<OutboxEventHandler> handlers,
+                         OutboxEventRepository repository,
+                         @Value("${outbox.max-retry:3}") int maxRetry) {
         this.handlersPorTipo = handlers.stream()
                 .collect(Collectors.toUnmodifiableMap(
                         OutboxEventHandler::eventType, h -> h));
         this.repository = repository;
+        this.maxRetry = maxRetry;
     }
 
-    public void processar(OutboxEvent evento) {
-        OutboxEventHandler handler = handlersPorTipo.get(evento.getEventType());
-        if (handler == null) {
-            // ajustar nomes aos métodos reais do OutboxEvent
-            evento.descartar("eventType nao registrado: " + evento.getEventType());
-            repository.save(evento);
-            return;
-        }
+    void processar(OutboxEvent evento) {
         try {
-            handler.handle(evento);
+            entregar(evento);
             evento.marcarProcessado();
+        } catch (EventoPermanenteException e) {
+            // erro irrecuperável — DESCARTADO sem retry
+            evento.descartar();
+            // log com detalhe (id, eventType, mensagem)
         } catch (Exception e) {
-            evento.registrarFalha(e.getMessage());
+            // erro transitório — registrarFalha incrementa tentativas e
+            // promove a DESCARTADO se esgotou maxRetry
+            evento.registrarFalha(maxRetry);
         }
         repository.save(evento);
+    }
+
+    private void entregar(OutboxEvent evento) {
+        OutboxEventHandler handler = handlersPorTipo.get(evento.getEventType());
+        if (handler == null) {
+            throw new EventoPermanenteException(
+                    "Tipo de evento outbox desconhecido: " + evento.getEventType());
+        }
+        handler.handle(evento);
     }
 }
 ```
 
-Os nomes `descartar`, `marcarProcessado` e `registrarFalha` são ilustrativos.
-Ajustar ao contrato real do `OutboxEvent` (que já tem o `OutboxEvent.pendente(...)`
-como factory).
+API real do `OutboxEvent` (já implementada no projeto): `marcarProcessado()`,
+`descartar()` sem args (o motivo é logado pelo processor via SLF4J), e
+`registrarFalha(int maxRetry)` que incrementa tentativas e promove a
+`DESCARTADO` quando atinge o limite.
 
 **Testes a atualizar/criar:**
 
