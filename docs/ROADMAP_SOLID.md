@@ -575,4 +575,63 @@ lente pra revisar com olhar treinado.
 
 ---
 
+## 15. Trade-offs honestos — quando SOLID não paga
+
+Documento até aqui foi otimista. Justo apontar os custos.
+
+### 15.1 Custo de indireção
+
+Cada interface adiciona um clique no IntelliJ pra navegar até a implementação.
+Em CRUD trivial isso atrapalha a leitura. A regra prática que vamos usar no
+grupo: vale criar a interface quando consigo nomear, agora, um cenário real
+onde a segunda implementação faria sentido.
+
+Exemplo positivo: `ServiceTokenProvider`. Cenário real = trocar Keycloak por
+outro IdP. Vale.
+
+Exemplo negativo: `IConvenioService` + `ConvenioServiceImpl`. Cenário real =
+nenhum. Não vale.
+
+### 15.2 Custo cognitivo
+
+Strategy com cinco handlers espalhados é mais difícil de seguir num grep do
+que um `switch` com cinco casos no mesmo arquivo. O ganho aparece quando o
+`switch` passa de dez casos e ninguém consegue ler. Antes disso, o `switch`
+ganha.
+
+A linha onde inverte depende do time. Pra grupo iniciante em SOLID, o limite é
+maior (deixa o switch crescer mais). Pra time experiente, refatora antes.
+
+### 15.3 Custo de PR
+
+Refactor SOLID puro (sem nova feature) tem revisão complicada. O revisor
+precisa concordar com a abstração nova e ver que nada quebrou. PRs grandes
+ficam parados. Por isso a recomendação de commits atômicos por módulo.
+
+Se o refactor não cabe em PR de 200 linhas modificadas, ele provavelmente está
+querendo abraçar demais. Quebra em PRs menores.
+
+### 15.4 Custo de teste
+
+Renomear classes pode invalidar `@MockBean` por tipo, gerando falhas
+barulhentas que distraem do objetivo. Roda a suíte completa logo após cada
+commit, não no final. Falha cedo é mais barato.
+
+### 15.5 Quando deliberadamente NÃO aplicar SOLID
+
+- **Spike/protótipo.** Código que vai ser jogado fora em duas semanas. Aplicar
+  SOLID em descartável é desperdício.
+- **CRUD repetido.** O 38º controller que faz get/post/put/delete não precisa
+  de Strategy, Factory ou Decorator. Aceita a repetição.
+- **Time aprendendo o domínio.** Se ninguém ainda sabe direito quais regras vão
+  existir, criar abstração agora é chutar no escuro. Espera a regra aparecer.
+- **Performance crítica.** Hot path com hashmap lookup em vez de chamada direta
+  vai medir diferente. Raro no nosso caso (CRUD em banco), mas vale lembrar.
+
+Em projeto pequeno com equipe nova, aplicar SOLID demais cedo é pior que de
+menos. O que funciona: aplicar onde a dor é demonstrável (mostra três PRs que
+abriram o mesmo arquivo) e adiar o resto.
+
+---
+
 *Documento vivo. Revisar ao fim de cada fase. Não é tablet de pedra.*
