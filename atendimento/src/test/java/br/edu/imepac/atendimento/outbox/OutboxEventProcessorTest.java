@@ -1,37 +1,38 @@
 package br.edu.imepac.atendimento.outbox;
 
-import br.edu.imepac.atendimento.integration.agendamento.AgendamentoClient;
-import br.edu.imepac.atendimento.outbox.OutboxEvent;
-import br.edu.imepac.atendimento.outbox.OutboxStatus;
-import br.edu.imepac.atendimento.outbox.OutboxEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OutboxEventProcessorTest {
 
     private static final int MAX_RETRY = 3;
+    private static final String EVENT_TYPE_CONHECIDO = "CONFIRMACAO_REALIZACAO";
 
     @Mock
     private OutboxEventRepository outboxEventRepository;
 
     @Mock
-    private AgendamentoClient agendamentoClient;
+    private OutboxEventHandler handler;
 
     private OutboxEventProcessor processor;
 
     @BeforeEach
     void setUp() {
-        processor = new OutboxEventProcessor(outboxEventRepository, agendamentoClient, MAX_RETRY);
+        when(handler.eventType()).thenReturn(EVENT_TYPE_CONHECIDO);
+        processor = new OutboxEventProcessor(outboxEventRepository, List.of(handler), MAX_RETRY);
     }
 
     private OutboxEvent evento(String aggregateId, String eventType) {
@@ -40,19 +41,19 @@ class OutboxEventProcessorTest {
 
     @Test
     void entregaComSucesso_marcaProcessadoESalva() {
-        OutboxEvent ev = evento("5", "CONFIRMACAO_REALIZACAO");
+        OutboxEvent ev = evento("5", EVENT_TYPE_CONHECIDO);
 
         processor.processar(ev);
 
-        verify(agendamentoClient).confirmarRealizacao(5L);
+        verify(handler).handle(ev);
         assertEquals(OutboxStatus.PROCESSADO, ev.getStatus());
         verify(outboxEventRepository).save(ev);
     }
 
     @Test
     void falhaTransitoria_incrementaTentativaEMantemFalha() {
-        OutboxEvent ev = evento("7", "CONFIRMACAO_REALIZACAO");
-        doThrow(new RuntimeException("rede caiu")).when(agendamentoClient).confirmarRealizacao(7L);
+        OutboxEvent ev = evento("7", EVENT_TYPE_CONHECIDO);
+        doThrow(new RuntimeException("rede caiu")).when(handler).handle(ev);
 
         processor.processar(ev);
 
@@ -63,9 +64,9 @@ class OutboxEventProcessorTest {
 
     @Test
     void falhaTransitoria_esgotandoLimite_marcaDescartado() {
-        OutboxEvent ev = evento("7", "CONFIRMACAO_REALIZACAO");
+        OutboxEvent ev = evento("7", EVENT_TYPE_CONHECIDO);
         ev.setTentativas(MAX_RETRY - 1); // proxima falha esgota
-        doThrow(new RuntimeException("rede caiu")).when(agendamentoClient).confirmarRealizacao(7L);
+        doThrow(new RuntimeException("rede caiu")).when(handler).handle(ev);
 
         processor.processar(ev);
 
@@ -74,10 +75,10 @@ class OutboxEventProcessorTest {
     }
 
     @Test
-    void erroPermanenteDoClient_marcaDescartadoSemIncrementarTentativas() {
-        OutboxEvent ev = evento("8", "CONFIRMACAO_REALIZACAO");
+    void erroPermanenteDoHandler_marcaDescartadoSemIncrementarTentativas() {
+        OutboxEvent ev = evento("8", EVENT_TYPE_CONHECIDO);
         doThrow(new EventoPermanenteException("consulta nao existe (404)"))
-                .when(agendamentoClient).confirmarRealizacao(8L);
+                .when(handler).handle(ev);
 
         processor.processar(ev);
 
@@ -87,26 +88,30 @@ class OutboxEventProcessorTest {
     }
 
     @Test
-    void tipoDeEventoDesconhecido_descartaSemTentarEntregar() {
+    void tipoDeEventoSemHandler_descartaSemChamarHandler() {
         OutboxEvent ev = evento("3", "EVENTO_QUE_NAO_EXISTE");
 
         processor.processar(ev);
 
         assertEquals(OutboxStatus.DESCARTADO, ev.getStatus());
         assertEquals(0, ev.getTentativas());
-        verify(agendamentoClient, never()).confirmarRealizacao(anyLong());
+        verify(handler, never()).handle(any());
         verify(outboxEventRepository).save(ev);
     }
 
     @Test
-    void aggregateIdInvalido_marcaFalhaTransitoria() {
-        // Long.valueOf("abc") joga NumberFormatException — generica, vai como transitoria
-        OutboxEvent ev = evento("abc", "CONFIRMACAO_REALIZACAO");
+    void listaVaziaDeHandlers_processarMarcaTodosComoDescartado() {
+        // sanity: processor sem handlers (configuracao errada) faz todos os
+        // eventos cairem em EventoPermanenteException interno -> DESCARTADO.
+        // O warn de inicializacao avisa, mas a aplicacao nao falha no startup.
+        OutboxEventProcessor semHandlers = new OutboxEventProcessor(
+                outboxEventRepository, List.of(), MAX_RETRY);
+        OutboxEvent ev = evento("9", EVENT_TYPE_CONHECIDO);
 
-        processor.processar(ev);
+        semHandlers.processar(ev);
 
-        assertEquals(OutboxStatus.FALHA, ev.getStatus());
-        assertEquals(1, ev.getTentativas());
+        assertEquals(OutboxStatus.DESCARTADO, ev.getStatus());
+        assertEquals(0, ev.getTentativas());
         verify(outboxEventRepository).save(ev);
     }
 }
