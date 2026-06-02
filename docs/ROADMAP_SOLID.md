@@ -70,27 +70,58 @@ Cada cópia sabe da URL do Keycloak, do `client_id` e do `client_secret`. No dia
 em que migrar pra Auth0, Okta ou um provedor próprio, são três rewrites em três
 módulos, sem teste de regressão de provedor.
 
-**Plano dentro de cada módulo:**
+**Estado atual do pacote de integração (mesmo padrão nos três módulos):**
 
-```java
-// 1. Promover a interface no mesmo pacote da classe atual
-public interface ServiceTokenProvider {
-    String obterToken();
-}
-
-// 2. Renomear a classe concreta atual
-@Component
-@ConditionalOnProperty(
-        name = "auth.provider",
-        havingValue = "keycloak",
-        matchIfMissing = true)
-class KeycloakServiceTokenProvider implements ServiceTokenProvider {
-    // corpo atual da classe sem alteração
-}
+```
+integration/<servico-alvo>/
+├── *Client.java                    (interface Feign)
+├── *FeignConfig.java               (RequestInterceptor que injeta o token)
+└── ServiceTokenProvider.java       (classe concreta acoplada ao Keycloak)
 ```
 
-O `RequestInterceptor` do Feign passa a depender de `ServiceTokenProvider`
-(interface), não da classe concreta. Nenhum outro arquivo precisa mudar.
+As três cópias são quase idênticas. Mudam só `client_id`, escopo do token, e
+qual serviço cada uma chama. Toda a lógica de fetch + cache + refresh é igual.
+
+**Passos exatos pra refatorar (por módulo):**
+
+1. **Renomear** a classe atual para `KeycloakServiceTokenProvider`. No IntelliJ,
+   `Shift+F6` em cima do nome — todos os usos e imports são atualizados.
+2. **Criar interface** no mesmo pacote, com a assinatura pública atual:
+   ```java
+   public interface ServiceTokenProvider {
+       String obterToken();
+   }
+   ```
+3. **Marcar a classe renomeada** como implementação ativa do Keycloak:
+   ```java
+   @Component
+   @ConditionalOnProperty(
+           name = "auth.provider",
+           havingValue = "keycloak",
+           matchIfMissing = true)
+   class KeycloakServiceTokenProvider implements ServiceTokenProvider {
+       // corpo atual da classe sem alteração
+   }
+   ```
+4. **Atualizar o `RequestInterceptor`** (no `*FeignConfig`) pra depender da
+   interface, não da classe concreta:
+   ```java
+   private final ServiceTokenProvider tokenProvider; // antes: KeycloakServiceTokenProvider
+   ```
+   Spring resolve sozinho pela única implementação ativa.
+5. **Rodar `mvn test`** no módulo. Os testes do client devem continuar verdes
+   (Mockito mocka interface igual a classe concreta).
+6. **Documentar** a nova flag `auth.provider` no `.env.example`.
+
+**Ordem entre módulos.**
+
+Recomendado fazer um módulo de cada vez, na ordem `atendimento → agendamento →
+administrativo`. Cada módulo é um commit atômico:
+
+- `refactor(integration): extrai ServiceTokenProvider como interface no atendimento`
+- `refactor(integration): extrai ServiceTokenProvider como interface no agendamento`
+- `refactor(integration): extrai ServiceTokenProvider como interface no administrativo`
+- `docs(env-example): documenta auth.provider`
 
 **Esforço.** ~1h por módulo, ~3h somando, mais revisão de PR.
 
