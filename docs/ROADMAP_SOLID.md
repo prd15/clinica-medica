@@ -769,4 +769,108 @@ R: Edita esse arquivo, abre PR. O FAQ é parte viva do roadmap.
 
 ---
 
+## 18. Estado SOLID atual por microsserviço
+
+Snapshot rápido de cada microsserviço, com o que já está bom e o que pode
+apertar quando crescer. Atualizar à medida que o código evoluir.
+
+### 18.1 administrativo
+
+Está limpo.
+
+- Services pequenos e bem segmentados: `ConvenioService`, `PacienteService`,
+  `MedicoService`. Cada um com responsabilidade clara.
+- Controllers magros, só delegação.
+- Único ponto de atenção: `ServiceTokenProvider` na pasta `integration/`,
+  resolvido pela fase 4.1.
+
+Medições estimadas (rodar `cloc` no commit `5733e31` pra valor exato):
+
+- Maior service em linhas: `ConvenioService`, ~150. OK.
+- Classe com mais dependências injetadas no constructor: provavelmente 3. OK.
+
+Próximos cuidados:
+
+- Quando entrar relatório consolidado entre Convenio + Paciente + Medico, vai
+  aparecer pressão pra criar `RelatorioService` que injeta os três. Manter
+  injetando os três é OK até passar de cinco dependências; aí vale dividir.
+
+### 18.2 agendamento
+
+Mais complexo. Domínio rico (consultas, disponibilidade, agenda do médico).
+
+- `ConsultaService` orquestra criação, confirmação, cancelamento, listagem,
+  agenda do médico. Hoje ainda cabe num arquivo legível, mas é o primeiro
+  candidato à fase 5.2 (quebra CQRS-lite) quando passar dos 12 métodos
+  públicos.
+- Lógica de double-booking ficou na entidade via unique constraint (boa
+  decisão arquitetural). Não vira service à parte.
+
+Pontos cheirosos hoje:
+
+- `ConsultaService` próximo do limite de 200 linhas (estimativa). Vale medir.
+- `ConsultaController` com 6+ endpoints. Aceitável; só vira problema se
+  endpoints novos forçarem o controller a coordenar mais de um service.
+
+Próximos cuidados:
+
+- Se adicionar tipos de consulta (eletiva, urgência, retorno) com regras
+  diferentes, aplicar fase 5.3 (strategy) antes de meter
+  `if (tipo == ELETIVA)` no service.
+- A confirmação automática que vem do atendimento via outbox é assíncrona.
+  Manter assim. Não cair na tentação de chamar o atendimento sincronamente
+  pra "simplificar".
+
+### 18.3 atendimento
+
+Já adotou padrão Outbox. Fase 4.2 vai apertar a abstração dos handlers.
+
+- `AtendimentoService` está enxuto, cuida só de registrar o atendimento e
+  enfileirar o evento.
+- `OutboxScheduler`, `OutboxEventProcessor`, `OutboxEventRepository`,
+  `OutboxEvent`, `OutboxStatus`: cinco classes com responsabilidades
+  distintas. SRP em prática.
+
+Pontos cheirosos hoje:
+
+- `OutboxEventProcessor` com lógica de um único tipo de evento (resolvido na
+  fase 4.2).
+- `ServiceTokenProvider` duplicado (resolvido na fase 4.1).
+
+Próximos cuidados:
+
+- Se o `OutboxScheduler` ganhar lógica de prioridade por tipo de evento ou de
+  rate limit por handler, isolar a query do lock numa `OutboxEventQuery`
+  separada antes que o scheduler vire god class.
+- Se aparecer necessidade de notificação síncrona em paralelo com a
+  assíncrona (improvável), criar canal separado, não sobrecarregar o outbox.
+
+### 18.4 gateway
+
+Pequeno. Faz roteamento e validação de JWT. Sem lógica de domínio.
+
+- Sem oportunidade clara de aplicar SOLID porque o que tem é configuração
+  declarativa (rotas em `application.yml`, `SecurityConfig`).
+- Cuidado: se entrar lógica de transformação de request/response (ex:
+  enriquecer payload com dados do user logado), isolar como filtro Spring
+  Cloud Gateway separado, não no `SecurityConfig`.
+
+### 18.5 commons
+
+Lib compartilhada. Padrão da casa: `commons/entities/<dominio>/`,
+`commons/repositories/<dominio>/`, `commons/services/<dominio>/`.
+
+- A separação por domínio em pacotes é SRP em escala arquitetural. Funciona.
+- Ponto de atenção: services em commons que dependem de classes específicas
+  de um microsserviço (raro). Se acontecer, é sinal de que o service não
+  deveria estar em commons.
+
+Próximos cuidados:
+
+- Não aceitar dependência de `commons` pra clientes Feign de microsserviços
+  específicos. Feign clients moram em `integration/` do microsserviço
+  consumidor.
+
+---
+
 *Documento vivo. Revisar ao fim de cada fase. Não é tablet de pedra.*
