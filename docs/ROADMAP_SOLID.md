@@ -30,9 +30,12 @@ Antes do plano, vale reconhecer o que não precisa mexer:
   pacote. Cada serviço tem um motivo de mudar (SRP em escala arquitetural).
 - O Outbox já delega: `OutboxScheduler` drena, `OutboxEventProcessor` processa um
   evento, `OutboxEventRepository` consulta. Três classes, três motivos de mudar.
-- Os Feign clients são pequenos (`AgendamentoConfirmacaoClient` no atendimento,
-  `AdministrativoClient` no agendamento). Nada de cliente único com 30 métodos
-  (ISP na prática).
+- Os Feign clients são pequenos e envoltos por adapters de domínio. No
+  atendimento: `AgendamentoFeignClient` (interface Feign) +
+  `AgendamentoClient` (adapter `@Component` que traduz `FeignException.NotFound`
+  e `Conflict` em `EventoPermanenteException`). No agendamento:
+  `AdministrativoClient`. Domínio depende do adapter, não do FeignClient direto
+  (ISP na prática + isolamento de erros de transporte).
 - Spring praticamente força DIP via `@Autowired` em interfaces
   (`ConvenioRepository`, `OutboxEventRepository`).
 
@@ -149,7 +152,7 @@ flowchart LR
     A[AtendimentoService.realizar] -->|grava evento na mesma tx| B[(outbox_event<br/>PENDENTE)]
     C[OutboxScheduler<br/>@Scheduled fixedDelay] -->|busca PENDENTE+FALHA| B
     C -->|para cada evento| D[OutboxEventProcessor.processar]
-    D -->|if CONFIRMACAO_REALIZACAO| E[AgendamentoConfirmacaoClient<br/>Feign call]
+    D -->|if CONFIRMACAO_REALIZACAO| E[AgendamentoClient.confirmarRealizacao<br/>adapter -> Feign call]
     D -->|outro tipo?| F[sem caminho definido]
     E -->|sucesso| G[(PROCESSADO)]
     E -->|falha| H[(FALHA<br/>tentativas++)]
@@ -185,7 +188,11 @@ public interface OutboxEventHandler {
 
 @Component
 class ConfirmacaoRealizacaoHandler implements OutboxEventHandler {
-    private final AgendamentoConfirmacaoClient client;
+    private final AgendamentoClient agendamentoClient; // adapter, nao FeignClient
+
+    ConfirmacaoRealizacaoHandler(AgendamentoClient agendamentoClient) {
+        this.agendamentoClient = agendamentoClient;
+    }
 
     @Override
     public String eventType() {
@@ -194,7 +201,10 @@ class ConfirmacaoRealizacaoHandler implements OutboxEventHandler {
 
     @Override
     public void handle(OutboxEvent evento) {
-        // toda a lógica atual do processor que chama o Feign client
+        // aggregateId carrega o consultaId
+        // AgendamentoClient ja traduz 404/409 em EventoPermanenteException —
+        // handler nao precisa repetir esse tratamento
+        agendamentoClient.confirmarRealizacao(Long.valueOf(evento.getAggregateId()));
     }
 }
 ```
