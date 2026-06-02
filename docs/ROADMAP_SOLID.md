@@ -255,6 +255,65 @@ caminho.
 **Ganho no dia D.** Quando `CANCELAMENTO` ou `REAGENDAMENTO` aparecer, é uma
 classe nova, um teste novo, zero alteração no processor ou no scheduler.
 
+### 4.3 Estratégia de testes para os refactors da fase 1
+
+Os dois refactors da fase 1 são estruturais. Mesma lógica, organização
+diferente. Vale aproveitar pra apertar a cobertura, mas sem inflar a suíte sem
+necessidade.
+
+**Para 4.1 (ServiceTokenProvider):**
+
+Os testes existentes do `*FeignConfig` mockam `ServiceTokenProvider`. Após o
+refactor:
+
+- Continuam funcionando sem alteração (Mockito mocka interface tão bem quanto
+  classe).
+- Renomear variável de mock pra `mockTokenProvider` se estava como
+  `mockKeycloakTokenProvider`. Clareza.
+- Adicionar `KeycloakServiceTokenProviderTest` se ainda não existir, cobrindo:
+  token é cacheado entre chamadas, refresh acontece após `expires_in`, exceção
+  do Keycloak propaga e não fica em loop infinito.
+
+Não criar `ServiceTokenProviderTest` em cima da interface vazia — não há
+comportamento default pra testar.
+
+**Para 4.2 (Outbox handlers):**
+
+Reestruturar a suíte em três camadas, cada uma com escopo claro:
+
+1. **`OutboxSchedulerTest`** (existente, quase não muda) — valida que o
+   scheduler delega cada evento do batch ao processor. Continua mockando o
+   processor por completo.
+2. **`OutboxEventProcessorTest`** (novo ou ajustado) — valida só o roteamento.
+   Casos mínimos:
+   - Handler conhecido + sucesso → status `PROCESSADO`.
+   - Handler conhecido + exceção → status `FALHA`, `tentativas` incrementado.
+   - Handler ausente → status `DESCARTADO` com mensagem clara.
+   - Lista vazia de handlers no constructor → log de alerta no startup (sanity
+     check, evita configuração silenciosa errada).
+3. **`ConfirmacaoRealizacaoHandlerTest`** (novo) — testa a chamada do Feign
+   client mockado. Move pra cá os asserts que hoje estão no
+   `OutboxEventProcessorTest` sobre lógica específica desse handler.
+
+**Métrica de sucesso da reestruturação:**
+
+Cobertura de linhas/branches deve subir ou ficar igual. Número absoluto de
+testes provavelmente cai (consolidação remove duplicação). Não é problema, é
+sinal de que os testes pararam de testar a mesma coisa em três lugares.
+
+**Antes de mergear, rodar:**
+
+```bash
+mvn -pl atendimento test
+mvn -pl administrativo test
+mvn -pl agendamento test
+mvn -pl commons test
+```
+
+E o smoke test do stack completo: `docker-compose up -d`, criar uma consulta
+via Postman e confirmar que o evento sai `PROCESSADO` em até 10s (o
+`poll-interval-ms` padrão).
+
 ---
 
 ## 5. Fase 2 — Reativo, faz quando a dor aparecer
