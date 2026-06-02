@@ -713,4 +713,60 @@ atividade no repo (sexta-feira de manhã, evitando fim de sprint).
 
 ---
 
+## 17. FAQ do grupo
+
+Perguntas antecipadas. Atualizar à medida que aparecer pergunta nova nas
+dailies.
+
+**P: Vale começar pela fase 1 mesmo se ninguém nunca trabalhou com SOLID na
+prática?**
+R: Vale. Fase 1 são refactors mecânicos, não exigem feeling de design. Quem
+nunca aplicou aprende fazendo, com diff pequeno e teste como rede.
+
+**P: Posso pular a interface e usar uma anotação tipo `@Strategy`?**
+R: Não tem `@Strategy` nativo no Spring. O padrão idiomático é interface +
+`@Component` + injeção como `List<T>`. Tentar atalhar com `@Configuration`
+registrando `Map<String, Bean>` funciona, mas fica menos legível e mais difícil
+de mockar em teste.
+
+**P: Como aplicar SOLID em controllers? Eles só delegam pro service.**
+R: Em geral não aplica. Controller magro (1 anotação, 1 chamada de service, 1
+return) já está SOLID por construção. Se um controller começar a ter lógica de
+coordenação (chama 3 services, monta o resultado, valida algo entre eles), aí
+vira candidato a virar service de aplicação à parte.
+
+**P: E os DTOs? Devo aplicar SOLID neles?**
+R: DTOs são estruturas de dados, não classes de comportamento. SOLID é
+ferramenta pra classes que orquestram. Records ou classes Lombok não precisam
+de abstração. Se um DTO virar "DTO com lógica", o lugar dessa lógica é o
+service, não o DTO.
+
+**P: Vou conseguir testar localmente os refactors da fase 1?**
+R: Sim. Subir o stack Docker (`docker-compose up`), rodar a collection Postman
+do domínio afetado. Pra 4.2 especificamente, executar o fluxo de realizar
+consulta e verificar que o evento sai `PROCESSADO` em até 10s (o
+`poll-interval-ms` padrão).
+
+**P: O grupo precisa estudar SOLID antes ou pode ir aprendendo no caminho?**
+R: A leitura mínima é o capítulo 7 do *Clean Architecture* (umas 30 páginas).
+Pra fase 1, isso já basta. Pra fase 2 e 3, vale alguém do grupo virar guardião
+do padrão e revisar PRs com olhar específico, sem virar gatekeeper.
+
+**P: E se a gente decidir mais pra frente que SOLID não vale a pena pra todo o
+projeto?**
+R: Tudo bem reverter ou parar. O roadmap é vivo. As métricas de sucesso da
+seção 10 servem pra essa decisão. Não tem vergonha em desfazer se a equipe
+acha que cerimônia ficou pesada demais. Pior que não aplicar é aplicar pela
+metade e ficar com dois estilos no mesmo módulo.
+
+**P: Como eu, autor de PR, sei se o que escrevi está SOLID?**
+R: Passa pela seção 14 (cheiros). Se a sua classe nova bateu em algum sinal,
+discute no PR description. Pode ser que valha, pode ser que não. O documentado
+vale mais que o "intuído".
+
+**P: Como adiciono uma nova pergunta a esse FAQ?**
+R: Edita esse arquivo, abre PR. O FAQ é parte viva do roadmap.
+
+---
+
 *Documento vivo. Revisar ao fim de cada fase. Não é tablet de pedra.*
