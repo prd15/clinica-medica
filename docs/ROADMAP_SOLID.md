@@ -515,4 +515,64 @@ Como saber daqui a três sprints se valeu:
 
 ---
 
+## 14. Cheiros SOLID — heurísticas pra identificar violações
+
+Apêndice prático. Quando bater dúvida sobre se uma classe está pedindo refactor
+ou ainda está OK, passa por essa lista. Não é check-list pra reprovar PR, é
+lente pra revisar com olhar treinado.
+
+### 14.1 SRP — sinais
+
+- Mais de uma "razão" na descrição em voz alta. "Esse service salva consulta E
+  envia evento E valida permissão."
+- Mais de cinco dependências injetadas no constructor.
+- `git log <arquivo>` mostra commits por motivos não relacionados nas últimas
+  semanas (uns por feature, outros por bug em camada diferente).
+- Dois pacotes completamente diferentes importam a mesma classe pelos mesmos
+  motivos diferentes.
+
+### 14.2 OCP — sinais
+
+- `switch (tipo)` ou cadeia `if/else if` por categoria que cresceu nos últimos
+  PRs.
+- Toda feature nova precisa abrir o mesmo arquivo.
+- Teste do método ganha mais um caso a cada feature, e nenhum dos casos antigos
+  sai.
+- Comentário tipo `// adicionar aqui quando criar o tipo X` no código.
+
+### 14.3 LSP — sinais
+
+- Subclasse que lança `UnsupportedOperationException` em método herdado.
+- Subclasse cujo método sobrescrito tem pré ou pós-condição mais restritiva que
+  a do pai.
+- "É um... mas só funciona se..." na descrição em voz alta da subclasse.
+- Teste do tipo base falha quando você passa uma instância da subclasse.
+
+### 14.4 ISP — sinais
+
+- Cliente injeta uma interface com 15 métodos mas chama só 2.
+- Mock em teste precisa stubbar 10 métodos só pra rodar o caso de 1.
+- Interface gigante cujo nome cresce a cada feature (`ConvenioFacade`,
+  `ConvenioMegaService`).
+- Implementação parcial: várias classes implementam a interface jogando
+  exception em metade dos métodos.
+
+### 14.5 DIP — sinais
+
+- `new` de classe concreta dentro de service ou controller (exceto DTOs e
+  exceptions, que são estruturas de dados).
+- Classe de domínio importando classe de infraestrutura (`org.hibernate.*`,
+  `com.mysql.*`, classes de cliente HTTP concreto).
+- Configuração de provedor (URL, secret, timeout, retry) hardcoded em vez de
+  injetada via properties.
+- Teste de unidade que precisa subir contexto Spring inteiro pra rodar.
+
+### 14.6 Combo de cheiros mais comuns no projeto
+
+- Service grande + switch por tipo + 7 dependências injetadas = SRP + OCP + DIP
+  todos juntos. Não tenta consertar os três no mesmo PR. Começa pelo SRP
+  (quebra em command/query/maintenance), aí o OCP e o DIP ficam óbvios.
+
+---
+
 *Documento vivo. Revisar ao fim de cada fase. Não é tablet de pedra.*
