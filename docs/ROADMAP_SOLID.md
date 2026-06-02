@@ -142,6 +142,39 @@ meter `switch (evento.getEventType())`. Cada tipo novo reabre o mesmo arquivo,
 cada teste do processor cresce, cada bug fixado num caso arrisca quebrar os
 outros.
 
+**Fluxo atual.**
+
+```mermaid
+flowchart LR
+    A[AtendimentoService.realizar] -->|grava evento na mesma tx| B[(outbox_event<br/>PENDENTE)]
+    C[OutboxScheduler<br/>@Scheduled fixedDelay] -->|busca PENDENTE+FALHA| B
+    C -->|para cada evento| D[OutboxEventProcessor.processar]
+    D -->|if CONFIRMACAO_REALIZACAO| E[AgendamentoConfirmacaoClient<br/>Feign call]
+    D -->|outro tipo?| F[sem caminho definido]
+    E -->|sucesso| G[(PROCESSADO)]
+    E -->|falha| H[(FALHA<br/>tentativas++)]
+```
+
+O ramo `F` é o sintoma: hoje só existe um `eventType` ativo. Adicionar o segundo
+significaria empurrar `switch` pra dentro do `D`.
+
+**Fluxo proposto.**
+
+```mermaid
+flowchart LR
+    A[AtendimentoService.realizar] -->|grava evento| B[(outbox_event<br/>PENDENTE)]
+    C[OutboxScheduler] -->|para cada evento| D[OutboxEventProcessor.processar]
+    D -->|lookup no Map<eventType,Handler>| E{handler<br/>existe?}
+    E -->|sim| F[ConfirmacaoRealizacaoHandler<br/>ou outro plugado]
+    E -->|nao| G[(DESCARTADO<br/>com motivo)]
+    F -->|sucesso| H[(PROCESSADO)]
+    F -->|exception| I[(FALHA<br/>tentativas++)]
+```
+
+Cada handler novo é uma classe nova com a anotação `@Component`. Spring detecta,
+o `Map` no processor se constrói no `@PostConstruct`, zero alteração no
+scheduler ou no processor.
+
 **Plano.**
 
 ```java
