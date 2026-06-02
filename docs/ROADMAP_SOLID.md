@@ -30,9 +30,12 @@ Antes do plano, vale reconhecer o que não precisa mexer:
   pacote. Cada serviço tem um motivo de mudar (SRP em escala arquitetural).
 - O Outbox já delega: `OutboxScheduler` drena, `OutboxEventProcessor` processa um
   evento, `OutboxEventRepository` consulta. Três classes, três motivos de mudar.
-- Os Feign clients são pequenos (`AgendamentoConfirmacaoClient` no atendimento,
-  `AdministrativoClient` no agendamento). Nada de cliente único com 30 métodos
-  (ISP na prática).
+- Os Feign clients são pequenos e envoltos por adapters de domínio. No
+  atendimento: `AgendamentoFeignClient` (interface Feign) +
+  `AgendamentoClient` (adapter `@Component` que traduz `FeignException.NotFound`
+  e `Conflict` em `EventoPermanenteException`). No agendamento:
+  `AdministrativoClient`. Domínio depende do adapter, não do FeignClient direto
+  (ISP na prática + isolamento de erros de transporte).
 - Spring praticamente força DIP via `@Autowired` em interfaces
   (`ConvenioRepository`, `OutboxEventRepository`).
 
@@ -149,7 +152,7 @@ flowchart LR
     A[AtendimentoService.realizar] -->|grava evento na mesma tx| B[(outbox_event<br/>PENDENTE)]
     C[OutboxScheduler<br/>@Scheduled fixedDelay] -->|busca PENDENTE+FALHA| B
     C -->|para cada evento| D[OutboxEventProcessor.processar]
-    D -->|if CONFIRMACAO_REALIZACAO| E[AgendamentoConfirmacaoClient<br/>Feign call]
+    D -->|if CONFIRMACAO_REALIZACAO| E[AgendamentoClient.confirmarRealizacao<br/>adapter -> Feign call]
     D -->|outro tipo?| F[sem caminho definido]
     E -->|sucesso| G[(PROCESSADO)]
     E -->|falha| H[(FALHA<br/>tentativas++)]
@@ -177,15 +180,25 @@ scheduler ou no processor.
 
 **Plano.**
 
+Visibilidade: a interface fica **package-private** (sem `public`) pra alinhar
+com o `OutboxEventProcessor`, que ja' e' package-private por decisao
+arquitetural documentada (deve ser usado apenas pelo `OutboxScheduler` do
+mesmo pacote). Handler em outro pacote nao precisa existir nesse modelo —
+todos vivem em `br.edu.imepac.atendimento.outbox`.
+
 ```java
-public interface OutboxEventHandler {
+interface OutboxEventHandler {
     String eventType();
     void handle(OutboxEvent evento);
 }
 
 @Component
 class ConfirmacaoRealizacaoHandler implements OutboxEventHandler {
-    private final AgendamentoConfirmacaoClient client;
+    private final AgendamentoClient agendamentoClient; // adapter, nao FeignClient
+
+    ConfirmacaoRealizacaoHandler(AgendamentoClient agendamentoClient) {
+        this.agendamentoClient = agendamentoClient;
+    }
 
     @Override
     public String eventType() {
@@ -194,50 +207,69 @@ class ConfirmacaoRealizacaoHandler implements OutboxEventHandler {
 
     @Override
     public void handle(OutboxEvent evento) {
-        // toda a lógica atual do processor que chama o Feign client
+        // aggregateId carrega o consultaId
+        // AgendamentoClient ja traduz 404/409 em EventoPermanenteException —
+        // handler nao precisa repetir esse tratamento
+        agendamentoClient.confirmarRealizacao(Long.valueOf(evento.getAggregateId()));
     }
 }
 ```
 
-O processor fica fino, só roteando:
+O processor fica fino e preserva a semântica atual de erro permanente vs
+transitório. Hoje o `OutboxEventProcessor` já distingue erros via
+`EventoPermanenteException` (DESCARTADO direto, sem retry) de erros genéricos
+(tentativas++ via `registrarFalha(maxRetry)`). O refactor mantém esse fluxo,
+só troca a entrega hardcoded por um lookup de handler:
 
 ```java
 @Component
-public class OutboxEventProcessor {
+class OutboxEventProcessor {
 
     private final Map<String, OutboxEventHandler> handlersPorTipo;
     private final OutboxEventRepository repository;
+    private final int maxRetry;
 
-    public OutboxEventProcessor(List<OutboxEventHandler> handlers,
-                                OutboxEventRepository repository) {
+    OutboxEventProcessor(List<OutboxEventHandler> handlers,
+                         OutboxEventRepository repository,
+                         @Value("${outbox.max-retry:3}") int maxRetry) {
         this.handlersPorTipo = handlers.stream()
                 .collect(Collectors.toUnmodifiableMap(
                         OutboxEventHandler::eventType, h -> h));
         this.repository = repository;
+        this.maxRetry = maxRetry;
     }
 
-    public void processar(OutboxEvent evento) {
-        OutboxEventHandler handler = handlersPorTipo.get(evento.getEventType());
-        if (handler == null) {
-            // ajustar nomes aos métodos reais do OutboxEvent
-            evento.descartar("eventType nao registrado: " + evento.getEventType());
-            repository.save(evento);
-            return;
-        }
+    void processar(OutboxEvent evento) {
         try {
-            handler.handle(evento);
+            entregar(evento);
             evento.marcarProcessado();
+        } catch (EventoPermanenteException e) {
+            // erro irrecuperável — DESCARTADO sem retry
+            evento.descartar();
+            // log com detalhe (id, eventType, mensagem)
         } catch (Exception e) {
-            evento.registrarFalha(e.getMessage());
+            // erro transitório — registrarFalha incrementa tentativas e
+            // promove a DESCARTADO se esgotou maxRetry
+            evento.registrarFalha(maxRetry);
         }
         repository.save(evento);
+    }
+
+    private void entregar(OutboxEvent evento) {
+        OutboxEventHandler handler = handlersPorTipo.get(evento.getEventType());
+        if (handler == null) {
+            throw new EventoPermanenteException(
+                    "Tipo de evento outbox desconhecido: " + evento.getEventType());
+        }
+        handler.handle(evento);
     }
 }
 ```
 
-Os nomes `descartar`, `marcarProcessado` e `registrarFalha` são ilustrativos.
-Ajustar ao contrato real do `OutboxEvent` (que já tem o `OutboxEvent.pendente(...)`
-como factory).
+API real do `OutboxEvent` (já implementada no projeto): `marcarProcessado()`,
+`descartar()` sem args (o motivo é logado pelo processor via SLF4J), e
+`registrarFalha(int maxRetry)` que incrementa tentativas e promove a
+`DESCARTADO` quando atinge o limite.
 
 **Testes a atualizar/criar:**
 
@@ -279,21 +311,32 @@ comportamento default pra testar.
 
 **Para 4.2 (Outbox handlers):**
 
-Reestruturar a suíte em três camadas, cada uma com escopo claro:
+A suíte de outbox no atendimento já tem `OutboxSchedulerTest`,
+`OutboxEventProcessorTest`, `OutboxEventTest` e `AgendamentoClientTest`.
+Reestruturar (não recriar) em três camadas com escopo claro:
 
 1. **`OutboxSchedulerTest`** (existente, quase não muda) — valida que o
    scheduler delega cada evento do batch ao processor. Continua mockando o
    processor por completo.
-2. **`OutboxEventProcessorTest`** (novo ou ajustado) — valida só o roteamento.
-   Casos mínimos:
+2. **`OutboxEventProcessorTest`** (existente, ajustar) — sai de mockar
+   `AgendamentoClient` direto, passa a mockar `OutboxEventHandler`. Mantém
+   asserts atuais (sucesso → PROCESSADO; falha transitória → FALHA
+   tentativas++; falha permanente → DESCARTADO) e adiciona caso novo de
+   handler ausente. Valida só o roteamento.
+   Casos mínimos cobertos:
    - Handler conhecido + sucesso → status `PROCESSADO`.
-   - Handler conhecido + exceção → status `FALHA`, `tentativas` incrementado.
-   - Handler ausente → status `DESCARTADO` com mensagem clara.
-   - Lista vazia de handlers no constructor → log de alerta no startup (sanity
-     check, evita configuração silenciosa errada).
-3. **`ConfirmacaoRealizacaoHandlerTest`** (novo) — testa a chamada do Feign
-   client mockado. Move pra cá os asserts que hoje estão no
-   `OutboxEventProcessorTest` sobre lógica específica desse handler.
+   - Handler conhecido + `EventoPermanenteException` → status `DESCARTADO`,
+     sem incrementar tentativas.
+   - Handler conhecido + Exception genérica → `registrarFalha(maxRetry)`,
+     status fica `FALHA` (ou `DESCARTADO` se esgotou o limite).
+   - Handler ausente → `EventoPermanenteException` interno, status
+     `DESCARTADO`.
+   - Lista vazia de handlers no constructor → log de alerta no startup
+     (sanity check).
+3. **`ConfirmacaoRealizacaoHandlerTest`** (novo) — testa a chamada do
+   `AgendamentoClient` mockado. Cobre: sucesso, exceção do client propaga
+   limpa pro processor. Não duplica os asserts de 404/409 já cobertos por
+   `AgendamentoClientTest` existente.
 
 **Métrica de sucesso da reestruturação:**
 
