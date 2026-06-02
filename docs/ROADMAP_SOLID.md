@@ -311,21 +311,32 @@ comportamento default pra testar.
 
 **Para 4.2 (Outbox handlers):**
 
-Reestruturar a suíte em três camadas, cada uma com escopo claro:
+A suíte de outbox no atendimento já tem `OutboxSchedulerTest`,
+`OutboxEventProcessorTest`, `OutboxEventTest` e `AgendamentoClientTest`.
+Reestruturar (não recriar) em três camadas com escopo claro:
 
 1. **`OutboxSchedulerTest`** (existente, quase não muda) — valida que o
    scheduler delega cada evento do batch ao processor. Continua mockando o
    processor por completo.
-2. **`OutboxEventProcessorTest`** (novo ou ajustado) — valida só o roteamento.
-   Casos mínimos:
+2. **`OutboxEventProcessorTest`** (existente, ajustar) — sai de mockar
+   `AgendamentoClient` direto, passa a mockar `OutboxEventHandler`. Mantém
+   asserts atuais (sucesso → PROCESSADO; falha transitória → FALHA
+   tentativas++; falha permanente → DESCARTADO) e adiciona caso novo de
+   handler ausente. Valida só o roteamento.
+   Casos mínimos cobertos:
    - Handler conhecido + sucesso → status `PROCESSADO`.
-   - Handler conhecido + exceção → status `FALHA`, `tentativas` incrementado.
-   - Handler ausente → status `DESCARTADO` com mensagem clara.
-   - Lista vazia de handlers no constructor → log de alerta no startup (sanity
-     check, evita configuração silenciosa errada).
-3. **`ConfirmacaoRealizacaoHandlerTest`** (novo) — testa a chamada do Feign
-   client mockado. Move pra cá os asserts que hoje estão no
-   `OutboxEventProcessorTest` sobre lógica específica desse handler.
+   - Handler conhecido + `EventoPermanenteException` → status `DESCARTADO`,
+     sem incrementar tentativas.
+   - Handler conhecido + Exception genérica → `registrarFalha(maxRetry)`,
+     status fica `FALHA` (ou `DESCARTADO` se esgotou o limite).
+   - Handler ausente → `EventoPermanenteException` interno, status
+     `DESCARTADO`.
+   - Lista vazia de handlers no constructor → log de alerta no startup
+     (sanity check).
+3. **`ConfirmacaoRealizacaoHandlerTest`** (novo) — testa a chamada do
+   `AgendamentoClient` mockado. Cobre: sucesso, exceção do client propaga
+   limpa pro processor. Não duplica os asserts de 404/409 já cobertos por
+   `AgendamentoClientTest` existente.
 
 **Métrica de sucesso da reestruturação:**
 
