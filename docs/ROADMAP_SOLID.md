@@ -634,4 +634,83 @@ abriram o mesmo arquivo) e adiar o resto.
 
 ---
 
+## 16. Plano de rollback
+
+Refactor é mudança estrutural. Se quebrar em produção, é melhor saber qual
+botão apertar antes do incidente do que durante. Plano por refactor da fase 1.
+
+### 16.1 Rollback de 4.1 (ServiceTokenProvider)
+
+**Probabilidade de quebra.** Baixa. O refactor é puramente de tipo, não muda
+semântica nem comportamento. O risco real seria injeção falhar em runtime se o
+`@ConditionalOnProperty` estiver mal configurado.
+
+**Diagnóstico se quebrar.** Erro de startup do tipo
+`NoSuchBeanDefinitionException: No qualifying bean of type 'ServiceTokenProvider'`
+ou `Could not autowire`. Aparece nos logs do Spring antes de o serviço aceitar
+requisições.
+
+**Reverter.** Como cada módulo é commit atômico (`refactor(integration): extrai
+ServiceTokenProvider...`), é cirúrgico:
+
+```bash
+git revert <sha-do-commit-do-modulo-afetado>
+git push
+```
+
+Outros módulos não são afetados.
+
+**Plano B sem revert.** Marcar `KeycloakServiceTokenProvider` como
+`@Primary` e voltar o `RequestInterceptor` pra depender da classe concreta.
+Mais arriscado que o revert porque mistura camadas. Só usar se o revert estiver
+bloqueado por outros commits encostados.
+
+### 16.2 Rollback de 4.2 (Outbox handlers)
+
+**Probabilidade de quebra.** Média. Aqui muda roteamento de eventos. Bug
+plausível: evento de tipo `CONFIRMACAO_REALIZACAO` ficar `DESCARTADO` por
+mismatch na string retornada pelo `eventType()` do handler.
+
+**Diagnóstico se quebrar.**
+
+```sql
+SELECT event_type, status, COUNT(*)
+FROM outbox_event
+WHERE criado_em > '<data-do-deploy>'
+GROUP BY event_type, status;
+```
+
+Se aparecer `DESCARTADO` em quantidade inesperada de `CONFIRMACAO_REALIZACAO`,
+o roteamento está errado.
+
+**Reverter.** `git revert <sha-do-PR-merge>` desfaz o refactor. Mas os eventos
+já marcados como `DESCARTADO` não voltam sozinhos. Após o revert:
+
+```sql
+UPDATE outbox_event
+SET status = 'PENDENTE',
+    tentativas = 0,
+    ultimo_erro = NULL
+WHERE status = 'DESCARTADO'
+  AND event_type = 'CONFIRMACAO_REALIZACAO'
+  AND criado_em > '<data-do-deploy>';
+```
+
+O scheduler vai poll-ar de novo e processar com a lógica antiga.
+
+**Defesa preventiva.** Antes de mergear `4.2`, rodar o stack em
+ambiente de teste por 48h com tráfego real (ou simulado por script) e verificar
+que zero eventos vão pra `DESCARTADO` inesperado.
+
+### 16.3 Quando o rollback NÃO é uma opção
+
+Se o refactor já está em produção há semanas e novas features dependem da
+estrutura nova, reverter quebra mais que conserta. Nesses casos, o caminho é
+forward fix: PR de correção em cima do refactor, não revert.
+
+Por isso a recomendação de mergear refactor estrutural em momento de baixa
+atividade no repo (sexta-feira de manhã, evitando fim de sprint).
+
+---
+
 *Documento vivo. Revisar ao fim de cada fase. Não é tablet de pedra.*
