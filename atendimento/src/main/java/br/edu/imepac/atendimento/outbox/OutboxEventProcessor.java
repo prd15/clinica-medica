@@ -1,9 +1,12 @@
 package br.edu.imepac.atendimento.outbox;
 
-import br.edu.imepac.atendimento.integration.agendamento.AgendamentoClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 // Processa UM evento por vez, no contexto transacional do scheduler (que mantem o
 // LOCK PESSIMISTIC_WRITE com SKIP_LOCKED ate o commit do batch — essencial pra
@@ -18,22 +21,31 @@ import org.springframework.stereotype.Component;
 // num evento (ex.: DataIntegrityViolationException no save) pode causar rollback do
 // batch inteiro; aceitavel porque outro scheduler/proxima execucao retoma. O try/catch
 // abaixo lida com TODA excecao da entrega (RuntimeException), nao afeta o save.
+//
+// Roteamento por eventType (OCP): processor delega a entrega ao OutboxEventHandler
+// cujo eventType() bate com o evento. Tipo desconhecido -> EventoPermanenteException
+// -> DESCARTADO. Adicionar tipo novo nao reabre essa classe — basta criar um novo
+// @Component package-private que implemente OutboxEventHandler no mesmo pacote.
 @Slf4j
 @Component
 class OutboxEventProcessor {
 
-    static final String EVENT_CONFIRMACAO_REALIZACAO = "CONFIRMACAO_REALIZACAO";
-
     private final OutboxEventRepository outboxEventRepository;
-    private final AgendamentoClient agendamentoClient;
+    private final Map<String, OutboxEventHandler> handlersPorTipo;
     private final int maxRetry;
 
     OutboxEventProcessor(OutboxEventRepository outboxEventRepository,
-                         AgendamentoClient agendamentoClient,
+                         List<OutboxEventHandler> handlers,
                          @Value("${outbox.max-retry:3}") int maxRetry) {
         this.outboxEventRepository = outboxEventRepository;
-        this.agendamentoClient = agendamentoClient;
+        this.handlersPorTipo = handlers.stream()
+                .collect(Collectors.toUnmodifiableMap(
+                        OutboxEventHandler::eventType, h -> h));
         this.maxRetry = maxRetry;
+        if (this.handlersPorTipo.isEmpty()) {
+            log.warn("OutboxEventProcessor inicializado sem nenhum OutboxEventHandler — "
+                    + "todos os eventos viraro DESCARTADO. Verifique a configuracao.");
+        }
     }
 
     void processar(OutboxEvent evento) {
@@ -61,11 +73,11 @@ class OutboxEventProcessor {
     }
 
     private void entregar(OutboxEvent evento) {
-        if (EVENT_CONFIRMACAO_REALIZACAO.equals(evento.getEventType())) {
-            // aggregateId carrega o consultaId que deve ser marcado como REALIZADA
-            agendamentoClient.confirmarRealizacao(Long.valueOf(evento.getAggregateId()));
-            return;
+        OutboxEventHandler handler = handlersPorTipo.get(evento.getEventType());
+        if (handler == null) {
+            throw new EventoPermanenteException(
+                    "Tipo de evento outbox desconhecido: " + evento.getEventType());
         }
-        throw new EventoPermanenteException("Tipo de evento outbox desconhecido: " + evento.getEventType());
+        handler.handle(evento);
     }
 }
