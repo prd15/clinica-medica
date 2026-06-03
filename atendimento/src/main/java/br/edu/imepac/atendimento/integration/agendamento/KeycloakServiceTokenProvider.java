@@ -17,7 +17,7 @@ import java.util.Map;
 // O OutboxScheduler roda em background thread — nao ha SecurityContext de usuario.
 @Slf4j
 @Component
-class ServiceTokenProvider {
+class KeycloakServiceTokenProvider {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
