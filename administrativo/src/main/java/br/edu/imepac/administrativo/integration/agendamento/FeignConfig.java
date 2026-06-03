@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 public class FeignConfig {
 
     @Autowired
-    private KeycloakServiceTokenProvider tokenProvider;
+    private ServiceTokenProvider tokenProvider;
 
     @Bean
     public RequestInterceptor serviceAuthInterceptor() {
