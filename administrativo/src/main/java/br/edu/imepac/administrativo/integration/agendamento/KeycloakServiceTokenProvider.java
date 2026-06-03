@@ -18,7 +18,7 @@ import java.util.Map;
 // so o refresh serializa. Cache com margem de 30s antes do expiry.
 @Slf4j
 @Component
-class ServiceTokenProvider {
+class KeycloakServiceTokenProvider {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
