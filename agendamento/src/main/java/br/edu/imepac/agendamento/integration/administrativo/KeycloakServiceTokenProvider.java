@@ -15,7 +15,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
-class ServiceTokenProvider {
+class KeycloakServiceTokenProvider {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
