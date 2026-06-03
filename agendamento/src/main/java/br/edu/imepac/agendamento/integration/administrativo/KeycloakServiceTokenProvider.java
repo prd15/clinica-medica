@@ -2,6 +2,7 @@ package br.edu.imepac.agendamento.integration.administrativo;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -13,9 +14,13 @@ import org.springframework.web.client.RestTemplate;
 import java.time.Instant;
 import java.util.Map;
 
+// Implementacao do contrato ServiceTokenProvider para Keycloak (client_credentials).
+// Ativo por padrao (matchIfMissing=true). Trocar de provedor = criar outro
+// componente que implemente ServiceTokenProvider e ajustar auth.provider.
 @Slf4j
 @Component
-class KeycloakServiceTokenProvider {
+@ConditionalOnProperty(name = "auth.provider", havingValue = "keycloak", matchIfMissing = true)
+class KeycloakServiceTokenProvider implements ServiceTokenProvider {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -31,7 +36,8 @@ class KeycloakServiceTokenProvider {
     private volatile String cachedToken;
     private volatile Instant expiresAt = Instant.MIN;
 
-    String getToken() {
+    @Override
+    public String getToken() {
         String token = cachedToken;
         if (token != null && Instant.now().isBefore(expiresAt.minusSeconds(30))) {
             return token;
