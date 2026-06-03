@@ -2,6 +2,7 @@ package br.edu.imepac.administrativo.integration.agendamento;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,9 +17,14 @@ import java.util.Map;
 // Obtém e cacheia token client_credentials para chamadas Feign internas com role SERVICE.
 // Double-checked locking: token valido em cache e servido sem lock (campos volatile);
 // so o refresh serializa. Cache com margem de 30s antes do expiry.
+//
+// Implementacao do contrato ServiceTokenProvider para Keycloak. Ativo por
+// padrao (matchIfMissing=true). Trocar de provedor = criar outro componente
+// que implemente ServiceTokenProvider e ajustar auth.provider.
 @Slf4j
 @Component
-class KeycloakServiceTokenProvider {
+@ConditionalOnProperty(name = "auth.provider", havingValue = "keycloak", matchIfMissing = true)
+class KeycloakServiceTokenProvider implements ServiceTokenProvider {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -34,7 +40,8 @@ class KeycloakServiceTokenProvider {
     private volatile String cachedToken;
     private volatile Instant expiresAt = Instant.MIN;
 
-    String getToken() {
+    @Override
+    public String getToken() {
         String token = cachedToken;
         if (token != null && Instant.now().isBefore(expiresAt.minusSeconds(30))) {
             return token;
