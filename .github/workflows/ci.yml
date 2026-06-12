@@ -114,7 +114,8 @@ jobs:
 
           check "sem token retorna 401"             401 http://localhost:8080/api/admin/v1/convenios
           check "GET convenios via gateway (admin)" 200 -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/admin/v1/convenios
-          check "GET consultas via gateway (admin)" 200 -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/agendamentos/v1/consultas
+          check "GET consultas sem filtro retorna 400" 400 -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/agendamentos/v1/consultas
+          check "GET consultas via gateway (admin)" 200 -H "Authorization: Bearer $TOKEN" "http://localhost:8080/api/agendamentos/v1/consultas?data=$(date +%F)"
           check "medico em convenios retorna 403"   403 -H "Authorization: Bearer $TOKEN_MEDICO" http://localhost:8080/api/admin/v1/convenios
 
       - name: Coleta logs dos containers
