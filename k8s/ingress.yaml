@@ -6,33 +6,26 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: administrativo.clinica.local
+    # Todo o trafego de API entra pelo gateway (rotas /api/admin, /api/agendamentos,
+    # /api/atendimentos) — os servicos nao sao mais expostos diretamente
+    - host: clinica.local
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: administrativo
+                name: gateway
                 port:
-                  number: 8081
-    - host: agendamento.clinica.local
+                  number: 8080
+    # Keycloak exposto para obtencao de tokens de fora do cluster
+    - host: keycloak.clinica.local
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: agendamento
+                name: keycloak
                 port:
-                  number: 8082
-    - host: atendimento.clinica.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: atendimento
-                port:
-                  number: 8083
+                  number: 8180

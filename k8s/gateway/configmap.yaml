@@ -1,13 +1,11 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: agendamento-config
+  name: gateway-config
   namespace: clinica
 data:
-  DB_HOST: db-agendamento
-  DB_PORT: "3306"
-  DB_USER: root
   ADMINISTRATIVO_URL: http://administrativo:8081
+  AGENDAMENTO_URL: http://agendamento:8082
+  ATENDIMENTO_URL: http://atendimento:8083
   KEYCLOAK_JWK_URI: http://keycloak:8180/realms/clinica/protocol/openid-connect/certs
-  KEYCLOAK_TOKEN_URL: http://keycloak:8180/realms/clinica/protocol/openid-connect/token
   KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/clinica

@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: clinica
+  labels:
+    app: keycloak
+spec:
+  replicas: 1
+  # Recreate: o start-dev usa H2 embarcado — duas instancias no rollout conflitam
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:24.0
+          args: ["start-dev", "--import-realm"]
+          ports:
+            - containerPort: 8180
+          env:
+            - name: KEYCLOAK_ADMIN
+              value: admin
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: admin
+            # Hostname fixo: o issuer dos tokens vira http://keycloak:8180/realms/clinica,
+            # o mesmo valor validado pelos servicos via KEYCLOAK_ISSUER_URI
+            - name: KC_HOSTNAME
+              value: keycloak
+            - name: KC_HOSTNAME_PORT
+              value: "8180"
+            - name: KC_HTTP_PORT
+              value: "8180"
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            # Substituido no realm-clinica.json durante o import (placeholder ${KEYCLOAK_SERVICE_SECRET})
+            - name: KEYCLOAK_SERVICE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-secrets
+                  key: keycloak-service-secret
+          volumeMounts:
+            # ConfigMap criado a partir do arquivo do repo (ver k8s/README.md):
+            # kubectl create configmap keycloak-realm --from-file=keycloak/realm-clinica.json -n clinica
+            - name: realm-import
+              mountPath: /opt/keycloak/data/import
+              readOnly: true
+          # O kubelet faz o httpGet de fora do container, entao funciona mesmo
+          # sem curl/wget na imagem (limitacao que o docker-compose contorna com /dev/tcp)
+          startupProbe:
+            httpGet:
+              path: /realms/clinica
+              port: 8180
+            periodSeconds: 5
+            # ate 5min de boot — em maquinas locais com pouca CPU o Keycloak demora
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /realms/clinica
+              port: 8180
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /realms/clinica
+              port: 8180
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+      volumes:
+        - name: realm-import
+          configMap:
+            name: keycloak-realm
