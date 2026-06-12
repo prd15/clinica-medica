@@ -18,6 +18,7 @@ A borda da plataforma é protegida por um API Gateway com autenticação OAuth2/
 - [Execução local (sem Docker)](#execução-local-sem-docker)
 - [Documentação da API (Swagger)](#documentação-da-api-swagger)
 - [Testes e qualidade](#testes-e-qualidade)
+- [CI/CD (GitHub Actions)](#cicd-github-actions)
 - [Implantação em Kubernetes](#implantação-em-kubernetes)
 - [Variáveis de ambiente](#variáveis-de-ambiente)
 - [Estrutura do repositório](#estrutura-do-repositório)
@@ -307,6 +308,27 @@ npx newman run docs/relatorios-collection.json   -e $ENV
 ```
 
 > O environment `docs/local.postman_environment.json` aponta para as portas diretas sem token e resultará em `401` — use-o apenas em cenários sem segurança.
+
+---
+
+## CI/CD (GitHub Actions)
+
+Dois workflows em `.github/workflows/`:
+
+| Workflow | Gatilho | O que faz |
+|----------|---------|-----------|
+| `ci.yml` (job `build-test`) | push e pull request em `main`/`development` | `mvn clean verify` na raiz + publicação dos resultados Surefire como check |
+| `ci.yml` (job `smoke`) | após `build-test` | Sobe a stack completa via Docker Compose (valida os 4 Dockerfiles), aguarda Keycloak e os health checks, obtém JWT real e testa auth/RBAC via gateway (401 sem token, 200 com ADMIN, 403 com role insuficiente) |
+| `docker-publish.yml` | push em `main`/`development` | Build das 4 imagens Docker (matrix) e push para o GHCR com cache de camadas |
+
+Imagens publicadas (tags: nome da branch, `sha-<short>` e `latest` apenas na `main`):
+
+- `ghcr.io/prd15/clinica-medica-administrativo`
+- `ghcr.io/prd15/clinica-medica-agendamento`
+- `ghcr.io/prd15/clinica-medica-atendimento`
+- `ghcr.io/prd15/clinica-medica-gateway`
+
+A autenticação no GHCR usa o `GITHUB_TOKEN` nativo (`packages: write`) — nenhum secret adicional é necessário. Para baixar as imagens localmente, faça `docker login ghcr.io` com um PAT com escopo `read:packages`.
 
 ---
 
