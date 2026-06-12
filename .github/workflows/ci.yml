@@ -43,3 +43,91 @@ jobs:
         with:
           name: surefire-reports
           path: '**/target/surefire-reports/'
+
+  smoke:
+    runs-on: ubuntu-latest
+    needs: build-test
+    env:
+      DB_USER: root
+      DB_PASS: smoke-ci-pass
+      KEYCLOAK_SERVICE_SECRET: clinica-service-secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sobe a stack (compose build valida os 4 Dockerfiles)
+        run: docker compose up -d --build
+
+      - name: Aguarda Keycloak e microsservicos
+        run: |
+          wait_for() {
+            local name=$1 url=$2
+            for i in $(seq 1 60); do
+              if curl -fsS "$url" > /dev/null 2>&1; then
+                echo "$name OK"
+                return 0
+              fi
+              sleep 5
+            done
+            echo "::error::$name nao respondeu em $url"
+            return 1
+          }
+          wait_for "keycloak"       http://localhost:8180/realms/clinica
+          wait_for "administrativo" http://localhost:8081/actuator/health
+          wait_for "agendamento"    http://localhost:8082/actuator/health
+          wait_for "atendimento"    http://localhost:8083/actuator/health
+          wait_for "gateway"        http://localhost:8080/actuator/health
+
+      - name: Smoke tests via gateway (auth + RBAC)
+        run: |
+          set -e
+
+          echo "Obtendo token do Keycloak (admin)..."
+          TOKEN=$(curl -fsS -X POST \
+            http://localhost:8180/realms/clinica/protocol/openid-connect/token \
+            -d grant_type=password \
+            -d client_id=clinica-frontend \
+            -d username=admin \
+            -d password='Admin123!' | jq -r .access_token)
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "::error::Falha ao obter token do Keycloak"
+            exit 1
+          fi
+
+          check() {
+            local desc=$1 expected=$2; shift 2
+            local status
+            status=$(curl -s -o /dev/null -w '%{http_code}' "$@")
+            if [ "$status" != "$expected" ]; then
+              echo "::error::$desc — esperado $expected, recebido $status"
+              exit 1
+            fi
+            echo "$desc → $status OK"
+          }
+
+          echo "Obtendo token do Keycloak (medico)..."
+          TOKEN_MEDICO=$(curl -fsS -X POST \
+            http://localhost:8180/realms/clinica/protocol/openid-connect/token \
+            -d grant_type=password \
+            -d client_id=clinica-frontend \
+            -d username=medico \
+            -d password='Medico123!' | jq -r .access_token)
+
+          check "sem token retorna 401"             401 http://localhost:8080/api/admin/v1/convenios
+          check "GET convenios via gateway (admin)" 200 -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/admin/v1/convenios
+          check "GET consultas via gateway (admin)" 200 -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/agendamentos/v1/consultas
+          check "medico em convenios retorna 403"   403 -H "Authorization: Bearer $TOKEN_MEDICO" http://localhost:8080/api/admin/v1/convenios
+
+      - name: Coleta logs dos containers
+        if: failure()
+        run: docker compose logs > compose-logs.txt
+
+      - name: Upload logs
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: compose-logs
+          path: compose-logs.txt
+
+      - name: Derruba a stack
+        if: always()
+        run: docker compose down -v

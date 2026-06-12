@@ -317,7 +317,8 @@ Dois workflows em `.github/workflows/`:
 
 | Workflow | Gatilho | O que faz |
 |----------|---------|-----------|
-| `ci.yml` | push e pull request em `main`/`development` | `mvn clean verify` na raiz + publicação dos resultados Surefire como check |
+| `ci.yml` (job `build-test`) | push e pull request em `main`/`development` | `mvn clean verify` na raiz + publicação dos resultados Surefire como check |
+| `ci.yml` (job `smoke`) | após `build-test` | Sobe a stack completa via Docker Compose (valida os 4 Dockerfiles), aguarda Keycloak e os health checks, obtém JWT real e testa auth/RBAC via gateway (401 sem token, 200 com ADMIN, 403 com role insuficiente) |
 | `docker-publish.yml` | push em `main`/`development` | Build das 4 imagens Docker (matrix) e push para o GHCR com cache de camadas |
 
 Imagens publicadas (tags: nome da branch, `sha-<short>` e `latest` apenas na `main`):
