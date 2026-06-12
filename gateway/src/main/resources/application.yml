@@ -1,0 +1,50 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      routes:
+        - id: administrativo
+          uri: ${ADMINISTRATIVO_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/admin/**
+          filters:
+            - StripPrefix=2
+
+        - id: agendamento
+          uri: ${AGENDAMENTO_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/agendamentos/**
+          filters:
+            - StripPrefix=2
+
+        - id: atendimento
+          uri: ${ATENDIMENTO_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/atendimentos/**
+          filters:
+            - StripPrefix=2
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # jwk-set-uri: lazy fetch das chaves publicas
+          # issuer-uri + audience: validados explicitamente no JwtDecoder (SecurityConfig)
+          # Dentro do Docker: KEYCLOAK_JWK_URI=http://keycloak:8180/realms/clinica/protocol/openid-connect/certs
+          jwk-set-uri: ${KEYCLOAK_JWK_URI:http://localhost:8180/realms/clinica/protocol/openid-connect/certs}
+
+app:
+  security:
+    jwt:
+      issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/clinica}
+      audience: ${KEYCLOAK_AUDIENCE:clinica-api}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

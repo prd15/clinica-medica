@@ -8,3 +8,6 @@ data:
   DB_PORT: "3306"
   DB_USER: root
   AGENDAMENTO_URL: http://agendamento:8082
+  KEYCLOAK_JWK_URI: http://keycloak:8180/realms/clinica/protocol/openid-connect/certs
+  KEYCLOAK_TOKEN_URL: http://keycloak:8180/realms/clinica/protocol/openid-connect/token
+  KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/clinica

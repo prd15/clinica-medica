@@ -7,6 +7,10 @@ metadata:
     app: administrativo
 spec:
   replicas: 1
+  # Recreate: evita duas instancias simultaneas rodando ddl-auto=update
+  # no mesmo banco durante o rollout (e poupa memoria em cluster local)
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: administrativo
@@ -48,6 +52,36 @@ spec:
                 configMapKeyRef:
                   name: administrativo-config
                   key: AGENDAMENTO_URL
+            - name: KEYCLOAK_JWK_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: administrativo-config
+                  key: KEYCLOAK_JWK_URI
+            - name: KEYCLOAK_TOKEN_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: administrativo-config
+                  key: KEYCLOAK_TOKEN_URL
+            - name: KEYCLOAK_ISSUER_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: administrativo-config
+                  key: KEYCLOAK_ISSUER_URI
+            # Sem default no application.properties — o pod nem sobe sem esse secret
+            - name: KEYCLOAK_SERVICE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-secrets
+                  key: keycloak-service-secret
+          # Spring Boot leva ~30-60s pra subir; sem startupProbe o liveness
+          # mata o pod antes do fim do boot
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            periodSeconds: 5
+            # ate 5min de boot — em maquinas locais com pouca CPU o Spring demora
+            failureThreshold: 60
           livenessProbe:
             httpGet:
               path: /actuator/health

@@ -1,67 +1,69 @@
 package br.edu.imepac.atendimento.outbox;
 
-import br.edu.imepac.atendimento.clients.AgendamentoClient;
-import br.edu.imepac.commons.entities.atendimento.OutboxEvent;
-import br.edu.imepac.commons.entities.atendimento.OutboxStatus;
-import br.edu.imepac.commons.repositories.atendimento.OutboxEventRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-// Entrega os eventos do outbox ao agendamento, com retry. Roda em intervalo fixo
-// e so reprocessa eventos PENDENTE/FALHA que ainda nao esgotaram o limite de tentativas.
-// Cada evento e isolado: uma falha (ex.: payload invalido) marca aquele evento como
-// FALHA e nao impede a entrega dos demais.
+// Drena o outbox em batches. A query usa lock pessimista com SKIP LOCKED — replicas
+// concorrentes do scheduler trabalham em eventos disjuntos (sem dupla entrega).
+// Cada evento e processado pelo OutboxEventProcessor na mesma transacao do scheduler
+// (NAO usa REQUIRES_NEW — ver justificativa no OutboxEventProcessor).
 @Slf4j
 @Component
 public class OutboxScheduler {
 
-    static final String EVENT_CONFIRMACAO_REALIZACAO = "CONFIRMACAO_REALIZACAO";
-
     private final OutboxEventRepository outboxEventRepository;
-    private final AgendamentoClient agendamentoClient;
+    private final OutboxEventProcessor processor;
     private final int maxRetry;
+    private final int batchSize;
+    private final int retentionDays;
 
     public OutboxScheduler(OutboxEventRepository outboxEventRepository,
-                           AgendamentoClient agendamentoClient,
-                           @Value("${outbox.max-retry:3}") int maxRetry) {
+                           OutboxEventProcessor processor,
+                           @Value("${outbox.max-retry:3}") int maxRetry,
+                           @Value("${outbox.batch-size:50}") int batchSize,
+                           @Value("${outbox.retention-days:7}") int retentionDays) {
         this.outboxEventRepository = outboxEventRepository;
-        this.agendamentoClient = agendamentoClient;
+        this.processor = processor;
         this.maxRetry = maxRetry;
+        this.batchSize = batchSize;
+        this.retentionDays = retentionDays;
     }
 
+    // @Transactional sustenta o LOCK PESSIMISTIC_WRITE da query buscarParaProcessar
+    // ate o final do batch — outras replicas pulam esses eventos via SKIP LOCKED.
+    // Os updates de status do processor ocorrem nesta mesma transacao (sem REQUIRES_NEW).
     @Scheduled(fixedDelayString = "${outbox.poll-interval-ms:10000}")
     @Transactional
     public void processarPendentes() {
-        List<OutboxEvent> eventos = outboxEventRepository.findByStatusInAndTentativasLessThan(
-                List.of(OutboxStatus.PENDENTE, OutboxStatus.FALHA), maxRetry);
+        List<OutboxEvent> eventos = outboxEventRepository.buscarParaProcessar(
+                List.of(OutboxStatus.PENDENTE, OutboxStatus.FALHA), maxRetry,
+                PageRequest.of(0, batchSize));
         if (eventos.isEmpty()) {
             return;
         }
         for (OutboxEvent evento : eventos) {
-            try {
-                entregar(evento);
-                evento.marcarProcessado();
-            } catch (Exception e) {
-                evento.registrarFalha();
-                log.error("Falha ao entregar evento outbox id={} eventType={} aggregateId={} tentativa={}/{}: {}",
-                        evento.getId(), evento.getEventType(), evento.getAggregateId(),
-                        evento.getTentativas(), maxRetry, e.getMessage());
-            }
-            outboxEventRepository.save(evento);
+            processor.processar(evento);
         }
     }
 
-    private void entregar(OutboxEvent evento) {
-        if (EVENT_CONFIRMACAO_REALIZACAO.equals(evento.getEventType())) {
-            // aggregateId carrega o consultaId que deve ser marcado como REALIZADA
-            agendamentoClient.confirmarRealizacao(Long.valueOf(evento.getAggregateId()));
-        } else {
-            throw new IllegalStateException("Tipo de evento outbox desconhecido: " + evento.getEventType());
+    // housekeeping: remove eventos terminais antigos para a tabela nao crescer indefinidamente.
+    // Cadencia propria (default diaria); separada do poll de entrega.
+    @Scheduled(fixedDelayString = "${outbox.purge-interval-ms:86400000}")
+    @Transactional
+    public void purgarTerminais() {
+        LocalDateTime limite = LocalDateTime.now().minusDays(retentionDays);
+        int removidos = outboxEventRepository.purgarTerminaisAntesDe(
+                List.of(OutboxStatus.PROCESSADO, OutboxStatus.DESCARTADO), limite);
+        if (removidos > 0) {
+            log.info("Outbox housekeeping: {} eventos terminais removidos (anteriores a {})",
+                    removidos, limite);
         }
     }
 }

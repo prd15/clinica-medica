@@ -1,0 +1,342 @@
+{
+  "info": {
+    "name": "Clinica Medica — Gateway Auth (Fase 3)",
+    "_postman_id": "clinica-gateway-auth-001",
+    "description": "Validacao de autenticacao e autorizacao via API Gateway. Testa ADMIN, ATENDENTE, MEDICO e chamada sem token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "convenio_id", "value": "" },
+    { "key": "convenio_cnpj", "value": "" },
+    { "key": "convenio_nome", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - Sem Token - GET convenios - 401",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Sem token retorna 401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gateway_url}}/api/admin/v1/convenios",
+          "host": ["{{gateway_url}}"],
+          "path": ["api", "admin", "v1", "convenios"]
+        }
+      }
+    },
+    {
+      "name": "02 - Obter Token ADMIN",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Token ADMIN obtido', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test('access_token presente', () => pm.expect(json.access_token).to.be.a('string').and.not.empty);",
+              "pm.environment.set('token_admin', json.access_token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "password" },
+            { "key": "client_id", "value": "{{client_id}}" },
+            { "key": "username", "value": "{{username_admin}}" },
+            { "key": "password", "value": "{{password_admin}}" }
+          ]
+        },
+        "url": {
+          "raw": "{{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/token",
+          "host": ["{{keycloak_url}}"],
+          "path": ["realms", "{{realm}}", "protocol", "openid-connect", "token"]
+        }
+      }
+    },
+    {
+      "name": "03 - Obter Token ATENDENTE",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Token ATENDENTE obtido', () => pm.response.to.have.status(200));",
+              "pm.environment.set('token_atendente', pm.response.json().access_token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "password" },
+            { "key": "client_id", "value": "{{client_id}}" },
+            { "key": "username", "value": "{{username_atendente}}" },
+            { "key": "password", "value": "{{password_atendente}}" }
+          ]
+        },
+        "url": {
+          "raw": "{{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/token",
+          "host": ["{{keycloak_url}}"],
+          "path": ["realms", "{{realm}}", "protocol", "openid-connect", "token"]
+        }
+      }
+    },
+    {
+      "name": "04 - Obter Token MEDICO",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Token MEDICO obtido', () => pm.response.to.have.status(200));",
+              "pm.environment.set('token_medico', pm.response.json().access_token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "password" },
+            { "key": "client_id", "value": "{{client_id}}" },
+            { "key": "username", "value": "{{username_medico}}" },
+            { "key": "password", "value": "{{password_medico}}" }
+          ]
+        },
+        "url": {
+          "raw": "{{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/token",
+          "host": ["{{keycloak_url}}"],
+          "path": ["realms", "{{realm}}", "protocol", "openid-connect", "token"]
+        }
+      }
+    },
+    {
+      "name": "05 - ADMIN - POST convenio - 201",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "const ts = Date.now().toString().slice(-8).padStart(8, '0');",
+              "const cnpj = ts.slice(0,2) + '.' + ts.slice(2,5) + '.' + ts.slice(5,8) + '/0001-' + ts.slice(0,2);",
+              "pm.collectionVariables.set('convenio_cnpj', cnpj);",
+              "pm.collectionVariables.set('convenio_nome', 'Plano-' + Date.now());"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('ADMIN cria convenio - 201', () => pm.response.to.have.status(201));",
+              "pm.test('ID retornado', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.id).to.be.a('number');",
+              "  pm.collectionVariables.set('convenio_id', json.id);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"{{convenio_nome}}\",\n  \"descricao\": \"Plano de saude via Gateway\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 99999-1234\",\n  \"ativo\": true\n}"
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/admin/v1/convenios",
+          "host": ["{{gateway_url}}"],
+          "path": ["api", "admin", "v1", "convenios"]
+        }
+      }
+    },
+    {
+      "name": "06 - ATENDENTE - GET convenios - 200",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('ATENDENTE le convenios - 200', () => pm.response.to.have.status(200));",
+              "pm.test('Resposta e lista', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token_atendente}}" }
+        ],
+        "url": {
+          "raw": "{{gateway_url}}/api/admin/v1/convenios",
+          "host": ["{{gateway_url}}"],
+          "path": ["api", "admin", "v1", "convenios"]
+        }
+      }
+    },
+    {
+      "name": "07 - ATENDENTE - POST atendente - 403 (proibido)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('ATENDENTE nao pode criar atendente - 403', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_atendente}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Teste Bloqueado\",\n  \"usuario\": \"teste.bloqueado\",\n  \"senha\": \"Senha@123\",\n  \"ativo\": true\n}"
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/admin/v1/atendentes",
+          "host": ["{{gateway_url}}"],
+          "path": ["api", "admin", "v1", "atendentes"]
+        }
+      }
+    },
+    {
+      "name": "08 - MEDICO - GET medicos ativos - 200",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('MEDICO le medicos ativos - 200', () => pm.response.to.have.status(200));",
+              "pm.test('Resposta e lista', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token_medico}}" }
+        ],
+        "url": {
+          "raw": "{{gateway_url}}/api/admin/v1/medicos/ativos",
+          "host": ["{{gateway_url}}"],
+          "path": ["api", "admin", "v1", "medicos", "ativos"]
+        }
+      }
+    },
+    {
+      "name": "09 - MEDICO - POST convenio - 403 (proibido)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('MEDICO nao pode criar convenio - 403', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_medico}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Bloqueado\",\n  \"descricao\": \"Nao deve criar\",\n  \"cnpj\": \"00.000.000/0001-00\",\n  \"telefone\": \"(11) 1111-1111\",\n  \"ativo\": true\n}"
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/admin/v1/convenios",
+          "host": ["{{gateway_url}}"],
+          "path": ["api", "admin", "v1", "convenios"]
+        }
+      }
+    },
+    {
+      "name": "10 - ADMIN - GET convenio por ID - 200",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('ADMIN busca convenio criado - 200', () => pm.response.to.have.status(200));",
+              "pm.test('CNPJ correto', () => pm.expect(pm.response.json().cnpj).to.eql(pm.collectionVariables.get('convenio_cnpj')));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+        ],
+        "url": {
+          "raw": "{{gateway_url}}/api/admin/v1/convenios/{{convenio_id}}",
+          "host": ["{{gateway_url}}"],
+          "path": ["api", "admin", "v1", "convenios", "{{convenio_id}}"]
+        }
+      }
+    },
+    {
+      "name": "11 - Actuator Health Gateway - 200 (publico)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Gateway health publico - 200', () => pm.response.to.have.status(200));",
+              "pm.test('Status UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gateway_url}}/actuator/health",
+          "host": ["{{gateway_url}}"],
+          "path": ["actuator", "health"]
+        }
+      }
+    }
+  ]
+}

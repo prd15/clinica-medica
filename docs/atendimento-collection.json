@@ -5,781 +5,365 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {
-      "key": "admin_url",
-      "value": "http://localhost:8081"
-    },
-    {
-      "key": "agenda_url",
-      "value": "http://localhost:8082"
-    },
-    {
-      "key": "atend_url",
-      "value": "http://localhost:8083"
-    },
-    {
-      "key": "convenio_id",
-      "value": ""
-    },
-    {
-      "key": "convenio_cnpj",
-      "value": ""
-    },
-    {
-      "key": "medico_id",
-      "value": ""
-    },
-    {
-      "key": "medico_crm",
-      "value": ""
-    },
-    {
-      "key": "paciente_id",
-      "value": ""
-    },
-    {
-      "key": "paciente_cpf",
-      "value": ""
-    },
-    {
-      "key": "consulta_id",
-      "value": ""
-    },
-    {
-      "key": "consulta_dataHora",
-      "value": ""
-    },
-    {
-      "key": "atendimento_id",
-      "value": ""
-    }
+    { "key": "convenio_id",     "value": "" },
+    { "key": "convenio_cnpj",   "value": "" },
+    { "key": "medico_id",       "value": "" },
+    { "key": "medico_crm",      "value": "" },
+    { "key": "paciente_id",     "value": "" },
+    { "key": "paciente_cpf",    "value": "" },
+    { "key": "consulta_id",     "value": "" },
+    { "key": "consulta_dataHora","value": "" },
+    { "key": "atendimento_id",  "value": "" }
   ],
   "item": [
     {
-      "name": "Setup — POST Convenio",
-      "event": [
+      "name": "00 - Obter Tokens",
+      "item": [
         {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "pm.collectionVariables.set('atend_conv_nome', 'ConvAtend-' + Date.now());",
-              "const d = String(Date.now()).slice(-8).padStart(8, '0');",
-              "pm.collectionVariables.set('convenio_cnpj', d.slice(0,2) + '.' + d.slice(2,5) + '.' + d.slice(5,8) + '/0001-' + d.slice(0,2));"
-            ]
+          "name": "Token ADMIN",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Token ADMIN', () => pm.response.to.have.status(200));",
+            "pm.environment.set('token_admin', pm.response.json().access_token);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "grant_type", "value": "password" },
+              { "key": "client_id",  "value": "{{client_id}}" },
+              { "key": "username",   "value": "{{username_admin}}" },
+              { "key": "password",   "value": "{{password_admin}}" }
+            ]},
+            "url": { "raw": "{{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/token",
+              "host": ["{{keycloak_url}}"], "path": ["realms","{{realm}}","protocol","openid-connect","token"] }
           }
         },
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Convenio criado 201', () => pm.response.to.have.status(201));",
-              "pm.collectionVariables.set('convenio_id', pm.response.json().id);"
-            ]
+          "name": "Token ATENDENTE",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Token ATENDENTE', () => pm.response.to.have.status(200));",
+            "pm.environment.set('token_atendente', pm.response.json().access_token);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "grant_type", "value": "password" },
+              { "key": "client_id",  "value": "{{client_id}}" },
+              { "key": "username",   "value": "{{username_atendente}}" },
+              { "key": "password",   "value": "{{password_atendente}}" }
+            ]},
+            "url": { "raw": "{{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/token",
+              "host": ["{{keycloak_url}}"], "path": ["realms","{{realm}}","protocol","openid-connect","token"] }
+          }
+        },
+        {
+          "name": "Token MEDICO",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Token MEDICO', () => pm.response.to.have.status(200));",
+            "pm.environment.set('token_medico', pm.response.json().access_token);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "grant_type", "value": "password" },
+              { "key": "client_id",  "value": "{{client_id}}" },
+              { "key": "username",   "value": "{{username_medico}}" },
+              { "key": "password",   "value": "{{password_medico}}" }
+            ]},
+            "url": { "raw": "{{keycloak_url}}/realms/{{realm}}/protocol/openid-connect/token",
+              "host": ["{{keycloak_url}}"], "path": ["realms","{{realm}}","protocol","openid-connect","token"] }
           }
         }
+      ]
+    },
+    {
+      "name": "Setup — POST Convenio (ADMIN)",
+      "event": [
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.collectionVariables.set('atend_conv_nome', 'ConvAtend-'+Date.now());",
+          "const d = String(Date.now()).slice(-8).padStart(8,'0');",
+          "pm.collectionVariables.set('convenio_cnpj', d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5,8)+'/0001-'+d.slice(0,2));"
+        ]}},
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Convenio criado 201', () => pm.response.to.have.status(201));",
+          "pm.collectionVariables.set('convenio_id', pm.response.json().id);"
+        ]}}
       ],
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_admin}}" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"nome\": \"{{atend_conv_nome}}\",\n  \"descricao\": \"Setup\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 90000-0000\",\n  \"ativo\": true\n}"
-        },
-        "url": {
-          "raw": "{{admin_url}}/v1/convenios",
-          "host": [
-            "{{admin_url}}"
-          ],
-          "path": [
-            "v1",
-            "convenios"
-          ]
-        }
+        "body": { "mode": "raw", "raw": "{\n  \"nome\": \"{{atend_conv_nome}}\",\n  \"descricao\": \"Setup\",\n  \"cnpj\": \"{{convenio_cnpj}}\",\n  \"telefone\": \"(34) 90000-0000\",\n  \"ativo\": true\n}" },
+        "url": { "raw": "{{admin_base_url}}/v1/convenios", "host": ["{{admin_base_url}}"], "path": ["v1","convenios"] }
       }
     },
     {
-      "name": "Setup — POST Medico",
+      "name": "Setup — POST Medico (ADMIN)",
       "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "pm.collectionVariables.set('medico_crm', 'CRM-AT-' + Date.now());"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Medico criado 201', () => pm.response.to.have.status(201));",
-              "pm.collectionVariables.set('medico_id', pm.response.json().id);"
-            ]
-          }
-        }
+        { "listen": "prerequest", "script": { "exec": [
+          "pm.collectionVariables.set('medico_crm', 'CRM-AT-'+Date.now());"
+        ]}},
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Medico criado 201', () => pm.response.to.have.status(201));",
+          "pm.collectionVariables.set('medico_id', pm.response.json().id);"
+        ]}}
       ],
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_admin}}" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"nome\": \"Dr. Atendimento\",\n  \"crm\": \"{{medico_crm}}\",\n  \"senha\": \"senha123\",\n  \"telefone\": \"3499999\"\n}"
-        },
-        "url": {
-          "raw": "{{admin_url}}/v1/medicos",
-          "host": [
-            "{{admin_url}}"
-          ],
-          "path": [
-            "v1",
-            "medicos"
-          ]
-        }
+        "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Dr. Atendimento\",\n  \"crm\": \"{{medico_crm}}\",\n  \"senha\": \"senha123\",\n  \"telefone\": \"3499999\"\n}" },
+        "url": { "raw": "{{admin_base_url}}/v1/medicos", "host": ["{{admin_base_url}}"], "path": ["v1","medicos"] }
       }
     },
     {
-      "name": "Setup — POST Paciente",
+      "name": "Setup — POST Paciente (ADMIN)",
       "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "if (!pm.collectionVariables.get('convenio_id')) throw new Error('Rode Setup Convenio antes');",
-              "const cpf = String(Date.now()).slice(-11).padStart(11, '0');",
-              "pm.collectionVariables.set('paciente_cpf', cpf.slice(0,3) + '.' + cpf.slice(3,6) + '.' + cpf.slice(6,9) + '-' + cpf.slice(9,11));"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Paciente criado 201', () => pm.response.to.have.status(201));",
-              "pm.collectionVariables.set('paciente_id', pm.response.json().id);"
-            ]
-          }
-        }
+        { "listen": "prerequest", "script": { "exec": [
+          "if (!pm.collectionVariables.get('convenio_id')) throw new Error('Rode Setup Convenio antes');",
+          "const cpf = String(Date.now()).slice(-11).padStart(11,'0');",
+          "pm.collectionVariables.set('paciente_cpf', cpf.slice(0,3)+'.'+cpf.slice(3,6)+'.'+cpf.slice(6,9)+'-'+cpf.slice(9,11));"
+        ]}},
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Paciente criado 201', () => pm.response.to.have.status(201));",
+          "pm.collectionVariables.set('paciente_id', pm.response.json().id);"
+        ]}}
       ],
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_admin}}" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"nome\": \"Paciente Atendimento\",\n  \"cpf\": \"{{paciente_cpf}}\",\n  \"dataNascimento\": \"1990-01-01\",\n  \"telefone\": \"3499998\",\n  \"email\": \"atend@email.com\",\n  \"endereco\": \"Rua X\",\n  \"convenioId\": {{convenio_id}}\n}"
-        },
-        "url": {
-          "raw": "{{admin_url}}/v1/pacientes",
-          "host": [
-            "{{admin_url}}"
-          ],
-          "path": [
-            "v1",
-            "pacientes"
-          ]
-        }
+        "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Paciente Atendimento\",\n  \"cpf\": \"{{paciente_cpf}}\",\n  \"dataNascimento\": \"1990-01-01\",\n  \"telefone\": \"3499998\",\n  \"email\": \"atend@email.com\",\n  \"endereco\": \"Rua X\",\n  \"convenioId\": {{convenio_id}}\n}" },
+        "url": { "raw": "{{admin_base_url}}/v1/pacientes", "host": ["{{admin_base_url}}"], "path": ["v1","pacientes"] }
       }
     },
     {
-      "name": "Setup — POST Consulta (agendamento)",
+      "name": "Setup — POST Consulta (ATENDENTE)",
       "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "if (!pm.collectionVariables.get('medico_id') || !pm.collectionVariables.get('paciente_id') || !pm.collectionVariables.get('convenio_id')) throw new Error('Rode setups 1-3 antes');",
-              "const d = new Date(Date.now() + 86400000);",
-              "const iso = d.toISOString().slice(0,19);",
-              "pm.collectionVariables.set('consulta_dataHora', iso);"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Consulta criada 201', () => pm.response.to.have.status(201));",
-              "pm.collectionVariables.set('consulta_id', pm.response.json().id);"
-            ]
-          }
-        }
+        { "listen": "prerequest", "script": { "exec": [
+          "if (!pm.collectionVariables.get('medico_id') || !pm.collectionVariables.get('paciente_id') || !pm.collectionVariables.get('convenio_id')) throw new Error('Rode setups 1-3 antes');",
+          "const d = new Date(Date.now()+86400000);",
+          "pm.collectionVariables.set('consulta_dataHora', d.toISOString().slice(0,19));"
+        ]}},
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Consulta criada 201', () => pm.response.to.have.status(201));",
+          "pm.collectionVariables.set('consulta_id', pm.response.json().id);"
+        ]}}
       ],
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_atendente}}" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_id}},\n  \"dataHora\": \"{{consulta_dataHora}}\",\n  \"observacoes\": \"Setup atendimento\"\n}"
-        },
-        "url": {
-          "raw": "{{agenda_url}}/v1/consultas",
-          "host": [
-            "{{agenda_url}}"
-          ],
-          "path": [
-            "v1",
-            "consultas"
-          ]
-        }
+        "body": { "mode": "raw", "raw": "{\n  \"pacienteId\": {{paciente_id}},\n  \"medicoId\": {{medico_id}},\n  \"convenioId\": {{convenio_id}},\n  \"dataHora\": \"{{consulta_dataHora}}\",\n  \"observacoes\": \"Setup atendimento\"\n}" },
+        "url": { "raw": "{{agenda_base_url}}/v1/consultas", "host": ["{{agenda_base_url}}"], "path": ["v1","consultas"] }
       }
     },
     {
-      "name": "Atendimento — POST realizar",
+      "name": "Atendimento — POST realizar (MEDICO)",
       "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "if (!pm.collectionVariables.get('consulta_id')) throw new Error('Rode Setup Consulta antes');"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Criado 201', () => pm.response.to.have.status(201));",
-              "pm.test('Tem ID', () => {",
-              "  const j = pm.response.json();",
-              "  pm.expect(j.id).to.be.a('number');",
-              "  pm.collectionVariables.set('atendimento_id', j.id);",
-              "});",
-              "pm.test('ConsultaId confere', () => pm.expect(pm.response.json().consultaId).to.eql(Number(pm.collectionVariables.get('consulta_id'))));",
-              "pm.test('MedicoId confere', () => pm.expect(pm.response.json().medicoId).to.eql(Number(pm.collectionVariables.get('medico_id'))));",
-              "pm.test('PacienteId confere', () => pm.expect(pm.response.json().pacienteId).to.eql(Number(pm.collectionVariables.get('paciente_id'))));"
-            ]
-          }
-        }
+        { "listen": "prerequest", "script": { "exec": [
+          "if (!pm.collectionVariables.get('consulta_id')) throw new Error('Rode Setup Consulta antes');"
+        ]}},
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Criado 201', () => pm.response.to.have.status(201));",
+          "pm.test('Tem ID', () => { const j=pm.response.json(); pm.expect(j.id).to.be.a('number'); pm.collectionVariables.set('atendimento_id',j.id); });",
+          "pm.test('ConsultaId confere', () => pm.expect(pm.response.json().consultaId).to.eql(Number(pm.collectionVariables.get('consulta_id'))));",
+          "pm.test('MedicoId confere', () => pm.expect(pm.response.json().medicoId).to.eql(Number(pm.collectionVariables.get('medico_id'))));",
+          "pm.test('PacienteId confere', () => pm.expect(pm.response.json().pacienteId).to.eql(Number(pm.collectionVariables.get('paciente_id'))));"
+        ]}}
       ],
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_medico}}" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"consultaId\": {{consulta_id}},\n  \"medicoId\": {{medico_id}},\n  \"pacienteId\": {{paciente_id}},\n  \"descricao\": \"Paciente relatou dor abdominal\",\n  \"diagnostico\": \"Gastrite aguda\",\n  \"observacoes\": \"Recomendado dieta leve\"\n}"
-        },
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos"
-          ]
-        }
+        "body": { "mode": "raw", "raw": "{\n  \"consultaId\": {{consulta_id}},\n  \"medicoId\": {{medico_id}},\n  \"pacienteId\": {{paciente_id}},\n  \"descricao\": \"Paciente relatou dor abdominal\",\n  \"diagnostico\": \"Gastrite aguda\",\n  \"observacoes\": \"Recomendado dieta leve\"\n}" },
+        "url": { "raw": "{{atend_base_url}}/v1/atendimentos", "host": ["{{atend_base_url}}"], "path": ["v1","atendimentos"] }
       }
     },
     {
-      "name": "Atendimento — POST 400 sem consultaId",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
-            ]
-          }
-        }
-      ],
+      "name": "Atendimento — POST 400 sem consultaId (MEDICO)",
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+      ]}}],
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_medico}}" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"medicoId\": 1,\n  \"pacienteId\": 1\n}"
-        },
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos"
-          ]
-        }
+        "body": { "mode": "raw", "raw": "{\"medicoId\": 1, \"pacienteId\": 1}" },
+        "url": { "raw": "{{atend_base_url}}/v1/atendimentos", "host": ["{{atend_base_url}}"], "path": ["v1","atendimentos"] }
       }
     },
     {
-      "name": "Atendimento — GET prontuario por consultaId",
+      "name": "Atendimento — GET prontuario por consultaId (MEDICO)",
       "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "if (!pm.collectionVariables.get('consulta_id')) throw new Error('Rode POST realizar antes');"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('Tem prontuario', () => pm.expect(pm.response.json()).to.have.property('id'));"
-            ]
-          }
-        }
+        { "listen": "prerequest", "script": { "exec": [
+          "if (!pm.collectionVariables.get('consulta_id')) throw new Error('Rode POST realizar antes');"
+        ]}},
+        { "listen": "test", "script": { "exec": [
+          "pm.test('200 OK', () => pm.response.to.have.status(200));",
+          "pm.test('Tem prontuario', () => pm.expect(pm.response.json()).to.have.property('id'));"
+        ]}}
       ],
       "request": {
         "method": "GET",
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos/{{consulta_id}}",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos",
-            "{{consulta_id}}"
-          ]
-        }
+        "header": [{ "key": "Authorization", "value": "Bearer {{token_medico}}" }],
+        "url": { "raw": "{{atend_base_url}}/v1/atendimentos/{{consulta_id}}", "host": ["{{atend_base_url}}"], "path": ["v1","atendimentos","{{consulta_id}}"] }
       }
     },
     {
-      "name": "Atendimento — POST anotacao",
+      "name": "Atendimento — POST anotacao (MEDICO)",
       "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "if (!pm.collectionVariables.get('atendimento_id')) throw new Error('Rode POST realizar antes');"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Criado 201', () => pm.response.to.have.status(201));",
-              "pm.test('Texto bate', () => pm.expect(pm.response.json().texto).to.eql('Paciente voltou para revisao. Melhora.'));"
-            ]
-          }
-        }
+        { "listen": "prerequest", "script": { "exec": [
+          "if (!pm.collectionVariables.get('atendimento_id')) throw new Error('Rode POST realizar antes');"
+        ]}},
+        { "listen": "test", "script": { "exec": [
+          "pm.test('Criado 201', () => pm.response.to.have.status(201));",
+          "pm.test('Texto bate', () => pm.expect(pm.response.json().texto).to.eql('Paciente voltou para revisao. Melhora.'));"
+        ]}}
       ],
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_medico}}" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"texto\": \"Paciente voltou para revisao. Melhora.\"\n}"
-        },
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/anotacoes",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos",
-            "{{atendimento_id}}",
-            "anotacoes"
-          ]
-        }
+        "body": { "mode": "raw", "raw": "{\"texto\": \"Paciente voltou para revisao. Melhora.\"}" },
+        "url": { "raw": "{{atend_base_url}}/v1/atendimentos/{{atendimento_id}}/anotacoes", "host": ["{{atend_base_url}}"], "path": ["v1","atendimentos","{{atendimento_id}}","anotacoes"] }
       }
     },
     {
-      "name": "Atendimento — POST anotacao 400 texto vazio",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
-            ]
-          }
-        }
-      ],
+      "name": "Atendimento — POST anotacao 400 texto vazio (MEDICO)",
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+      ]}}],
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_medico}}" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"texto\": \"\"\n}"
-        },
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/anotacoes",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos",
-            "{{atendimento_id}}",
-            "anotacoes"
-          ]
-        }
+        "body": { "mode": "raw", "raw": "{\"texto\": \"\"}" },
+        "url": { "raw": "{{atend_base_url}}/v1/atendimentos/{{atendimento_id}}/anotacoes", "host": ["{{atend_base_url}}"], "path": ["v1","atendimentos","{{atendimento_id}}","anotacoes"] }
       }
     },
     {
-      "name": "Atendimento — POST exame",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Criado 201', () => pm.response.to.have.status(201));",
-              "pm.test('Descricao bate', () => pm.expect(pm.response.json().descricao).to.eql('Hemograma completo'));"
-            ]
-          }
-        }
-      ],
+      "name": "Atendimento — POST exame (MEDICO)",
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Criado 201', () => pm.response.to.have.status(201));",
+        "pm.test('Descricao bate', () => pm.expect(pm.response.json().descricao).to.eql('Hemograma completo'));"
+      ]}}],
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_medico}}" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"descricao\": \"Hemograma completo\",\n  \"tipo\": \"LABORATORIAL\"\n}"
-        },
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/exames",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos",
-            "{{atendimento_id}}",
-            "exames"
-          ]
-        }
+        "body": { "mode": "raw", "raw": "{\"descricao\": \"Hemograma completo\", \"tipo\": \"LABORATORIAL\"}" },
+        "url": { "raw": "{{atend_base_url}}/v1/atendimentos/{{atendimento_id}}/exames", "host": ["{{atend_base_url}}"], "path": ["v1","atendimentos","{{atendimento_id}}","exames"] }
       }
     },
     {
-      "name": "Atendimento — POST exame 400 descricao vazia",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
-            ]
-          }
-        }
-      ],
+      "name": "Atendimento — POST exame 400 descricao vazia (MEDICO)",
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+      ]}}],
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
+          { "key": "Content-Type",  "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_medico}}" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"descricao\": \"\",\n  \"tipo\": \"LABORATORIAL\"\n}"
-        },
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/exames",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos",
-            "{{atendimento_id}}",
-            "exames"
-          ]
-        }
+        "body": { "mode": "raw", "raw": "{\"descricao\": \"\", \"tipo\": \"LABORATORIAL\"}" },
+        "url": { "raw": "{{atend_base_url}}/v1/atendimentos/{{atendimento_id}}/exames", "host": ["{{atend_base_url}}"], "path": ["v1","atendimentos","{{atendimento_id}}","exames"] }
       }
     },
     {
-      "name": "Atendimento — GET historico paciente",
+      "name": "Atendimento — GET historico paciente (MEDICO)",
       "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "if (!pm.collectionVariables.get('paciente_id')) throw new Error('Rode setup paciente antes');"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));",
-              "pm.test('Nao vazio', () => pm.expect(pm.response.json().length).to.be.above(0));"
-            ]
-          }
-        }
+        { "listen": "prerequest", "script": { "exec": [
+          "if (!pm.collectionVariables.get('paciente_id')) throw new Error('Rode setup paciente antes');"
+        ]}},
+        { "listen": "test", "script": { "exec": [
+          "pm.test('200 OK', () => pm.response.to.have.status(200));",
+          "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+          "pm.test('Nao vazio', () => pm.expect(pm.response.json().length).to.be.above(0));"
+        ]}}
       ],
       "request": {
         "method": "GET",
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos/historico?pacienteId={{paciente_id}}",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos",
-            "historico"
-          ],
-          "query": [
-            {
-              "key": "pacienteId",
-              "value": "{{paciente_id}}"
-            }
-          ]
-        }
+        "header": [{ "key": "Authorization", "value": "Bearer {{token_medico}}" }],
+        "url": { "raw": "{{atend_base_url}}/v1/atendimentos/historico?pacienteId={{paciente_id}}", "host": ["{{atend_base_url}}"], "path": ["v1","atendimentos","historico"], "query": [{ "key": "pacienteId", "value": "{{paciente_id}}" }] }
       }
     },
     {
-      "name": "Atendimento — GET historico paciente inexistente",
+      "name": "Atendimento — GET historico paciente inexistente (MEDICO)",
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('Array vazio', () => pm.expect(pm.response.json()).to.be.an('array').that.is.empty);"
+      ]}}],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token_medico}}" }],
+        "url": { "raw": "{{atend_base_url}}/v1/atendimentos/historico?pacienteId=999999", "host": ["{{atend_base_url}}"], "path": ["v1","atendimentos","historico"], "query": [{ "key": "pacienteId", "value": "999999" }] }
+      }
+    },
+    {
+      "name": "Atendimento — GET prontuario consulta inexistente (MEDICO)",
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+      ]}}],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token_medico}}" }],
+        "url": { "raw": "{{atend_base_url}}/v1/atendimentos/999999", "host": ["{{atend_base_url}}"], "path": ["v1","atendimentos","999999"] }
+      }
+    },
+    {
+      "name": "Atendimento — GET listar anotacoes (MEDICO)",
       "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('Array vazio', () => pm.expect(pm.response.json()).to.be.an('array').that.is.empty);"
-            ]
-          }
-        }
+        { "listen": "prerequest", "script": { "exec": [
+          "if (!pm.collectionVariables.get('atendimento_id')) throw new Error('Rode POST realizar antes');"
+        ]}},
+        { "listen": "test", "script": { "exec": [
+          "pm.test('200 OK', () => pm.response.to.have.status(200));",
+          "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+        ]}}
       ],
       "request": {
         "method": "GET",
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos/historico?pacienteId=999999",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos",
-            "historico"
-          ],
-          "query": [
-            {
-              "key": "pacienteId",
-              "value": "999999"
-            }
-          ]
-        }
+        "header": [{ "key": "Authorization", "value": "Bearer {{token_medico}}" }],
+        "url": { "raw": "{{atend_base_url}}/v1/atendimentos/{{atendimento_id}}/anotacoes", "host": ["{{atend_base_url}}"], "path": ["v1","atendimentos","{{atendimento_id}}","anotacoes"] }
       }
     },
     {
-      "name": "Atendimento — GET prontuario consulta inexistente",
+      "name": "Atendimento — GET listar exames (MEDICO)",
       "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
-            ]
-          }
-        }
+        { "listen": "prerequest", "script": { "exec": [
+          "if (!pm.collectionVariables.get('atendimento_id')) throw new Error('Rode POST realizar antes');"
+        ]}},
+        { "listen": "test", "script": { "exec": [
+          "pm.test('200 OK', () => pm.response.to.have.status(200));",
+          "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+        ]}}
       ],
       "request": {
         "method": "GET",
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos/999999",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos",
-            "999999"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Atendimento — POST anotacao em atendimento inexistente",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"texto\": \"qualquer coisa\"\n}"
-        },
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos/999999/anotacoes",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos",
-            "999999",
-            "anotacoes"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Atendimento — POST exame em atendimento inexistente",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"descricao\": \"Hemograma\",\n  \"tipo\": \"LABORATORIAL\"\n}"
-        },
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos/999999/exames",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos",
-            "999999",
-            "exames"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Atendimento — GET listar anotacoes",
-      "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "if (!pm.collectionVariables.get('atendimento_id')) throw new Error('Rode POST realizar antes');"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/anotacoes",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos",
-            "{{atendimento_id}}",
-            "anotacoes"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Atendimento — GET listar exames",
-      "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "exec": [
-              "if (!pm.collectionVariables.get('atendimento_id')) throw new Error('Rode POST realizar antes');"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('Array', () => pm.expect(pm.response.json()).to.be.an('array'));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{atend_url}}/v1/atendimentos/{{atendimento_id}}/exames",
-          "host": [
-            "{{atend_url}}"
-          ],
-          "path": [
-            "v1",
-            "atendimentos",
-            "{{atendimento_id}}",
-            "exames"
-          ]
-        }
+        "header": [{ "key": "Authorization", "value": "Bearer {{token_medico}}" }],
+        "url": { "raw": "{{atend_base_url}}/v1/atendimentos/{{atendimento_id}}/exames", "host": ["{{atend_base_url}}"], "path": ["v1","atendimentos","{{atendimento_id}}","exames"] }
       }
     }
   ]
