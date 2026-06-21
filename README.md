@@ -18,6 +18,8 @@ A borda da plataforma é protegida por um API Gateway com autenticação OAuth2/
 - [Execução local (sem Docker)](#execução-local-sem-docker)
 - [Documentação da API (Swagger)](#documentação-da-api-swagger)
 - [Testes e qualidade](#testes-e-qualidade)
+- [Observabilidade e logs](#observabilidade-e-logs)
+- [CI/CD (GitHub Actions)](#cicd-github-actions)
 - [Implantação em Kubernetes](#implantação-em-kubernetes)
 - [Variáveis de ambiente](#variáveis-de-ambiente)
 - [Estrutura do repositório](#estrutura-do-repositório)
@@ -97,6 +99,7 @@ Princípios:
 | Spring Cloud Gateway | 2023.0.3 | API Gateway reativo (WebFlux) |
 | Spring Security / OAuth2 Resource Server | Gerenciada pelo Boot | Validação de JWT no gateway e nos serviços |
 | Spring Data JPA / Hibernate | Gerenciada pelo Boot | Persistência |
+| SLF4J + Logback | Gerenciada pelo Boot | Logging com correlation-id por request |
 | Spring Cloud OpenFeign | 2023.0.3 | Comunicação HTTP entre serviços |
 | OkHttp | Gerenciada pelo Boot | Cliente HTTP do Feign (timeouts 3s/5s) |
 | Keycloak | 24 | Identity Provider (OAuth2/OIDC) |
@@ -310,6 +313,59 @@ npx newman run docs/relatorios-collection.json   -e $ENV
 
 ---
 
+## Observabilidade e logs
+
+Logging com **SLF4J + Logback** e rastreabilidade por **correlation-id** de ponta a ponta entre os serviços.
+
+**Fluxo do correlation-id:**
+
+1. O gateway gera um `X-Correlation-Id` na borda (ou reaproveita o enviado pelo cliente) e o injeta no request encaminhado aos microsserviços.
+2. Cada microsserviço lê o header, coloca o id no MDC e o devolve no header da resposta.
+3. As chamadas internas via OpenFeign propagam o mesmo id, de modo que toda a request — gateway → administrativo → agendamento, por exemplo — compartilha um único identificador nos logs.
+
+**Formato da linha de log** (`[serviço] [correlation-id]`):
+
+```
+2026-06-21 14:30:01.123 INFO  [administrativo] [a1b2c3d4-...] b.e.i.c.logging.CorrelationIdFilter - GET /v1/convenios -> 200 (45ms)
+```
+
+O padrão usa `%clr` do Spring Boot: ANSI colorido em terminal, texto puro em container (stdout — coletável por Docker/k8s). Cada request HTTP de negócio gera uma linha de acesso (`método rota -> status (tempoms)`); o `/actuator/health` é omitido para não poluir.
+
+**Configuração:**
+
+- O nível de log da aplicação é ajustável por ambiente: `LOG_LEVEL_APP=DEBUG` (padrão `INFO`).
+- A configuração compartilhada está em `commons/src/main/resources/logback-base.xml`, incluída por cada microsserviço; o gateway (WebFlux) tem o seu próprio `logback-spring.xml`.
+
+**Rastrear uma request nos logs:**
+
+```bash
+# o uuid vem no header X-Correlation-Id da resposta
+docker compose logs | grep "<correlation-id>"
+```
+
+---
+
+## CI/CD (GitHub Actions)
+
+Dois workflows em `.github/workflows/`:
+
+| Workflow | Gatilho | O que faz |
+|----------|---------|-----------|
+| `ci.yml` (job `build-test`) | push e pull request em `main`/`development` | `mvn clean verify` na raiz + publicação dos resultados Surefire como check |
+| `ci.yml` (job `smoke`) | após `build-test` | Sobe a stack completa via Docker Compose (valida os 4 Dockerfiles), aguarda Keycloak e os health checks, obtém JWT real e testa auth/RBAC via gateway (401 sem token, 200 com ADMIN, 403 com role insuficiente) |
+| `docker-publish.yml` | push em `main`/`development` | Build das 4 imagens Docker (matrix) e push para o GHCR com cache de camadas |
+
+Imagens publicadas (tags: nome da branch, `sha-<short>` e `latest` apenas na `main`):
+
+- `ghcr.io/prd15/clinica-medica-administrativo`
+- `ghcr.io/prd15/clinica-medica-agendamento`
+- `ghcr.io/prd15/clinica-medica-atendimento`
+- `ghcr.io/prd15/clinica-medica-gateway`
+
+A autenticação no GHCR usa o `GITHUB_TOKEN` nativo (`packages: write`) — nenhum secret adicional é necessário. Para baixar as imagens localmente, faça `docker login ghcr.io` com um PAT com escopo `read:packages`.
+
+---
+
 ## Implantação em Kubernetes
 
 Manifests em `k8s/` (namespace `clinica`). Crie o Secret real a partir do exemplo antes de aplicar:
@@ -326,6 +382,7 @@ docker compose build
 kind load docker-image clinica/administrativo:latest
 kind load docker-image clinica/agendamento:latest
 kind load docker-image clinica/atendimento:latest
+kind load docker-image clinica/gateway:latest
 ```
 
 Aplicação dos recursos:
@@ -334,9 +391,11 @@ Aplicação dos recursos:
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/secrets.yaml
 kubectl apply -f k8s/databases/
+kubectl apply -f k8s/keycloak/
 kubectl apply -f k8s/administrativo/
 kubectl apply -f k8s/agendamento/
 kubectl apply -f k8s/atendimento/
+kubectl apply -f k8s/gateway/
 kubectl apply -f k8s/ingress.yaml
 kubectl get pods -n clinica
 ```
@@ -363,6 +422,7 @@ Para Ingress local, instale o NGINX Ingress Controller e aponte os hosts no arqu
 | `DB_USER` | Usuário do MySQL | root |
 | `DB_PASS` | Senha do MySQL | (vazio) |
 | `SPRING_JPA_SHOW_SQL` | Exibe SQL no log | false |
+| `LOG_LEVEL_APP` | Nível de log do pacote `br.edu.imepac` | INFO |
 | `ADMINISTRATIVO_URL` | URL do administrativo (usada pelo agendamento) | http://localhost:8081 |
 | `AGENDAMENTO_URL` | URL do agendamento (usada pelo atendimento) | http://localhost:8082 |
 | `KEYCLOAK_SERVICE_SECRET` | Secret do client `clinica-service` | (definir no `.env`) |
