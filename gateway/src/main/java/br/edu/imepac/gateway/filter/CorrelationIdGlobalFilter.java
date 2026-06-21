@@ -6,8 +6,10 @@ import org.slf4j.MDC;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
@@ -30,12 +32,21 @@ public class CorrelationIdGlobalFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        String header = exchange.getRequest().getHeaders().getFirst(CORRELATION_ID_HEADER);
-        String correlationId = StringUtils.hasText(header) ? header : UUID.randomUUID().toString();
+        String existing = exchange.getRequest().getHeaders().getFirst(CORRELATION_ID_HEADER);
+        String correlationId = StringUtils.hasText(existing) ? existing : UUID.randomUUID().toString();
 
-        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                .header(CORRELATION_ID_HEADER, correlationId)
-                .build();
+        // Os headers de entrada do Netty sao read-only; decora o request com uma copia
+        // gravavel em vez de mutar o original (que lanca UnsupportedOperationException).
+        HttpHeaders headers = new HttpHeaders();
+        headers.addAll(exchange.getRequest().getHeaders());
+        headers.set(CORRELATION_ID_HEADER, correlationId);
+        ServerHttpRequest mutatedRequest = new ServerHttpRequestDecorator(exchange.getRequest()) {
+            @Override
+            public HttpHeaders getHeaders() {
+                return headers;
+            }
+        };
+
         exchange.getResponse().getHeaders().set(CORRELATION_ID_HEADER, correlationId);
 
         long start = System.currentTimeMillis();
