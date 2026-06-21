@@ -382,6 +382,7 @@ docker compose build
 kind load docker-image clinica/administrativo:latest
 kind load docker-image clinica/agendamento:latest
 kind load docker-image clinica/atendimento:latest
+kind load docker-image clinica/gateway:latest
 ```
 
 Aplicação dos recursos:
@@ -390,9 +391,11 @@ Aplicação dos recursos:
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/secrets.yaml
 kubectl apply -f k8s/databases/
+kubectl apply -f k8s/keycloak/
 kubectl apply -f k8s/administrativo/
 kubectl apply -f k8s/agendamento/
 kubectl apply -f k8s/atendimento/
+kubectl apply -f k8s/gateway/
 kubectl apply -f k8s/ingress.yaml
 kubectl get pods -n clinica
 ```
@@ -419,6 +422,7 @@ Para Ingress local, instale o NGINX Ingress Controller e aponte os hosts no arqu
 | `DB_USER` | Usuário do MySQL | root |
 | `DB_PASS` | Senha do MySQL | (vazio) |
 | `SPRING_JPA_SHOW_SQL` | Exibe SQL no log | false |
+| `LOG_LEVEL_APP` | Nível de log do pacote `br.edu.imepac` | INFO |
 | `ADMINISTRATIVO_URL` | URL do administrativo (usada pelo agendamento) | http://localhost:8081 |
 | `AGENDAMENTO_URL` | URL do agendamento (usada pelo atendimento) | http://localhost:8082 |
 | `KEYCLOAK_SERVICE_SECRET` | Secret do client `clinica-service` | (definir no `.env`) |
