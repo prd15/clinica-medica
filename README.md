@@ -18,6 +18,7 @@ A borda da plataforma é protegida por um API Gateway com autenticação OAuth2/
 - [Execução local (sem Docker)](#execução-local-sem-docker)
 - [Documentação da API (Swagger)](#documentação-da-api-swagger)
 - [Testes e qualidade](#testes-e-qualidade)
+- [Observabilidade e logs](#observabilidade-e-logs)
 - [CI/CD (GitHub Actions)](#cicd-github-actions)
 - [Implantação em Kubernetes](#implantação-em-kubernetes)
 - [Variáveis de ambiente](#variáveis-de-ambiente)
@@ -98,6 +99,7 @@ Princípios:
 | Spring Cloud Gateway | 2023.0.3 | API Gateway reativo (WebFlux) |
 | Spring Security / OAuth2 Resource Server | Gerenciada pelo Boot | Validação de JWT no gateway e nos serviços |
 | Spring Data JPA / Hibernate | Gerenciada pelo Boot | Persistência |
+| SLF4J + Logback | Gerenciada pelo Boot | Logging com correlation-id por request |
 | Spring Cloud OpenFeign | 2023.0.3 | Comunicação HTTP entre serviços |
 | OkHttp | Gerenciada pelo Boot | Cliente HTTP do Feign (timeouts 3s/5s) |
 | Keycloak | 24 | Identity Provider (OAuth2/OIDC) |
@@ -308,6 +310,38 @@ npx newman run docs/relatorios-collection.json   -e $ENV
 ```
 
 > O environment `docs/local.postman_environment.json` aponta para as portas diretas sem token e resultará em `401` — use-o apenas em cenários sem segurança.
+
+---
+
+## Observabilidade e logs
+
+Logging com **SLF4J + Logback** e rastreabilidade por **correlation-id** de ponta a ponta entre os serviços.
+
+**Fluxo do correlation-id:**
+
+1. O gateway gera um `X-Correlation-Id` na borda (ou reaproveita o enviado pelo cliente) e o injeta no request encaminhado aos microsserviços.
+2. Cada microsserviço lê o header, coloca o id no MDC e o devolve no header da resposta.
+3. As chamadas internas via OpenFeign propagam o mesmo id, de modo que toda a request — gateway → administrativo → agendamento, por exemplo — compartilha um único identificador nos logs.
+
+**Formato da linha de log** (`[serviço] [correlation-id]`):
+
+```
+2026-06-21 14:30:01.123 INFO  [administrativo] [a1b2c3d4-...] b.e.i.c.logging.CorrelationIdFilter - GET /v1/convenios -> 200 (45ms)
+```
+
+O padrão usa `%clr` do Spring Boot: ANSI colorido em terminal, texto puro em container (stdout — coletável por Docker/k8s). Cada request HTTP de negócio gera uma linha de acesso (`método rota -> status (tempoms)`); o `/actuator/health` é omitido para não poluir.
+
+**Configuração:**
+
+- O nível de log da aplicação é ajustável por ambiente: `LOG_LEVEL_APP=DEBUG` (padrão `INFO`).
+- A configuração compartilhada está em `commons/src/main/resources/logback-base.xml`, incluída por cada microsserviço; o gateway (WebFlux) tem o seu próprio `logback-spring.xml`.
+
+**Rastrear uma request nos logs:**
+
+```bash
+# o uuid vem no header X-Correlation-Id da resposta
+docker compose logs | grep "<correlation-id>"
+```
 
 ---
 
