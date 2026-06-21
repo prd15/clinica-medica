@@ -1,5 +1,7 @@
 package br.edu.imepac.gateway.filter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -13,6 +15,8 @@ import reactor.core.publisher.Mono;
 @Component
 public class InvalidPathFilter implements WebFilter, Ordered {
 
+    private static final Logger log = LoggerFactory.getLogger(InvalidPathFilter.class);
+
     @Override
     public int getOrder() {
         return Ordered.HIGHEST_PRECEDENCE;
@@ -20,7 +24,9 @@ public class InvalidPathFilter implements WebFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        if (exchange.getRequest().getURI().getRawPath().contains("//")) {
+        String path = exchange.getRequest().getURI().getRawPath();
+        if (path.contains("//")) {
+            log.warn("Path invalido rejeitado na borda: {}", path);
             exchange.getResponse().setStatusCode(HttpStatus.NOT_FOUND);
             return exchange.getResponse().setComplete();
         }

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Configuracao de log compartilhada pelos microsservicos MVC.
+  Importada por cada servico via <include resource="logback-base.xml"/> no logback-spring.xml.
+  Usa %clr do Spring Boot: ANSI colorido em terminal, texto puro em container/arquivo.
+  O %X{correlationId} imprime o id propagado pelo CorrelationIdFilter.
+-->
+<included>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="app"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%-5level) %clr([${appName}]){blue} %clr([%X{correlationId:-}]){magenta} %clr(%logger{36}){cyan} %clr(-){faint} %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</included>

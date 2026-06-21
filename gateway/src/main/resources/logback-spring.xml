@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Configuracao de log do gateway (WebFlux). Standalone porque o gateway nao depende do commons.
+  Usa %clr do Spring Boot: ANSI colorido em terminal, texto puro em container.
+  O %X{correlationId} imprime o id atribuido pelo CorrelationIdGlobalFilter.
+-->
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="gateway"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%-5level) %clr([${appName}]){blue} %clr([%X{correlationId:-}]){magenta} %clr(%logger{36}){cyan} %clr(-){faint} %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
