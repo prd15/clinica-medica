@@ -67,9 +67,12 @@ services:
 
   administrativo:
     build:
-      # Contexto na raiz porque o Dockerfile precisa enxergar commons/ e administrativo/
+      # Dockerfile unico na raiz; o MODULE seleciona qual JAR copiar.
+      # Rode `mvn package -DskipTests` antes de `docker compose up --build`.
       context: .
-      dockerfile: administrativo/Dockerfile
+      dockerfile: Dockerfile
+      args:
+        MODULE: administrativo
     container_name: administrativo
     restart: on-failure
     ports:
@@ -95,7 +98,9 @@ services:
   agendamento:
     build:
       context: .
-      dockerfile: agendamento/Dockerfile
+      dockerfile: Dockerfile
+      args:
+        MODULE: agendamento
     container_name: agendamento
     restart: on-failure
     ports:
@@ -123,7 +128,9 @@ services:
   atendimento:
     build:
       context: .
-      dockerfile: atendimento/Dockerfile
+      dockerfile: Dockerfile
+      args:
+        MODULE: atendimento
     container_name: atendimento
     restart: on-failure
     ports:
@@ -181,7 +188,9 @@ services:
   gateway:
     build:
       context: .
-      dockerfile: gateway/Dockerfile
+      dockerfile: Dockerfile
+      args:
+        MODULE: gateway
     container_name: gateway
     restart: on-failure
     ports:
