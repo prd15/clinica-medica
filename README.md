@@ -215,8 +215,11 @@ git clone https://github.com/prd15/clinica-medica.git
 cd clinica-medica
 cp .env.example .env
 # editar .env com DB_USER, DB_PASS e KEYCLOAK_SERVICE_SECRET
+mvn package -DskipTests       # gera os JARs que as imagens copiam
 docker compose up -d --build
 ```
+
+> As imagens usam um **Dockerfile único na raiz** (runtime-only): elas apenas copiam o JAR já compilado, sem rodar Maven dentro do build. Por isso o `mvn package -DskipTests` precisa rodar antes do `docker compose up --build`. Resultado: build de imagem muito mais rápido e containers mais leves (`MaxRAMPercentage=75`, shutdown limpo via PID 1).
 
 A stack sobe **8 containers**: 3 bancos MySQL, Keycloak, o gateway e os 3 microsserviços.
 
@@ -378,6 +381,7 @@ cp k8s/secrets.example.yaml k8s/secrets.yaml
 Build das imagens locais e, em Kind, carga no cluster:
 
 ```bash
+mvn package -DskipTests       # JARs que as imagens copiam
 docker compose build
 kind load docker-image clinica/administrativo:latest
 kind load docker-image clinica/agendamento:latest

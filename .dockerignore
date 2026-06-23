@@ -1,0 +1,7 @@
+# O contexto de build precisa apenas dos JARs ja compilados.
+# Ignora tudo e libera somente os artefatos de cada microsservico.
+*
+!administrativo/target/*.jar
+!agendamento/target/*.jar
+!atendimento/target/*.jar
+!gateway/target/*.jar

@@ -54,7 +54,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Sobe a stack (compose build valida os 4 Dockerfiles)
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Empacota os JARs (imagens runtime-only copiam o artefato)
+        run: mvn -B -ntp package -DskipTests
+
+      - name: Sobe a stack
         run: docker compose up -d --build
 
       - name: Aguarda Keycloak e microsservicos
