@@ -1,0 +1,107 @@
+@startuml CasosDeUso_Clinica_Medica_API
+' ==========================================================
+'  Clinica Medica API - Diagrama de Casos de Uso
+'  Por microsservico. Papeis RBAC: ADMIN, ATENDENTE, MEDICO, SERVICE
+' ==========================================================
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "ADMIN\n(Administrador)" as ADMIN
+actor "ATENDENTE\n(Recepcao)" as ATEND
+actor "MEDICO" as MED
+actor "Servico\n(SERVICE)" as SVC
+
+' ADMIN herda os casos de Atendente e Medico (acesso total)
+ADMIN --|> ATEND
+ADMIN --|> MED
+
+rectangle "Microsservico Administrativo" #F0FDFA {
+  usecase "Gerenciar Pacientes" as UC_pac
+  usecase "Gerenciar Medicos" as UC_med
+  usecase "Gerenciar Convenios" as UC_conv
+  usecase "Gerenciar Especialidades" as UC_esp
+  usecase "Gerenciar Atendentes" as UC_atend
+  usecase "Listar Medicos Ativos" as UC_ativos
+  usecase "Pesquisar Paciente" as UC_pesq
+  usecase "Inativar Medico" as UC_inativar
+  usecase "Associar / Desassociar Especialidade" as UC_assoc
+  usecase "Gerar Relatorios" as UC_rel
+  usecase "(Controlar Status Ativo/Inativo)" as UC_status
+  usecase "(Relatorio Diario de Consultas)" as UC_relA
+  usecase "(Relatorio Pacientes por Convenio)" as UC_relB
+}
+
+ATEND --> UC_pac
+ATEND --> UC_med
+ATEND --> UC_conv
+ATEND --> UC_esp
+ATEND --> UC_atend
+ATEND --> UC_ativos
+ATEND --> UC_pesq
+ATEND --> UC_inativar
+ATEND --> UC_assoc
+ATEND --> UC_rel
+UC_conv ..> UC_status : <<include>>
+UC_inativar ..> UC_status : <<include>>
+UC_rel ..> UC_relA : <<include>>
+UC_rel ..> UC_relB : <<include>>
+
+rectangle "Microsservico Agendamento" #EFF6FF {
+  usecase "Agendar Consulta" as UC_ag
+  usecase "Reagendar Consulta" as UC_reag
+  usecase "Cancelar Consulta" as UC_canc
+  usecase "Confirmar Consulta" as UC_conf
+  usecase "Consultar Agenda por Medico" as UC_agenda
+  usecase "Buscar Consultas por Data" as UC_buscarData
+  usecase "Buscar Consulta por Id" as UC_buscarId
+  usecase "Consultar Historico de Consultas" as UC_hist
+  usecase "Visualizar Minha Agenda" as UC_minha
+  usecase "(Validar Conflito de Horario)" as UC_conflito
+  usecase "Marcar Consulta Realizada" as UC_marcar
+  usecase "Contar Consultas (Relatorios)" as UC_contar
+}
+
+ATEND --> UC_ag
+ATEND --> UC_reag
+ATEND --> UC_canc
+ATEND --> UC_conf
+ATEND --> UC_agenda
+ATEND --> UC_buscarData
+ATEND --> UC_buscarId
+ATEND --> UC_hist
+MED   --> UC_minha
+UC_ag   ..> UC_conflito : <<include>>
+UC_reag ..> UC_conflito : <<include>>
+' Endpoints internos (chamados por outros servicos via token SERVICE)
+SVC --> UC_marcar
+SVC --> UC_contar
+
+rectangle "Microsservico Atendimento" #FFF7ED {
+  usecase "Realizar Atendimento /\nRegistrar Prontuario" as UC_realizar
+  usecase "Consultar Historico de Prontuarios" as UC_histP
+  usecase "Consultar Prontuario Especifico" as UC_pront
+  usecase "Solicitar Exames" as UC_exames
+  usecase "Consultar Exames" as UC_consExames
+  usecase "Adicionar Anotacoes ao Prontuario" as UC_anot
+  usecase "Consultar Anotacoes" as UC_consAnot
+  usecase "(Notificar Consulta Realizada - Outbox)" as UC_notif
+}
+
+MED --> UC_realizar
+MED --> UC_histP
+MED --> UC_pront
+MED --> UC_exames
+MED --> UC_consExames
+MED --> UC_anot
+MED --> UC_consAnot
+UC_realizar ..> UC_notif : <<include>>
+
+note bottom
+  Todas as operacoes exigem autenticacao via Keycloak (OAuth2/JWT).
+  Autorizacao por papel (RBAC) no gateway e nos microsservicos.
+  ( ) = caso de uso <<include>>.
+end note
+
+@enduml

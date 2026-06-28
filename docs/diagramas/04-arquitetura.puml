@@ -1,0 +1,71 @@
+@startuml Arquitetura_Clinica_Medica_API
+' ==========================================================
+'  Clinica Medica API - Modelagem Arquitetural (microsservicos)
+' ==========================================================
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam rectangle {
+  BorderColor #333333
+}
+
+actor "Cliente HTTP\n(Postman / Front)" as cliente
+
+node "Keycloak :8180\nrealm clinica\n(OAuth2 / OIDC)" as keycloak #FEF3C7
+
+node "API Gateway :8080\nSpring Cloud Gateway (WebFlux)\nValida JWT na borda" as gw #E2E8F0
+
+package "administrativo :8081" #F0FDFA {
+  component "API REST\nconvenios, pacientes, medicos,\nespecialidades, atendentes, relatorios" as admApi
+  database "MySQL :3307\nclinica_administrativo" as admDb
+}
+
+package "agendamento :8082" #EFF6FF {
+  component "API REST\nconsultas / agenda" as ageApi
+  database "MySQL :3308\nclinica_agendamento" as ageDb
+}
+
+package "atendimento :8083" #FFF7ED {
+  component "API REST\natendimento, prontuario,\nanotacoes, exames" as atdApi
+  component "Outbox\n(OutboxScheduler + retry)" as outbox
+  database "MySQL :3309\nclinica_atendimento" as atdDb
+}
+
+component "commons (lib)\nBaseEntity, excecoes,\nGlobalExceptionHandler,\nModelMapper, CorrelationIdFilter" as commons #FFFFFF
+
+' ---------- Borda / autenticacao ----------
+cliente --> gw : Bearer JWT (HTTPS)
+gw ..> keycloak : valida assinatura (JWKS)
+admApi ..> keycloak : OAuth2 Resource Server
+ageApi ..> keycloak : OAuth2 Resource Server
+atdApi ..> keycloak : OAuth2 Resource Server
+
+' ---------- Roteamento do gateway ----------
+gw --> admApi : /api/admin/**
+gw --> ageApi : /api/agendamentos/**
+gw --> atdApi : /api/atendimentos/**
+
+' ---------- Persistencia (JPA) ----------
+admApi --> admDb
+ageApi --> ageDb
+atdApi --> atdDb
+
+' ---------- Comunicacao entre servicos ----------
+ageApi --> admApi : OpenFeign\nvalida paciente/medico/convenio
+admApi --> ageApi : OpenFeign\nGET /v1/consultas/contagem (relatorios)
+outbox --> ageApi : Outbox Pattern\nPATCH /v1/consultas/{id}/realizar\n(token SERVICE, retry)
+atdApi --> outbox : grava evento\n(mesma transacao)
+
+' ---------- Biblioteca compartilhada ----------
+admApi ..> commons : usa
+ageApi ..> commons : usa
+atdApi ..> commons : usa
+
+note bottom
+  Java 17 + Spring Boot 3.3.5 | MySQL 8 (database per service) | Keycloak 24
+  Logging SLF4J/Logback com correlation-id (X-Correlation-Id) ponta a ponta
+  Empacotamento Docker (Dockerfile slim) | Orquestracao Docker Compose / Kubernetes
+  CI/CD GitHub Actions (build+test, smoke) -> imagens no GHCR
+end note
+
+@enduml

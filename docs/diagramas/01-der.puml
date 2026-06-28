@@ -1,0 +1,173 @@
+@startuml DER_Clinica_Medica_API
+' ==========================================================
+'  Clinica Medica API - DER (database per service)
+'  Notacao Information Engineering (crow's foot)
+' ==========================================================
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 6
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam entity {
+  BackgroundColor #FFFFFF
+  BorderColor #333333
+}
+
+' Apenas medico_especialidade possui FK fisica (join N:N, mesmo banco).
+' As demais ligacoes sao referencias logicas por Long id
+' (database per service: sem FK entre bancos diferentes).
+
+package "clinica_administrativo" <<Database>> #F0FDFA {
+
+  entity convenios {
+    * id : bigint <<PK>>
+    --
+    * nome : varchar(150)
+    descricao : varchar(500)
+    * cnpj : varchar(18) <<UQ>>
+    telefone : varchar(20)
+    * ativo : boolean
+    created_at : datetime
+    updated_at : datetime
+  }
+
+  entity pacientes {
+    * id : bigint <<PK>>
+    --
+    * nome : varchar(200)
+    * cpf : varchar(14) <<UQ>>
+    data_nascimento : date
+    telefone : varchar(20)
+    email : varchar(150)
+    endereco : varchar(300)
+    convenio_id : bigint <<FK logica>>
+    created_at : datetime
+    updated_at : datetime
+  }
+
+  entity especialidades {
+    * id : bigint <<PK>>
+    --
+    * nome : varchar(100) <<UQ>>
+    descricao : varchar(300)
+    created_at : datetime
+    updated_at : datetime
+  }
+
+  entity medicos {
+    * id : bigint <<PK>>
+    --
+    * nome : varchar(150)
+    * crm : varchar(20) <<UQ>>
+    * senha : varchar(255)
+    telefone : varchar(20)
+    * ativo : boolean
+    created_at : datetime
+    updated_at : datetime
+  }
+
+  entity atendentes {
+    * id : bigint <<PK>>
+    --
+    * nome : varchar(150)
+    * usuario : varchar(80) <<UQ>>
+    * senha : varchar(255)
+    * ativo : boolean
+    created_at : datetime
+    updated_at : datetime
+  }
+
+  entity medico_especialidade {
+    * medico_id : bigint <<PK,FK>>
+    * especialidade_id : bigint <<PK,FK>>
+  }
+}
+
+package "clinica_agendamento" <<Database>> #EFF6FF {
+
+  entity consultas {
+    * id : bigint <<PK>>
+    --
+    * paciente_id : bigint <<FK logica>>
+    * medico_id : bigint <<FK logica>>
+    * convenio_id : bigint <<FK logica>>
+    * data_hora : datetime
+    slot_ativo : datetime <<UQ medico_id+slot>>
+    * status : varchar(20)
+    observacoes : varchar(500)
+    created_at : datetime
+    updated_at : datetime
+  }
+}
+
+package "clinica_atendimento" <<Database>> #FFF7ED {
+
+  entity atendimentos {
+    * id : bigint <<PK>>
+    --
+    * consulta_id : bigint <<FK logica, UQ>>
+    * medico_id : bigint
+    * paciente_id : bigint
+    * data_hora : datetime
+    * status : varchar(20)
+    created_at : datetime
+    updated_at : datetime
+  }
+
+  entity prontuarios {
+    * id : bigint <<PK>>
+    --
+    * atendimento_id : bigint <<FK logica, UQ>>
+    descricao : text
+    diagnostico : varchar(255)
+    observacoes : text
+    data_criacao : datetime
+    created_at : datetime
+    updated_at : datetime
+  }
+
+  entity anotacoes {
+    * id : bigint <<PK>>
+    --
+    * prontuario_id : bigint <<FK logica>>
+    texto : text
+    data_criacao : datetime
+    created_at : datetime
+    updated_at : datetime
+  }
+
+  entity solicitacoes_exame {
+    * id : bigint <<PK>>
+    --
+    * atendimento_id : bigint <<FK logica>>
+    descricao : varchar(255)
+    tipo : varchar(255)
+    data_solicitacao : datetime
+    created_at : datetime
+    updated_at : datetime
+  }
+}
+
+' ===================== RELACIONAMENTOS =====================
+
+' --- FK fisica (N:N, mesmo banco) ---
+medicos        ||--o{ medico_especialidade
+especialidades ||--o{ medico_especialidade
+
+' --- Referencias logicas (Long id, sem FK) ---
+convenios ||--o{ pacientes : convenio_id
+
+' agendamento -> administrativo (cross-DB, logica)
+pacientes ||--o{ consultas : paciente_id
+medicos   ||--o{ consultas : medico_id
+convenios ||--o{ consultas : convenio_id
+
+' atendimento -> agendamento (cross-DB, 1:1 logica)
+consultas ||--|| atendimentos : consulta_id
+
+' atendimento (mesmo banco, logica)
+atendimentos ||--|| prontuarios        : atendimento_id (1:1)
+prontuarios  ||--o{ anotacoes          : prontuario_id
+atendimentos ||--o{ solicitacoes_exame : atendimento_id
+
+@enduml

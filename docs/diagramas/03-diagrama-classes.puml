@@ -1,0 +1,152 @@
+@startuml Classes_Clinica_Medica_API
+' ==========================================================
+'  Clinica Medica API - Diagrama de Classes (Entidades JPA)
+'  Por microsservico (database per service)
+' ==========================================================
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #333333
+}
+
+abstract class "BaseEntity" as BaseEntity << (A,#607D8B) abstract >> {
+  # createdAt : LocalDateTime
+  # updatedAt : LocalDateTime
+}
+note right of BaseEntity
+  Todas as entidades (*Entity) estendem BaseEntity (auditoria JPA).
+  Linha solida = associacao com FK real (N:N).
+  Tracejada = referencia por Long id (sem FK entre bancos).
+end note
+
+package "administrativo (clinica_administrativo)" #F0FDFA {
+  class ConvenioEntity {
+    - id : Long
+    - nome : String
+    - descricao : String
+    - cnpj : String
+    - telefone : String
+    - ativo : Boolean
+  }
+  class PacienteEntity {
+    - id : Long
+    - nome : String
+    - cpf : String
+    - dataNascimento : LocalDate
+    - telefone : String
+    - email : String
+    - endereco : String
+    - convenioId : Long
+  }
+  class MedicoEntity {
+    - id : Long
+    - nome : String
+    - crm : String
+    - senha : String
+    - telefone : String
+    - ativo : Boolean
+    - especialidades : Set<EspecialidadeEntity>
+  }
+  class EspecialidadeEntity {
+    - id : Long
+    - nome : String
+    - descricao : String
+  }
+  class AtendenteEntity {
+    - id : Long
+    - nome : String
+    - usuario : String
+    - senha : String
+    - ativo : Boolean
+  }
+}
+
+package "agendamento (clinica_agendamento)" #EFF6FF {
+  enum StatusConsulta {
+    PENDENTE
+    CONFIRMADA
+    REALIZADA
+    CANCELADA
+  }
+  class ConsultaEntity {
+    - id : Long
+    - pacienteId : Long
+    - medicoId : Long
+    - convenioId : Long
+    - dataHora : LocalDateTime
+    - slotAtivo : LocalDateTime
+    - status : StatusConsulta
+    - observacoes : String
+  }
+}
+
+package "atendimento (clinica_atendimento)" #FFF7ED {
+  enum StatusAtendimento {
+    EM_ANDAMENTO
+    REALIZADO
+  }
+  class AtendimentoEntity {
+    - id : Long
+    - consultaId : Long
+    - medicoId : Long
+    - pacienteId : Long
+    - dataHora : LocalDateTime
+    - status : StatusAtendimento
+  }
+  class ProntuarioEntity {
+    - id : Long
+    - atendimentoId : Long
+    - descricao : String
+    - diagnostico : String
+    - observacoes : String
+    - dataCriacao : LocalDateTime
+  }
+  class AnotacaoEntity {
+    - id : Long
+    - prontuarioId : Long
+    - texto : String
+    - dataCriacao : LocalDateTime
+  }
+  class SolicitacaoExameEntity {
+    - id : Long
+    - atendimentoId : Long
+    - descricao : String
+    - tipo : String
+    - dataSolicitacao : LocalDateTime
+  }
+}
+
+' ---------- Heranca ----------
+ConvenioEntity        --|> BaseEntity
+PacienteEntity        --|> BaseEntity
+MedicoEntity          --|> BaseEntity
+EspecialidadeEntity   --|> BaseEntity
+AtendenteEntity       --|> BaseEntity
+ConsultaEntity        --|> BaseEntity
+AtendimentoEntity     --|> BaseEntity
+ProntuarioEntity      --|> BaseEntity
+AnotacaoEntity        --|> BaseEntity
+SolicitacaoExameEntity --|> BaseEntity
+
+' ---------- N:N real (join medico_especialidade) ----------
+MedicoEntity "* " -- " *" EspecialidadeEntity : medico_especialidade
+
+' ---------- Referencias por Long id (sem FK) ----------
+PacienteEntity ..> ConvenioEntity : convenioId
+ConsultaEntity ..> PacienteEntity : pacienteId
+ConsultaEntity ..> MedicoEntity : medicoId
+ConsultaEntity ..> ConvenioEntity : convenioId
+ConsultaEntity ..> StatusConsulta : status
+AtendimentoEntity ..> ConsultaEntity : consultaId (1:1)
+AtendimentoEntity ..> StatusAtendimento : status
+ProntuarioEntity ..> AtendimentoEntity : atendimentoId (1:1)
+AnotacaoEntity ..> ProntuarioEntity : prontuarioId
+SolicitacaoExameEntity ..> AtendimentoEntity : atendimentoId
+
+note bottom of AtendimentoEntity
+  medicoId e pacienteId sao copiados da consulta.
+end note
+
+@enduml
