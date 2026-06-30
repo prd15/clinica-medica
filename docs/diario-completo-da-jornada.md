@@ -151,3 +151,39 @@ seu domínio. Build e boot limpos. Fechei C3 com PR.
 
 ---
 
+## Capítulo 5 — C4: o padrão Outbox (nada se perde)
+
+Esse é, tecnicamente, o capítulo do qual mais me orgulho. O problema: quando o
+atendimento avisa o agendamento que a consulta foi realizada, **e se a chamada
+falhar?** A consulta foi atendida mas o agendamento nunca soube. Informação perdida.
+
+A solução é o **padrão Outbox (caixa de saída transacional)**:
+
+- No mesmo instante (e na **mesma transação**) em que o atendimento é salvo, gravo
+  um registro de "aviso a entregar" numa tabela `outbox_event`. Ou os dois
+  acontecem, ou nenhum — atomicidade garantida pelo banco.
+- Um **scheduler** roda em segundo plano, lê os eventos pendentes e tenta entregar.
+  Se falhar, marca como FALHA e **tenta de novo** depois (retry configurável).
+
+**O que construí (C4):**
+
+- `OutboxEvent` + `OutboxStatus` (PENDENTE / PROCESSADO / FALHA / DESCARTADO) +
+  repositório.
+- O `registrar()` do atendimento enfileira o evento na mesma transação.
+- `OutboxScheduler` com retry configurável.
+- Mais tarde isso ganharia housekeeping (limpar eventos terminais antigos) e lock
+  pessimista com SKIP LOCKED pra rodar em múltiplas instâncias sem entrega dupla.
+
+**Validação end-to-end** (provada com scripts bash):
+
+- *Caminho feliz:* POST atendimento → consulta vira REALIZADA em ~7s →
+  `outbox_event` em PROCESSADO.
+- *Falha + retry:* derrubei o agendamento de propósito → o evento foi pra FALHA
+  com tentativas=1 → religuei o agendamento → na próxima volta do scheduler virou
+  PROCESSADO. **O evento não se perdeu.** Esse era o ponto.
+
+Registrei no `BACKLOG.md` o que ficou de fora de propósito (backoff exponencial,
+circuit breaker, etc.) e documentei tudo no diário.
+
+---
+
