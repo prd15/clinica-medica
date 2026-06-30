@@ -431,3 +431,16 @@ Herança honesta pro próximo que pegar isto:
 
 ---
 
+## O que aprendi pelo caminho
+
+- **Auditar a suposição contra o código real** antes de executar economiza retrabalho
+  — o roadmap SOLID errado teria me feito codar coisa que não existia.
+- **Commits atômicos** não são burocracia: foi graças a eles que o revert ficou
+  cirúrgico e que cada passo pôde ser testado isolado.
+- **Aplicar padrão onde a dor é real**, não onde é bonito. SOLID rendeu no Outbox e
+  no token provider porque ali havia dor concreta (segundo tipo de evento, troca de
+  provedor). No resto, deixei quieto de propósito.
+- **Infra é metade da batalha.** OrbStack caindo, Maven faltando, TLS da faculdade
+  quebrando o gh — nada disso é "o código", mas consumiu tempo real. Faz parte.
+
+— Lucks026
