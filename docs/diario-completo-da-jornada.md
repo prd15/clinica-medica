@@ -28,3 +28,34 @@ cada passo.
 
 ---
 
+## Capítulo 0 — O primeiro contato
+
+Quando abri o repositório pela primeira vez, o esqueleto do sistema já existia: um
+projeto Maven multi-módulo com a separação que viraria a espinha dorsal de tudo.
+
+- **`commons`** — biblioteca compartilhada (não é serviço): entidades-base,
+  exceções, handler global, configurações comuns.
+- **`administrativo`** (porta 8081) — cadastros: convênios, pacientes, médicos,
+  especialidades, atendentes, relatórios.
+- **`agendamento`** (porta 8082) — consultas e seus status.
+- **`atendimento`** (porta 8083) — prontuário, anotações, exames.
+
+A "regra de ouro" do projeto já estava posta: o módulo **Convênio** era o padrão
+de referência. Toda funcionalidade nova deveria seguir a mesma anatomia em camadas:
+
+```
+Entity  →  Repository  →  Service (com testes)  →  Controller
+                                                    ├─ Request DTO (@NotBlank)
+                                                    └─ Response DTO
+```
+
+E duas regras de arquitetura que eu respeitaria sempre:
+
+1. **Nunca** `@ManyToOne` entre entidades de bancos diferentes — referência é por
+   `Long id`. Cada serviço é dono do seu banco e ninguém lê o banco alheio.
+2. Comunicação entre serviços **só** por HTTP REST.
+
+Esse foi o terreno. A partir daqui, é a minha caminhada.
+
+---
+
