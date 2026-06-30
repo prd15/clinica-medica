@@ -416,3 +416,18 @@ Reta final. Produzi os artefatos de fechamento:
 
 ---
 
+## O que eu faria a seguir
+
+Herança honesta pro próximo que pegar isto:
+
+- Encaminhar `AUTH_PROVIDER` no compose/k8s (fechar o gap da revisão).
+- Recriar o `BACKLOG.md`.
+- Adicionar o Maven Wrapper (`mvnw`) — pra ninguém mais penar com `brew install`.
+- Reconciliar os diagramas PlantUML do `main` no `development`.
+- Fase 2 do SOLID, quando a dor aparecer: validators de service, quebra de service
+  gordo (CQRS-lite), strategy pra regras que variam. Tudo reativo, sem antecipar.
+- Hash de senha (BCrypt), migrations de banco (Flyway), paginação nas listas,
+  testes de ponta a ponta.
+
+---
+
