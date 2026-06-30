@@ -307,3 +307,15 @@ teste.
 
 ---
 
+## Capítulo 10 — Fase 1 SOLID, Tarefa C: template de PR
+
+A menor das três. Branch `chore/pr-template-solid`, 1 commit: criei
+`.github/pull_request_template.md` (a pasta `.github/` nem existia) com test plan +
+três perguntas SOLID (SRP/OCP/DIP) que o autor responde antes de submeter. É a parte
+"cultura" da Fase 1 — um espelho que força a pessoa a pensar antes da revisão. PR #38.
+
+Com isso a **Fase 1 SOLID fechou**: 16 commits atômicos em 3 PRs, build e testes
+verdes.
+
+---
+
