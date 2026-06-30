@@ -281,3 +281,29 @@ processor confirmou. O caminho feliz também: evento real → PROCESSADO em ~10s
 
 ---
 
+## Capítulo 9 — Fase 1 SOLID, Tarefa A: DIP no token provider
+
+Branch `refactor/dip-service-token-provider`, escopo nos três serviços. O
+`ServiceTokenProvider` (classe concreta, acoplada ao Keycloak, repetida 3x) virou
+uma **interface**, com `KeycloakServiceTokenProvider` como implementação,
+selecionada por `@ConditionalOnProperty(auth.provider=keycloak, matchIfMissing=true)`.
+
+Fiz 3 commits por módulo (10 no total, com o de docs), sempre o mesmo padrão:
+
+1. Renomeia a classe concreta pra `KeycloakServiceTokenProvider`.
+2. Cria a interface + a classe passa a implementá-la + `@ConditionalOnProperty`.
+3. O `FeignConfig` passa a depender da interface, não da classe.
+
+Três commits por módulo foi de propósito: permite **revert cirúrgico** se um módulo
+específico der problema. Documentei a flag `auth.provider` no `.env.example`.
+
+Decisão de divergência do plano: o método ficou `getToken()` (o nome real que já
+existia), não `obterToken()` (que o roadmap usava como ilustrativo). Zero churn em
+teste.
+
+**Validação:** rebuild dos 3 serviços, zero `NoSuchBeanDefinitionException` nos logs
+(o Spring resolveu a interface pra implementação certa), e regressão de Postman:
+**96 requests, 153 asserts, 0 falhas** em 7 collections. PR #37. Mergeado.
+
+---
+
