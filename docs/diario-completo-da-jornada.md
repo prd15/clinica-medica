@@ -319,3 +319,19 @@ verdes.
 
 ---
 
+## Capítulo 11 — Maven que faltava e outros tropeços da execução
+
+Vale registrar os perrengues, porque diário honesto também tem os tropeços:
+
+- Numa das vezes que fui buildar, o `mvn` **não estava no PATH** e o projeto não
+  tinha Maven Wrapper (`mvnw`). Tive que `brew install maven` — e ele ainda veio
+  linkado com Java 26, sendo que o projeto é Java 17. Resolvi apontando `JAVA_HOME`
+  pro JDK 17 com `/usr/libexec/java_home -v 17`. Anotei "adicionar `mvnw`" como
+  dívida pra não depender disso de novo.
+- O OrbStack caiu **no meio de um build** mais de uma vez. Religar + retry.
+- Antes de cada push, revisava o histórico pra garantir que os commits estavam no
+  padrão e que nada de configuração local (`.env`, override de Docker) ia junto
+  por engano.
+
+---
+
