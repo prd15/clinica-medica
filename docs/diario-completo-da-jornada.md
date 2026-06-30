@@ -116,3 +116,38 @@ explícito. Testei que a remoção não afetou nada e fechei com commits de `cho
 
 ---
 
+## Capítulo 4 — C3: cada banco com as suas tabelas
+
+Aqui veio o primeiro problema *arquitetural* sério. O `@EntityScan` estava amplo
+demais: o Hibernate enxergava as entidades de todos os domínios e **criava todas as
+tabelas em todos os bancos**. O banco do agendamento tinha tabela de convênio, o de
+atendimento tinha tabela de paciente — uma bagunça que feria o princípio de "cada
+serviço é dono do seu banco".
+
+**O que fiz (C3):**
+
+- Movi entidades, repositórios e services pra subpacotes por domínio
+  (`commons.<tipo>.<dominio>`).
+- Estreitei o `@EntityScan`, o `@EnableJpaRepositories` e o `scanBasePackages` de
+  cada serviço pra enxergar **só** o seu domínio.
+
+**Os perrengues técnicos** (e foram vários):
+
+- Escrevi um script pra mover as classes em lote e ele **falhou no zsh** — o `for c
+  in $3` não fazia word-splitting como eu esperava. Reescrevi em bash.
+- O bash 3.2 do macOS **não tem** `declare -A` (array associativo) nem nameref.
+  Tive que reescrever com variáveis simples + `eval`.
+- O `set -e` deixou um **refactor parcial** no meio do caminho (umas classes
+  movidas, outras não). Limpei com `git reset --hard` + `git clean -fd` e refiz do
+  zero, com calma.
+- Mover os services quebrou testes que dependiam de **acesso de mesmo pacote**.
+  Movi os testes pra espelhar os subpacotes novos.
+- Um detalhe que quase me pegou: `mvn | tail` retorna o exit do `tail`, **não** do
+  Maven. Quase declarei verde um build que tinha falhado. Passei a checar o
+  resultado de verdade.
+
+**Validação:** `SHOW TABLES` em cada banco confirmou — cada um só com as tabelas do
+seu domínio. Build e boot limpos. Fechei C3 com PR.
+
+---
+
