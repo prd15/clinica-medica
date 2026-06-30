@@ -107,3 +107,12 @@ Validei tudo com Postman e build verde antes de fechar. Esse capítulo me deixou
 
 ---
 
+## Capítulo 3 — Caça ao código morto
+
+Pedi e fiz uma varredura por código morto. Achei e removi o que não tinha mais uso
+(por exemplo, um `AtendenteService.findByUsuario` órfão). Regra que segui à risca:
+**não matar nada que indicasse teste** — testes ficam intocados até pedido
+explícito. Testei que a remoção não afetou nada e fechei com commits de `chore`.
+
+---
+
