@@ -248,3 +248,36 @@ começar. Isso evitou executar em cima de suposição.
 
 ---
 
+## Capítulo 8 — Fase 1 SOLID, Tarefa B: OCP no Outbox
+
+Primeira execução. Branch `refactor/ocp-outbox-handlers`, escopo só no atendimento.
+A ideia: o processor parar de decidir o que fazer com `if (eventType == X)` e passar
+a **rotear por handler**.
+
+Fiz em commits atômicos, cada um com teste verde antes do próximo:
+
+1. `feat(outbox): cria interface OutboxEventHandler` — interface package-private
+   (alinhada com o processor, que já era package-private de propósito).
+2. `feat(outbox): cria ConfirmacaoRealizacaoHandler` — a lógica do único tipo atual,
+   dependendo do adapter `AgendamentoClient` (que já traduz 404/409 em
+   `EventoPermanenteException`).
+3. `refactor(outbox): OutboxEventProcessor roteia via Map<eventType, Handler>` —
+   monta um mapa dos handlers no construtor e roteia. Tipo desconhecido vira
+   `EventoPermanenteException` → DESCARTADO. **Preservei** o try/catch que separa
+   erro permanente (descarta sem retry) de transitório (incrementa tentativas).
+4. Ajustei o `OutboxEventProcessorTest` (que já existia) pra mockar o handler.
+5. Criei o `ConfirmacaoRealizacaoHandlerTest`.
+
+Um commit do plano (ajustar o `OutboxSchedulerTest`) eu **pulei conscientemente** —
+o teste já estava alinhado com a arquitetura nova, não precisava mexer. Anotei a
+decisão em vez de inventar commit cosmético.
+
+**Provei o OCP de verdade na stack:** inseri um evento fake apontando pra uma
+consulta inexistente (id 999) → o scheduler pegou → o handler chamou o agendamento →
+404 → virou `EventoPermanenteException` → DESCARTADO, tentativas=0. O log do
+processor confirmou. O caminho feliz também: evento real → PROCESSADO em ~10s.
+
+40 testes verdes no atendimento. PR #36. Mergeado.
+
+---
+
