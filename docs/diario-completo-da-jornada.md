@@ -403,3 +403,16 @@ Reta final. Produzi os artefatos de fechamento:
 
 ---
 
+## Onde o projeto está hoje
+
+- **`development`** é o coração: tem 100% do código, build verde, **167 testes**
+  passando, **232 asserts** de Postman sem falha, Swagger nos 3 serviços, stack de
+  8 containers subindo limpa.
+- **`main`** é o espelho estável — idêntico em código, exceto pelos diagramas
+  PlantUML que entraram direto nele.
+- A arquitetura está madura: domínios isolados, banco por serviço, gateway na
+  entrada, Keycloak na segurança, Feign na comunicação, Outbox na confiabilidade,
+  correlation-id na observabilidade, CI/CD no GitHub Actions.
+
+---
+
