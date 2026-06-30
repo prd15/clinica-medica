@@ -81,3 +81,29 @@ Fechei essa rodada documentando e com o ciclo de review encerrado.
 
 ---
 
+## Capítulo 2 — O fluxo atendimento → agendamento: 3 bugs e 3 melhorias
+
+Esse foi o primeiro mergulho num fluxo de negócio de ponta a ponta. A ideia: quando
+um atendimento acontece, o agendamento precisa saber que a consulta foi realizada.
+Mexendo nisso, achei e consertei **três bugs**:
+
+1. **Endpoint `/realizar` no agendamento** — o caminho pra marcar uma consulta como
+   realizada não estava redondo.
+2. **Unicidade de `consultaId` no atendimento** — dava pra registrar atendimento
+   duplicado pra mesma consulta. Fechei com restrição de unicidade.
+3. **Validar a consulta antes de registrar o atendimento** — não dava pra atender
+   uma consulta que não existe. Passei a validar antes.
+
+E **três melhorias**:
+
+- `minha-agenda` do médico passou a incluir consultas **CONFIRMADA** (não só
+  agendadas).
+- Listagem com **filtros combinados**.
+- Avaliação de **double-booking** (dois agendamentos no mesmo horário pro mesmo
+  médico) — que depois viraria uma trava no próprio banco.
+
+Validei tudo com Postman e build verde antes de fechar. Esse capítulo me deixou
+íntimo do agendamento e do atendimento, o que seria essencial pro Outbox.
+
+---
+
