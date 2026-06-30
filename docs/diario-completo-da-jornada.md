@@ -357,3 +357,33 @@ dívidas.
 
 ---
 
+## Capítulo 13 — Manter atualizado e a história das branches
+
+A partir daqui o trabalho virou bastante "manter o barco em dia". O time continuou
+entregando em paralelo, e eu fui trazendo pro meu checkout:
+
+- **k8s** (correções de memória do Keycloak, manifests) — PR #39.
+- **CI/CD com GitHub Actions** — build + smoke test com Docker Compose + publicação
+  de imagens no GHCR — PR #41.
+- **Logging estruturado SLF4J/Logback com correlation-id** ponta a ponta — um id por
+  requisição que aparece em todos os logs e é propagado entre serviços via Feign —
+  PR #42. (Curiosidade: esse PR mexeu nos mesmos `FeignConfig` da minha Tarefa A, e
+  mesclou sem conflito — o interceptor de correlation-id entrou ao lado do de auth.)
+- **Dockerfile slim** único — PR #44.
+
+Cada atualização foi `git pull --ff-only` no `development`, rebuild da stack, e
+revalidação (build + Postman + Swagger). E em todas, o OrbStack caindo pelo menos
+uma vez no meio.
+
+**Limpeza de branches:** o repositório tinha dezenas de branches. Mapeei todas
+(local + remoto), confirmei que `main` e `development` tinham **árvore idêntica** (os
+commits a mais no main eram só merge commits) e deletei **13 branches locais já 100%
+mergeadas** — operação segura e reversível (todas existem no origin). Não toquei em
+`main`, `development`, nas branches em uso por worktree, nem nas remotas do time.
+
+Mais tarde notei que o `main` ganhou um commit que o `development` não tem: os
+**diagramas PlantUML** (DER, casos de uso, classes, arquitetura) adicionados direto
+no main em 27/jun. Ficaram "ilhados" lá — algo a reconciliar.
+
+---
+
