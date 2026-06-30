@@ -59,3 +59,25 @@ Esse foi o terreno. A partir daqui, é a minha caminhada.
 
 ---
 
+## Capítulo 1 — Code review e as primeiras melhorias
+
+Meu primeiro trabalho de verdade não foi escrever feature nova — foi *olhar com
+seriedade* pro que existia e apertar os parafusos. Saiu daí uma rodada de
+melhorias que não eram over-engineering, coisas concretas:
+
+- **`show-sql` desligado por padrão** nos três serviços. Em dev, dá pra ligar por
+  variável de ambiente (`SPRING_JPA_SHOW_SQL=true`), mas o padrão é silencioso —
+  log limpo.
+- **DRY no `AdministrativoClient`** — extraí um helper que estava repetido.
+- **`@Transactional(readOnly = true)`** nos métodos de leitura. Sinaliza intenção
+  e deixa o provider otimizar (sem flush desnecessário).
+
+Aprendi/reforcei aqui o raciocínio de **logging com SLF4J + Logback**: por que
+`log.warn` em vez de `System.out`, por que níveis importam, e como isso depois
+escalaria pro projeto inteiro com Logback. Foi a semente do que viraria a
+observabilidade lá na frente.
+
+Fechei essa rodada documentando e com o ciclo de review encerrado.
+
+---
+
