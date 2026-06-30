@@ -335,3 +335,25 @@ Vale registrar os perrengues, porque diário honesto também tem os tropeços:
 
 ---
 
+## Capítulo 12 — A revisão pós-Fase 1
+
+Depois de mergear as três tarefas, troquei de chapéu e fiz uma **revisão técnica**
+do estado integrado, revalidando tudo do zero em vez de confiar no que já tinha
+rodado antes. Achados:
+
+- **`AUTH_PROVIDER` documentado mas não encaminhado** pelo docker-compose/k8s. O
+  default funciona, mas a doc promete um mecanismo que o deploy containerizado não
+  entrega. Importante.
+- **`BACKLOG.md` sumiu** do repositório (o time tirou docs internas do
+  versionamento num refactor). Os itens pendentes perderam casa.
+- **Sem teste do `@ConditionalOnProperty`** — o switching de provedor não tem
+  cobertura.
+- Pequenos: typo num log ("viraro"), mensagem genérica em colisão de handlers,
+  ausência de `mvnw`, ausência de healthcheck dos 4 serviços no compose.
+
+Entreguei isso como nota de revisão pro grupo, com veredito "aprovado com
+ressalvas" e as ações priorizadas. Nenhuma ressalva era regressão — eram gaps e
+dívidas.
+
+---
+
