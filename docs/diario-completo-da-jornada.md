@@ -217,3 +217,34 @@ arquiteturalmente mais avançada.
 
 ---
 
+## Capítulo 7 — SOLID: do conceito ao roadmap
+
+O pedido seguinte foi diferente: olhar o projeto com seriedade e avaliar se valia
+aplicar um **design pattern bem definido** — e SOLID. Expliquei os cinco princípios
+no contexto real do projeto (não na teoria), apontando onde o código já acertava e
+onde doía:
+
+- **SRP** — a separação por domínio já era SRP em escala de arquitetura.
+- **OCP** — o `OutboxEventProcessor` tratava um único tipo de evento; o segundo tipo
+  ia pedir um `switch`. Candidato número 1.
+- **LSP / ISP** — pouco aplicáveis no estado atual; não forcei.
+- **DIP** — o `ServiceTokenProvider` era classe concreta acoplada ao Keycloak,
+  repetida nos três serviços. Candidato número 2.
+
+Disso saiu o **Roadmap SOLID**: um plano pragmático, em fases, com a postura de
+"aplicar onde a dor é real, não inventar abstração por abstração". Documentei tudo
+num cofre Obsidian separado (`clinica-medica-solid-roadmap`) com o roadmap, o guia
+de execução passo a passo, o plano de rollback e uma pasta de evidências.
+
+Antes de mexer em qualquer código, criei uma **tag de rollback**
+(`snapshot-pre-solid-fase1`) no origin — um ponto seguro pra voltar com um comando
+se algo quebrasse.
+
+Detalhe importante: auditei o roadmap **contra o código real** antes de executar e
+achei várias premissas erradas (nomes de método ilustrativos que não existiam,
+`OutboxEventProcessorTest` que eu achava que ia criar mas já existia, o adapter
+`AgendamentoClient` que eu não tinha considerado). Corrigi o roadmap antes de
+começar. Isso evitou executar em cima de suposição.
+
+---
+
