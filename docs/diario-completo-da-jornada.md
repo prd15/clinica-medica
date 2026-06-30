@@ -187,3 +187,33 @@ circuit breaker, etc.) e documentei tudo no diário.
 
 ---
 
+## Capítulo 6 — A descoberta: Keycloak já estava pronto
+
+Num dado momento fui verificar se a segurança/Keycloak já tinha sido implementada —
+e descobri que **sim**, estava tudo na branch `development`: o realm `clinica`, o
+OAuth2 Resource Server nos serviços, os papéis ADMIN/ATENDENTE/MEDICO/SERVICE, o
+`client_credentials` pra comunicação serviço-a-serviço. O time tinha avançado em
+paralelo com Gateway (Spring Cloud Gateway) e OpenFeign (substituindo RestTemplate).
+
+Aqui a história deixou de ser "o meu canto do código" e virou "entrar no fluxo do
+time". Decidimos trabalhar a partir do `development`, que já era a versão
+arquiteturalmente mais avançada.
+
+**Trazer tudo pra rodar localmente:**
+
+- Atualizei meu checkout pro `development` e recarreguei o IntelliJ.
+- Subi a stack completa no Docker — 8 containers (3 bancos + Keycloak + 4 serviços).
+- Fiz um **smoke test** ponta a ponta provando a segurança: 401 sem token, 200 com
+  token de admin, 403 atendente tentando criar médico, 201 admin criando convênio.
+  A defesa em profundidade funcionava — até o acesso direto ao microsserviço
+  (sem passar pelo gateway) validava o JWT.
+
+**Perrengues recorrentes da infra** (que me acompanhariam até o fim):
+
+- O **OrbStack** (daemon do Docker) caía sozinho com frequência. Religar com
+  `open -a OrbStack` virou reflexo.
+- A **rede da faculdade** fazia interceptação de TLS e quebrava o `gh` (GitHub
+  CLI). Resolvi reautenticando com token clássico quando precisei.
+
+---
+
