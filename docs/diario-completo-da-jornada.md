@@ -387,3 +387,19 @@ no main em 27/jun. Ficaram "ilhados" lá — algo a reconciliar.
 
 ---
 
+## Capítulo 14 — Consolidação: resumo, mapa visual e apresentação
+
+Reta final. Produzi os artefatos de fechamento:
+
+- **Resumo geral do projeto** (`resumo-geral-do-projeto.md`) — registro consolidado
+  das 13 fases, compilado do histórico real do git (40 PRs, 9 contribuidores).
+- **Mapa visual do projeto** — um infográfico PNG (arquitetura + stack por camada
+  com versões + números + linha do tempo), gerado em HTML e renderizado via Chrome
+  headless em alta resolução. Pra mandar pro grupo.
+- **Slide de tecnologias da apresentação** — analisei a apresentação `.pptx` do
+  grupo, apontei o que faltava (o slide de tecnologias estava incompleto: faltavam
+  Lombok, ModelMapper, OkHttp, SLF4J/Logback, Actuator, JUnit/Mockito, versões) e
+  refiz no estilo creme do deck — 6 categorias, calmo, sem poluição, com versões.
+
+---
+
