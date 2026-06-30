@@ -11,3 +11,20 @@ Stack central: Java 17, Spring Boot 3.3.5, Spring Cloud, MySQL, Keycloak, Docker
 
 ---
 
+## Padrões que mantive o tempo todo
+
+Antes de qualquer coisa, alguns padrões que segui em todo o projeto:
+
+- **Conventional Commits.** `tipo(escopo): descrição`, em português, no imperativo,
+  pra manter o histórico legível e fácil de revisar.
+- **Nada de senha no código.** Segredos sempre por variável de ambiente
+  (`${VAR}`), nunca chumbados no `application.properties`.
+- **A anatomia do Convênio em tudo.** Cada funcionalidade nova segue as mesmas
+  camadas do módulo de referência: Entity → Repository → Service (com testes) →
+  Controller + DTOs.
+
+Esses padrões aparecem em absolutamente tudo abaixo, então não vou repetir a
+cada passo.
+
+---
+
