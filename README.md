@@ -14,6 +14,7 @@ A borda da plataforma é protegida por um API Gateway com autenticação OAuth2/
 - [Domínios e serviços](#domínios-e-serviços)
 - [Segurança e autenticação](#segurança-e-autenticação)
 - [Pré-requisitos](#pré-requisitos)
+- [Banco de dados: criação das tabelas](#banco-de-dados-criação-das-tabelas)
 - [Execução com Docker Compose](#execução-com-docker-compose)
 - [Execução local (sem Docker)](#execução-local-sem-docker)
 - [Documentação da API (Swagger)](#documentação-da-api-swagger)
@@ -205,6 +206,32 @@ curl -i http://localhost:8080/api/admin/v1/pacientes
 - Docker e Docker Compose.
 - `jq` (opcional, para extrair o token nos exemplos).
 - Para Kubernetes: `kubectl` e um cluster local (Kind, Minikube ou Docker Desktop).
+
+---
+
+## Banco de dados: criação das tabelas
+
+O schema é criado **automaticamente** pelo Hibernate (`ddl-auto=update`) na primeira vez que cada microsserviço sobe — não é preciso rodar nada manualmente para usar a aplicação normalmente (via Docker Compose ou Kubernetes, como nas seções abaixo).
+
+Para quem quiser criar os bancos e as tabelas **sem** subir a aplicação Java primeiro (ex.: inspecionar o schema, preparar um banco antes de rodar os testes), os scripts estão em `sql/` — um arquivo por microsserviço (arquitetura database-per-service: cada um cria seu próprio banco e tabelas, sem FK entre bancos diferentes) mais um `init.sql` que roda os três em sequência.
+
+Os scripts foram extraídos do schema real (`mysqldump --no-data` contra o banco criado pelo Hibernate) e validados: rodados do zero num MySQL 8 limpo e reexecutados duas vezes seguidas sem erro (idempotentes).
+
+**Rodar os três de uma vez:**
+
+```bash
+mysql -u root -p < sql/init.sql
+```
+
+**Ou um microsserviço por vez:**
+
+```bash
+mysql -u root -p < sql/administrativo.sql
+mysql -u root -p < sql/agendamento.sql
+mysql -u root -p < sql/atendimento.sql
+```
+
+> Mesmo comando em macOS, Linux e Windows (PowerShell) — só precisa do client `mysql` disponível no PATH.
 
 ---
 
