@@ -282,6 +282,37 @@ Swagger UI ativo nos três microsserviços:
 
 OpenAPI bruto disponível em `/v3/api-docs` de cada serviço.
 
+### Testando endpoints protegidos pelo botão Authorize
+
+Os 3 Swagger UI têm o esquema `bearerAuth` habilitado — endpoints protegidos aparecem com um cadeado e podem ser testados direto na página, sem Postman.
+
+**1. Obtenha um `access_token` do Keycloak** (troque `username`/`password` pelo usuário desejado — veja a tabela de [usuários de demonstração](#usuários-de-demonstração)):
+
+macOS / Linux:
+```bash
+curl -s -X POST http://localhost:8180/realms/clinica/protocol/openid-connect/token \
+  -d "grant_type=password&client_id=clinica-frontend&username=admin&password=Admin123!" \
+  | jq -r .access_token
+```
+
+Windows (PowerShell):
+```powershell
+$body = @{
+  grant_type = "password"
+  client_id  = "clinica-frontend"
+  username   = "admin"
+  password   = "Admin123!"
+}
+$resp = Invoke-RestMethod -Method Post -Uri "http://localhost:8180/realms/clinica/protocol/openid-connect/token" -Body $body
+$resp.access_token | Set-Clipboard
+```
+
+> No PowerShell, copie o token via `Set-Clipboard` (como acima) em vez de selecionar manualmente no terminal — tokens longos quebram em várias linhas na tela, e copiar a quebra de linha corrompe o JWT (erro `Bearer token is malformed`).
+
+**2. Cole no Swagger:** clique no botão **Authorize** (canto superior direito), cole o token **sem o prefixo `Bearer `** no campo `Value`, clique **Authorize** e depois **Close**.
+
+**3. Teste:** expanda qualquer endpoint protegido → **Try it out** → **Execute**. O token fica anexado a todas as chamadas até você dar Logout ou fechar a aba.
+
 ---
 
 ## Testes e qualidade
@@ -296,7 +327,21 @@ Cobre os services de todos os módulos. Os relatórios Surefire ficam em `*/targ
 
 ### Testes de API (Postman + Newman)
 
-As collections em `docs/` são executadas contra o gateway com autenticação real, usando o environment `docs/keycloak.postman_environment.json` (já busca o token JWT no pre-request). Comece pela collection de autenticação/RBAC:
+As collections em `docs/` são executadas contra o gateway com autenticação real, usando o environment `docs/keycloak.postman_environment.json` (já busca o token JWT no pre-request).
+
+#### Rodando no aplicativo Postman (interface gráfica)
+
+1. Abra o Postman e importe as collections: **File → Import** → selecione todos os arquivos `docs/*-collection.json`.
+2. Importe também os environments: **File → Import** → `docs/keycloak.postman_environment.json` e `docs/local.postman_environment.json`.
+3. No canto superior direito, selecione o environment **Keycloak** na lista suspensa.
+4. Abra a collection **gateway-auth** (autenticação/RBAC) primeiro, rode a requisição de login — o pre-request script já busca o token JWT e preenche automaticamente as demais requisições da collection.
+5. Rode as outras collections normalmente, com o mesmo environment selecionado. Use **Runner** (botão no topo da collection) para rodar todas as requisições de uma collection em sequência.
+
+#### Via linha de comando (Newman)
+
+Comece pela collection de autenticação/RBAC:
+
+**macOS / Linux (bash, zsh):**
 
 ```bash
 ENV=docs/keycloak.postman_environment.json
@@ -311,6 +356,24 @@ npx newman run docs/atendimento-collection.json  -e $ENV
 npx newman run docs/atendimento-notificacao-collection.json -e $ENV
 npx newman run docs/relatorios-collection.json   -e $ENV
 ```
+
+**Windows (PowerShell):**
+
+```powershell
+$EnvFile = "docs/keycloak.postman_environment.json"
+npx newman run docs/gateway-auth-collection.json -e $EnvFile
+npx newman run docs/convenio-collection.json     -e $EnvFile
+npx newman run docs/especialidade-collection.json -e $EnvFile
+npx newman run docs/medico-collection.json       -e $EnvFile
+npx newman run docs/paciente-collection.json     -e $EnvFile
+npx newman run docs/atendente-collection.json    -e $EnvFile
+npx newman run docs/consulta-collection.json     -e $EnvFile
+npx newman run docs/atendimento-collection.json  -e $EnvFile
+npx newman run docs/atendimento-notificacao-collection.json -e $EnvFile
+npx newman run docs/relatorios-collection.json   -e $EnvFile
+```
+
+> A sintaxe `VAR=valor comando` do bash não existe no PowerShell — por isso os dois blocos são diferentes. No PowerShell, `curl` também é um alias para `Invoke-WebRequest` (não o curl real); use `curl.exe` se precisar do comportamento do curl padrão.
 
 > O environment `docs/local.postman_environment.json` aponta para as portas diretas sem token e resultará em `401` — use-o apenas em cenários sem segurança.
 
@@ -339,12 +402,60 @@ O padrão usa `%clr` do Spring Boot: ANSI colorido em terminal, texto puro em co
 - O nível de log da aplicação é ajustável por ambiente: `LOG_LEVEL_APP=DEBUG` (padrão `INFO`).
 - A configuração compartilhada está em `commons/src/main/resources/logback-base.xml`, incluída por cada microsserviço; o gateway (WebFlux) tem o seu próprio `logback-spring.xml`.
 
-**Rastrear uma request nos logs:**
+### Como ver os logs
+
+Com a stack rodando (`docker compose up -d`), os comandos abaixo funcionam em qualquer serviço (`administrativo`, `agendamento`, `atendimento`, `gateway`, `keycloak`, `db-administrativo`, etc.).
+
+**Ver logs de todos os serviços:**
 
 ```bash
-# o uuid vem no header X-Correlation-Id da resposta
-docker compose logs | grep "<correlation-id>"
+docker compose logs
 ```
+
+**Ver logs de um serviço específico** (mais limpo para depurar um módulo):
+
+```bash
+docker compose logs administrativo
+```
+
+**Acompanhar em tempo real** (`-f` = follow, fica escutando novas linhas):
+
+```bash
+docker compose logs -f administrativo
+```
+
+**Ver só as últimas N linhas:**
+
+```bash
+docker compose logs --tail=100 administrativo
+```
+
+Esses comandos são idênticos em macOS, Linux e Windows (PowerShell) — o `docker compose` já cuida disso sozinho.
+
+### Rastrear uma request específica pelo correlation-id
+
+Cada resposta HTTP traz um header `X-Correlation-Id` (um UUID). Copie esse valor e filtre os logs de todos os serviços por ele — assim você vê a mesma request passando pelo gateway e por cada microsserviço que ela tocou.
+
+**1. Pegue o `X-Correlation-Id` de uma resposta.** Aparece:
+- Na aba **Response Headers** do Swagger UI ou do Postman, depois de qualquer chamada.
+- Ou via `curl`:
+  ```bash
+  curl -i http://localhost:8080/api/admin/v1/pacientes -H "Authorization: Bearer $TOKEN" | grep -i "x-correlation-id"
+  ```
+
+**2. Filtre os logs por esse id:**
+
+macOS / Linux (bash, zsh):
+```bash
+docker compose logs | grep "a1b2c3d4-5678-90ab-cdef-1234567890ab"
+```
+
+Windows (PowerShell) — `grep` não existe nativo, use `Select-String`:
+```powershell
+docker compose logs | Select-String "a1b2c3d4-5678-90ab-cdef-1234567890ab"
+```
+
+O resultado mostra a mesma request atravessando os serviços, cada linha com `[serviço] [correlation-id]` — dá pra seguir o caminho completo (ex.: `gateway` → `agendamento` → `administrativo`) e achar exatamente onde algo deu errado.
 
 ---
 
@@ -376,6 +487,13 @@ Manifests em `k8s/` (namespace `clinica`). Crie o Secret real a partir do exempl
 ```bash
 cp k8s/secrets.example.yaml k8s/secrets.yaml
 # editar k8s/secrets.yaml com db-username e db-password em base64
+```
+
+Se ainda não existir um cluster Kind local, crie um antes de qualquer outro passo (`kind load` precisa de um cluster existente — sem isso o comando falha com `ERROR: no nodes found for cluster "kind"`):
+
+```bash
+kind get clusters          # confirma se ja existe um cluster chamado "kind"
+kind create cluster        # cria (nome padrao "kind", usado pelos comandos abaixo)
 ```
 
 Build das imagens locais e, em Kind, carga no cluster:
