@@ -17,11 +17,15 @@ services:
       - vol-administrativo:/var/lib/mysql
     # Sem esse healthcheck o Java tenta conectar antes do banco estar pronto
     # e quebra na inicializacao — aprendi isso da pior forma
+    # start_period generoso: no primeiro boot (volume novo) o MySQL demora criando
+    # as tabelas de sistema, e com os 3 bancos + Keycloak subindo juntos em maquinas
+    # mais lentas isso pode passar dos 50s (retries x interval) sem essa folga.
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 60s
     networks:
       - clinica-network
 
@@ -42,6 +46,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 60s
     networks:
       - clinica-network
 
@@ -62,6 +67,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 60s
     networks:
       - clinica-network
 
@@ -73,6 +79,9 @@ services:
       dockerfile: Dockerfile
       args:
         MODULE: administrativo
+    # Sem isso o compose gera a tag padrao "brahma-clinic-administrativo" (nome do
+    # projeto), que nao bate com o que os manifests k8s/kind load esperam.
+    image: clinica/administrativo:latest
     container_name: administrativo
     restart: on-failure
     ports:
@@ -101,6 +110,7 @@ services:
       dockerfile: Dockerfile
       args:
         MODULE: agendamento
+    image: clinica/agendamento:latest
     container_name: agendamento
     restart: on-failure
     ports:
@@ -131,6 +141,7 @@ services:
       dockerfile: Dockerfile
       args:
         MODULE: atendimento
+    image: clinica/atendimento:latest
     container_name: atendimento
     restart: on-failure
     ports:
@@ -191,6 +202,7 @@ services:
       dockerfile: Dockerfile
       args:
         MODULE: gateway
+    image: clinica/gateway:latest
     container_name: gateway
     restart: on-failure
     ports:
