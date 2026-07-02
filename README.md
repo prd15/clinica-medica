@@ -219,19 +219,33 @@ Os scripts foram extraídos do schema real (`mysqldump --no-data` contra o banco
 
 **Rodar os três de uma vez:**
 
+macOS / Linux (bash, zsh):
 ```bash
 mysql -u root -p < sql/init.sql
 ```
 
+Windows (PowerShell) — o operador `<` é reservado e não funciona no PowerShell; use `Get-Content` com pipe:
+```powershell
+Get-Content sql/init.sql | mysql -u root -p
+```
+
 **Ou um microsserviço por vez:**
 
+macOS / Linux (bash, zsh):
 ```bash
 mysql -u root -p < sql/administrativo.sql
 mysql -u root -p < sql/agendamento.sql
 mysql -u root -p < sql/atendimento.sql
 ```
 
-> Mesmo comando em macOS, Linux e Windows (PowerShell) — só precisa do client `mysql` disponível no PATH.
+Windows (PowerShell):
+```powershell
+Get-Content sql/administrativo.sql | mysql -u root -p
+Get-Content sql/agendamento.sql    | mysql -u root -p
+Get-Content sql/atendimento.sql    | mysql -u root -p
+```
+
+> Em ambos os casos é preciso ter o client `mysql` disponível no PATH.
 
 ---
 
